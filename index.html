@@ -590,7 +590,8 @@ function renderPlayer() {
               '<div style="width:26px;height:26px;border-radius:5px;overflow:hidden;flex-shrink:0;cursor:pointer" onclick="event.stopPropagation();goChampDetail(\''+m.champ+'\')">'+cImg(m.champ,26,5)+'</div>'+
               '<span style="flex:1;font-size:12px;color:var(--text2)">'+m.champ+'</span>'+
               '<span style="font-size:11px;color:var(--muted)">'+m.games+'전 '+m.wins+'승 '+m.losses+'패</span>'+
-              '<span style="font-size:13px;font-weight:700;font-family:Rajdhani,sans-serif;color:'+mc2+';width:42px;text-align:right">'+m.wr+'%</span></div>';
+              '<span style="font-size:13px;font-weight:700;font-family:Rajdhani,sans-serif;color:'+mc2+';width:42px;text-align:right">'+m.wr+'%</span>'+
+              '<span style="font-size:12px;font-weight:700;font-family:Rajdhani,sans-serif;color:var(--purp);width:38px;text-align:right" title="이 상대 기준 CP 평균">'+(m.cp!=null?m.cp:'-')+'</span></div>';
           }).join('')
         : '<div style="padding:10px;text-align:center;font-size:11px;color:var(--muted);border-top:1px solid var(--dim)">맞라인 데이터 없음</div>';
       return '<div style="border-bottom:1px solid var(--dim)">'+
@@ -1533,21 +1534,30 @@ function playerChampStat(name, champ){
 // 선수가 특정 챔피언으로 상대한 맞라인 챔프별 전적 (champ=null이면 전체)
 function playerChampMatchups(name, champ){
   var rec = {};
+  // 게임번호+선수 → 그 경기 CP
+  var cpLook = {};
+  GAME_DETAILS.forEach(function(gd){
+    gd.players.forEach(function(p){ if(p.name===name && typeof p.cp==='number') cpLook[gd.no+'|'+p.champ] = p.cp; });
+  });
   GAMES.slice(-30).forEach(function(gm){
     if(!gm.winChamps) return;
     for(var i=0;i<gm.win.length;i++){
       var wp=_strip(gm.win[i]), lp=_strip(gm.lose[i]);
       var wc=gm.winChamps[i], lc=gm.loseChamps[i];
       if(wp===name && (!champ || wc===champ)){ // 이김
-        rec[lc]=rec[lc]||{games:0,wins:0}; rec[lc].games++; rec[lc].wins++;
+        rec[lc]=rec[lc]||{games:0,wins:0,cps:[]}; rec[lc].games++; rec[lc].wins++;
+        var cv1=cpLook[gm.no+'|'+wc]; if(typeof cv1==='number') rec[lc].cps.push(cv1);
       }
       if(lp===name && (!champ || lc===champ)){ // 짐
-        rec[wc]=rec[wc]||{games:0,wins:0}; rec[wc].games++;
+        rec[wc]=rec[wc]||{games:0,wins:0,cps:[]}; rec[wc].games++;
+        var cv2=cpLook[gm.no+'|'+lc]; if(typeof cv2==='number') rec[wc].cps.push(cv2);
       }
     }
   });
   return Object.keys(rec).map(function(o){
-    return {champ:o, games:rec[o].games, wins:rec[o].wins, losses:rec[o].games-rec[o].wins, wr:Math.round(rec[o].wins/rec[o].games*100)};
+    var cps=rec[o].cps;
+    var cp=cps.length?Math.round(cps.reduce(function(s,x){return s+x;},0)/cps.length*100)/100:null;
+    return {champ:o, games:rec[o].games, wins:rec[o].wins, losses:rec[o].games-rec[o].wins, wr:Math.round(rec[o].wins/rec[o].games*100), cp:cp};
   }).sort(function(a,b){return b.games-a.games||b.wr-a.wr;});
 }
 // 특정 챔피언으로 맞라인 이긴/진 플레이어별 전적
