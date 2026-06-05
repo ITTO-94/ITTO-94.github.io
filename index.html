@@ -263,19 +263,19 @@ function cImg(kr,sz,r){
 
 // ── 선수 데이터 ──────────────────────────────────────
 const PLAYERS = {
-"백찬":{"name":"백찬","pos":"TOP","games":1,"wins":1,"losses":0,"wr":100,"elo":1010,"kda":1.0,"k":4.0,"d":6.0,"a":2.0,"dpm":666,"vspm":0.3,"kp":17,"dtpm":926,"gpm":360,"ccpm":0.0,"dpg":1.85,"piwa":0.0,"dpmPct":15.9,"cs_per_min":3.0,"cp_avg":2.69,"cp_best":2.69,"cp_worst":2.69,"champPool":1,"mostChamps":[["마스터 이",{"games":1,"wins":1,"k":4,"d":6,"a":2}]]},
-"관모":{"name":"관모","pos":"JUG","games":1,"wins":1,"losses":0,"wr":100,"elo":1010,"kda":2.8,"k":5.0,"d":5.0,"a":9.0,"dpm":586,"vspm":1.04,"kp":39,"dtpm":977,"gpm":381,"ccpm":0.94,"dpg":1.54,"piwa":0.0,"dpmPct":13.8,"cs_per_min":2.7,"cp_avg":4.36,"cp_best":4.36,"cp_worst":4.36,"champPool":1,"mostChamps":[["리 신",{"games":1,"wins":1,"k":5,"d":5,"a":9}]]},
-"용인":{"name":"용인","pos":"MID","games":1,"wins":1,"losses":0,"wr":100,"elo":1010,"kda":2.75,"k":4.0,"d":4.0,"a":7.0,"dpm":769,"vspm":0.15,"kp":31,"dtpm":830,"gpm":362,"ccpm":0.84,"dpg":2.12,"piwa":0.0,"dpmPct":18.1,"cs_per_min":3.5,"cp_avg":3.36,"cp_best":3.36,"cp_worst":3.36,"champPool":1,"mostChamps":[["에코",{"games":1,"wins":1,"k":4,"d":4,"a":7}]]},
-"이또":{"name":"이또","pos":"ADC","games":1,"wins":1,"losses":0,"wr":100,"elo":1010,"kda":7.0,"k":19.0,"d":4.0,"a":9.0,"dpm":1742,"vspm":1.44,"kp":78,"dtpm":756,"gpm":776,"ccpm":0.25,"dpg":2.24,"piwa":1.5,"dpmPct":41.0,"cs_per_min":7.6,"cp_avg":7.08,"cp_best":7.08,"cp_worst":7.08,"champPool":1,"mostChamps":[["카이사",{"games":1,"wins":1,"k":19,"d":4,"a":9}]]},
-"다이스":{"name":"다이스","pos":"SUP","games":1,"wins":1,"losses":0,"wr":100,"elo":1010,"kda":6.5,"k":4.0,"d":4.0,"a":22.0,"dpm":437,"vspm":2.53,"kp":72,"dtpm":714,"gpm":389,"ccpm":1.89,"dpg":1.12,"piwa":5.5,"dpmPct":10.3,"cs_per_min":0.4,"cp_avg":5.24,"cp_best":5.24,"cp_worst":5.24,"champPool":1,"mostChamps":[["쓰레쉬",{"games":1,"wins":1,"k":4,"d":4,"a":22}]]},
-"미안":{"name":"미안","pos":"TOP","games":1,"wins":0,"losses":1,"wr":0,"elo":990,"kda":4.0,"k":7.0,"d":2.0,"a":1.0,"dpm":819,"vspm":0.79,"kp":35,"dtpm":918,"gpm":361,"ccpm":1.19,"dpg":1.49,"piwa":0.0,"dpmPct":19.2,"cs_per_min":3.8,"cp_avg":4.64,"cp_best":4.64,"cp_worst":4.64,"champPool":1,"mostChamps":[["레넥톤",{"games":1,"wins":0,"k":7,"d":2,"a":1}]]},
-"남탓":{"name":"남탓","pos":"JUG","games":1,"wins":0,"losses":1,"wr":0,"elo":990,"kda":1.4,"k":3.0,"d":5.0,"a":4.0,"dpm":358,"vspm":1.19,"kp":30,"dtpm":714,"gpm":297,"ccpm":0.99,"dpg":1.08,"piwa":0.0,"dpmPct":8.4,"cs_per_min":2.3,"cp_avg":3.58,"cp_best":3.58,"cp_worst":3.58,"champPool":1,"mostChamps":[["스카너",{"games":1,"wins":0,"k":3,"d":5,"a":4}]]},
-"닥터":{"name":"닥터","pos":"MID","games":1,"wins":0,"losses":1,"wr":0,"elo":990,"kda":1.0,"k":5.0,"d":8.0,"a":3.0,"dpm":759,"vspm":0.45,"kp":35,"dtpm":759,"gpm":363,"ccpm":2.19,"dpg":0.21,"piwa":0.0,"dpmPct":17.8,"cs_per_min":3.7,"cp_avg":3.78,"cp_best":3.78,"cp_worst":3.78,"champPool":1,"mostChamps":[["리산드라",{"games":1,"wins":0,"k":5,"d":8,"a":3}]]},
-"베이":{"name":"베이","pos":"ADC","games":1,"wins":0,"losses":1,"wr":0,"elo":990,"kda":0.82,"k":3.0,"d":11.0,"a":6.0,"dpm":712,"vspm":0.5,"kp":39,"dtpm":757,"gpm":635,"ccpm":0.5,"dpg":1.63,"piwa":0.5,"dpmPct":16.7,"cs_per_min":5.8,"cp_avg":3.3,"cp_best":3.3,"cp_worst":3.3,"champPool":1,"mostChamps":[["드레이븐",{"games":1,"wins":0,"k":3,"d":11,"a":6}]]},
-"나사":{"name":"나사","pos":"SUP","games":1,"wins":0,"losses":1,"wr":0,"elo":990,"kda":1.1,"k":8.0,"d":10.0,"a":3.0,"dpm":706,"vspm":2.04,"kp":48,"dtpm":706,"gpm":375,"ccpm":0.89,"dpg":1.88,"piwa":2.0,"dpmPct":16.6,"cs_per_min":0.5,"cp_avg":5.4,"cp_best":5.4,"cp_worst":5.4,"champPool":1,"mostChamps":[["판테온",{"games":1,"wins":0,"k":8,"d":10,"a":3}]]},
+"백찬":{"name":"백찬","pos":"TOP","games":1,"wins":1,"losses":0,"wr":100,"elo":1010,"kda":1.0,"k":4.0,"d":6.0,"a":2.0,"dpm":666,"vspm":0.3,"kp":17,"dtpm":926,"gpm":360,"ccpm":0.0,"dpg":1.85,"piwa":0.0,"dpmPct":15.9,"cs_per_min":7.4,"cp_avg":2.69,"cp_best":2.69,"cp_worst":2.69,"champPool":1,"mostChamps":[["마스터 이",{"games":1,"wins":1,"k":4,"d":6,"a":2}]]},
+"관모":{"name":"관모","pos":"JUG","games":1,"wins":1,"losses":0,"wr":100,"elo":1010,"kda":2.8,"k":5.0,"d":5.0,"a":9.0,"dpm":586,"vspm":1.04,"kp":39,"dtpm":977,"gpm":381,"ccpm":0.94,"dpg":1.54,"piwa":0.0,"dpmPct":13.8,"cs_per_min":5.1,"cp_avg":4.36,"cp_best":4.36,"cp_worst":4.36,"champPool":1,"mostChamps":[["리 신",{"games":1,"wins":1,"k":5,"d":5,"a":9}]]},
+"용인":{"name":"용인","pos":"MID","games":1,"wins":1,"losses":0,"wr":100,"elo":1010,"kda":2.75,"k":4.0,"d":4.0,"a":7.0,"dpm":769,"vspm":0.15,"kp":31,"dtpm":830,"gpm":362,"ccpm":0.84,"dpg":2.12,"piwa":0.0,"dpmPct":18.1,"cs_per_min":6.1,"cp_avg":3.36,"cp_best":3.36,"cp_worst":3.36,"champPool":1,"mostChamps":[["에코",{"games":1,"wins":1,"k":4,"d":4,"a":7}]]},
+"이또":{"name":"이또","pos":"ADC","games":1,"wins":1,"losses":0,"wr":100,"elo":1010,"kda":7.0,"k":19.0,"d":4.0,"a":9.0,"dpm":1742,"vspm":1.44,"kp":78,"dtpm":756,"gpm":776,"ccpm":0.25,"dpg":2.24,"piwa":1.5,"dpmPct":41.0,"cs_per_min":8.4,"cp_avg":7.08,"cp_best":7.08,"cp_worst":7.08,"champPool":1,"mostChamps":[["카이사",{"games":1,"wins":1,"k":19,"d":4,"a":9}]]},
+"다이스":{"name":"다이스","pos":"SUP","games":1,"wins":1,"losses":0,"wr":100,"elo":1010,"kda":6.5,"k":4.0,"d":4.0,"a":22.0,"dpm":437,"vspm":2.53,"kp":72,"dtpm":714,"gpm":389,"ccpm":1.89,"dpg":1.12,"piwa":5.5,"dpmPct":10.3,"cs_per_min":1.0,"cp_avg":5.24,"cp_best":5.24,"cp_worst":5.24,"champPool":1,"mostChamps":[["쓰레쉬",{"games":1,"wins":1,"k":4,"d":4,"a":22}]]},
+"미안":{"name":"미안","pos":"TOP","games":1,"wins":0,"losses":1,"wr":0,"elo":990,"kda":4.0,"k":7.0,"d":2.0,"a":1.0,"dpm":819,"vspm":0.79,"kp":35,"dtpm":918,"gpm":361,"ccpm":1.19,"dpg":1.49,"piwa":0.0,"dpmPct":19.2,"cs_per_min":10.2,"cp_avg":4.64,"cp_best":4.64,"cp_worst":4.64,"champPool":1,"mostChamps":[["레넥톤",{"games":1,"wins":0,"k":7,"d":2,"a":1}]]},
+"남탓":{"name":"남탓","pos":"JUG","games":1,"wins":0,"losses":1,"wr":0,"elo":990,"kda":1.4,"k":3.0,"d":5.0,"a":4.0,"dpm":358,"vspm":1.19,"kp":30,"dtpm":714,"gpm":297,"ccpm":0.99,"dpg":1.08,"piwa":0.0,"dpmPct":8.4,"cs_per_min":6.1,"cp_avg":3.58,"cp_best":3.58,"cp_worst":3.58,"champPool":1,"mostChamps":[["스카너",{"games":1,"wins":0,"k":3,"d":5,"a":4}]]},
+"닥터":{"name":"닥터","pos":"MID","games":1,"wins":0,"losses":1,"wr":0,"elo":990,"kda":1.0,"k":5.0,"d":8.0,"a":3.0,"dpm":759,"vspm":0.45,"kp":35,"dtpm":759,"gpm":363,"ccpm":2.19,"dpg":0.21,"piwa":0.0,"dpmPct":17.8,"cs_per_min":5.3,"cp_avg":3.78,"cp_best":3.78,"cp_worst":3.78,"champPool":1,"mostChamps":[["리산드라",{"games":1,"wins":0,"k":5,"d":8,"a":3}]]},
+"베이":{"name":"베이","pos":"ADC","games":1,"wins":0,"losses":1,"wr":0,"elo":990,"kda":0.82,"k":3.0,"d":11.0,"a":6.0,"dpm":712,"vspm":0.5,"kp":39,"dtpm":757,"gpm":635,"ccpm":0.5,"dpg":1.63,"piwa":0.5,"dpmPct":16.7,"cs_per_min":6.5,"cp_avg":3.3,"cp_best":3.3,"cp_worst":3.3,"champPool":1,"mostChamps":[["드레이븐",{"games":1,"wins":0,"k":3,"d":11,"a":6}]]},
+"나사":{"name":"나사","pos":"SUP","games":1,"wins":0,"losses":1,"wr":0,"elo":990,"kda":1.1,"k":8.0,"d":10.0,"a":3.0,"dpm":706,"vspm":2.04,"kp":48,"dtpm":706,"gpm":375,"ccpm":0.89,"dpg":1.88,"piwa":2.0,"dpmPct":16.6,"cs_per_min":1.1,"cp_avg":5.4,"cp_best":5.4,"cp_worst":5.4,"champPool":1,"mostChamps":[["판테온",{"games":1,"wins":0,"k":8,"d":10,"a":3}]]},
 };
 
-const GAME_DETAILS = [{"no": 1, "date": "2026.06.05", "durMin": 20.13, "players": [{"name": "백찬", "pos": "TOP", "champ": "마스터 이", "team": "win", "k": 4, "d": 6, "a": 2, "vs": 6, "dmg": 13405, "dt": 18642, "gold": 7244, "cc": 0, "cs": 1, "cp": 2.69, "dpm": 666.0, "kda": 1}, {"name": "관모", "pos": "JUG", "champ": "리 신", "team": "win", "k": 5, "d": 5, "a": 9, "vs": 21, "dmg": 11806, "dt": 19676, "gold": 7675, "cc": 19, "cs": 1, "cp": 4.36, "dpm": 586.0, "kda": 2.8}, {"name": "용인", "pos": "MID", "champ": "에코", "team": "win", "k": 4, "d": 4, "a": 7, "vs": 3, "dmg": 15477, "dt": 16703, "gold": 7289, "cc": 17, "cs": 1, "cp": 3.36, "dpm": 769.0, "kda": 2.75}, {"name": "이또", "pos": "ADC", "champ": "카이사", "team": "win", "k": 19, "d": 4, "a": 9, "vs": 29, "dmg": 35068, "dt": 15218, "gold": 15628, "cc": 5, "cs": 1, "cp": 7.08, "dpm": 1742.0, "kda": 7}, {"name": "다이스", "pos": "SUP", "champ": "쓰레쉬", "team": "win", "k": 4, "d": 4, "a": 22, "vs": 51, "dmg": 8804, "dt": 14373, "gold": 7841, "cc": 38, "cs": 1, "cp": 5.24, "dpm": 437.0, "kda": 6.5}, {"name": "미안", "pos": "TOP", "champ": "레넥톤", "team": "lose", "k": 7, "d": 2, "a": 1, "vs": 16, "dmg": 16480, "dt": 22971, "gold": 11047, "cc": 24, "cs": 1, "cp": 4.64, "dpm": 819.0, "kda": 4}, {"name": "남탓", "pos": "JUG", "champ": "스카너", "team": "lose", "k": 0, "d": 5, "a": 7, "vs": 24, "dmg": 7207, "dt": 20956, "gold": 6703, "cc": 20, "cs": 1, "cp": 3.58, "dpm": 358.0, "kda": 1.4}, {"name": "닥터", "pos": "MID", "champ": "리산드라", "team": "lose", "k": 5, "d": 8, "a": 3, "vs": 9, "dmg": 15284, "dt": 19166, "gold": 74553, "cc": 44, "cs": 1, "cp": 3.78, "dpm": 759.0, "kda": 1}, {"name": "베이", "pos": "ADC", "champ": "드레이븐", "team": "lose", "k": 3, "d": 11, "a": 6, "vs": 10, "dmg": 14336, "dt": 17996, "gold": 8799, "cc": 10, "cs": 1, "cp": 3.3, "dpm": 712.0, "kda": 0.82}, {"name": "나사", "pos": "SUP", "champ": "판테온", "team": "lose", "k": 8, "d": 10, "a": 3, "vs": 41, "dmg": 14215, "dt": 21097, "gold": 7565, "cc": 18, "cs": 1, "cp": 5.4, "dpm": 706.0, "kda": 1.1}]}];
+const GAME_DETAILS = [{"no": 1, "date": "2026.06.05", "durMin": 20.13, "players": [{"name": "백찬", "pos": "TOP", "champ": "마스터 이", "team": "win", "k": 4, "d": 6, "a": 2, "vs": 6, "dmg": 13405, "dt": 18642, "gold": 7244, "cc": 0, "cs": 148, "cp": 2.69, "dpm": 666.0, "kda": 1}, {"name": "관모", "pos": "JUG", "champ": "리 신", "team": "win", "k": 5, "d": 5, "a": 9, "vs": 21, "dmg": 11806, "dt": 19676, "gold": 7675, "cc": 19, "cs": 102, "cp": 4.36, "dpm": 586.0, "kda": 2.8}, {"name": "용인", "pos": "MID", "champ": "에코", "team": "win", "k": 4, "d": 4, "a": 7, "vs": 3, "dmg": 15477, "dt": 16703, "gold": 7289, "cc": 17, "cs": 123, "cp": 3.36, "dpm": 769.0, "kda": 2.75}, {"name": "이또", "pos": "ADC", "champ": "카이사", "team": "win", "k": 19, "d": 4, "a": 9, "vs": 29, "dmg": 35068, "dt": 15218, "gold": 15628, "cc": 5, "cs": 170, "cp": 7.08, "dpm": 1742.0, "kda": 7}, {"name": "다이스", "pos": "SUP", "champ": "쓰레쉬", "team": "win", "k": 4, "d": 4, "a": 22, "vs": 51, "dmg": 8804, "dt": 14373, "gold": 7841, "cc": 38, "cs": 20, "cp": 5.24, "dpm": 437.0, "kda": 6.5}, {"name": "미안", "pos": "TOP", "champ": "레넥톤", "team": "lose", "k": 7, "d": 2, "a": 1, "vs": 16, "dmg": 16480, "dt": 22971, "gold": 11047, "cc": 24, "cs": 206, "cp": 4.64, "dpm": 819.0, "kda": 4}, {"name": "남탓", "pos": "JUG", "champ": "스카너", "team": "lose", "k": 0, "d": 5, "a": 7, "vs": 24, "dmg": 7207, "dt": 20956, "gold": 6703, "cc": 20, "cs": 123, "cp": 3.58, "dpm": 358.0, "kda": 1.4}, {"name": "닥터", "pos": "MID", "champ": "리산드라", "team": "lose", "k": 5, "d": 8, "a": 3, "vs": 9, "dmg": 15284, "dt": 19166, "gold": 7553, "cc": 44, "cs": 107, "cp": 3.78, "dpm": 759.0, "kda": 1}, {"name": "베이", "pos": "ADC", "champ": "드레이븐", "team": "lose", "k": 3, "d": 11, "a": 6, "vs": 10, "dmg": 14336, "dt": 17996, "gold": 8799, "cc": 10, "cs": 130, "cp": 3.3, "dpm": 712.0, "kda": 0.82}, {"name": "나사", "pos": "SUP", "champ": "판테온", "team": "lose", "k": 8, "d": 10, "a": 3, "vs": 41, "dmg": 14215, "dt": 21097, "gold": 7565, "cc": 18, "cs": 23, "cp": 5.4, "dpm": 706.0, "kda": 1.1}]}];
 const ELO_HISTORY = {"백찬": [1000, 1010], "미안": [1000, 990], "관모": [1000, 1010], "남탓": [1000, 990], "용인": [1000, 1010], "닥터": [1000, 990], "이또": [1000, 1010], "베이": [1000, 990], "다이스": [1000, 1010], "나사": [1000, 990]};
 
 const POS_AVG={TOP:{DPM:558.5,VSPM:0.862,KP:0.47,DTPM:804.5,GPM:280,CCPM:0.766,DPG:1.44,CS:7.5},JUG:{DPM:443.7,VSPM:1.121,KP:0.61,DTPM:972.2,GPM:260,CCPM:0.622,DPG:1.26,CS:5.5},MID:{DPM:578.8,VSPM:0.957,KP:0.54,DTPM:649.9,GPM:290,CCPM:0.681,DPG:1.46,CS:7.8},ADC:{DPM:667.6,VSPM:0.886,KP:0.58,DTPM:546.5,GPM:310,CCPM:0.490,DPG:1.48,CS:8.5},SUP:{DPM:325.4,VSPM:2.013,KP:0.59,DTPM:497.4,GPM:220,CCPM:0.964,DPG:1.24,CS:1.5},전체:{DPM:515,VSPM:1.17,KP:0.56,DTPM:694,GPM:272,CCPM:0.7,DPG:1.38,CS:6.2}};
@@ -360,9 +360,9 @@ function getRank(name, metric) {
 // ── 종합 렌더 ────────────────────────────────────────
 
 // ── 경기 기록 데이터 ─────────────────────────────────
-const GAMES = [{"no": 1, "date": "2026.06.05", "time": "20:08", "win": ["백찬(TOP)", "관모(JUG)", "용인(MID)", "이또(ADC)", "다이스(SUP)"], "lose": ["미안(TOP)", "남탓(JUG)", "닥터(MID)", "베이(ADC)", "나사(SUP)"], "winChamps": ["마스터 이", "리 신", "에코", "카이사", "쓰레쉬"], "loseChamps": ["레넥톤", "스카너", "리산드라", "드레이븐", "판테온"]}];
+const GAMES = [{"no": 1, "date": "2026.06.05", "time": "20:08", "win": ["백찬(TOP)", "관모(JUG)", "용인(MID)", "이또(ADC)", "다이스(SUP)"], "lose": ["미안(TOP)", "남탓(JUG)", "닥터(MID)", "베이(ADC)", "나사(SUP)"], "winChamps": ["마스터 이", "리 신", "에코", "카이사", "쓰레쉬"], "loseChamps": ["레넥톤", "스카너", "리산드라", "드레이븐", "판테온"], "bans": ["말파이트", "가렌", "노틸러스", "루시안", "말자하", "피오라", "릴리아", "갈리오", "자야", "브라움"]}];
 const MATCHUPS = [{"pos": "TOP", "win": "마스터 이", "lose": "레넥톤"}, {"pos": "JUG", "win": "리 신", "lose": "스카너"}, {"pos": "MID", "win": "에코", "lose": "리산드라"}, {"pos": "ADC", "win": "카이사", "lose": "드레이븐"}, {"pos": "SUP", "win": "쓰레쉬", "lose": "판테온"}];
-const CHAMP_STATS = {"마스터 이": {"pos": "TOP", "players": ["백찬"], "dpm": 666, "vspm": 0.3, "kp": 17, "dtpm": 926, "gpm": 360, "ccpm": 0.0, "dpg": 1.85, "piwa": 0.0, "dpmPct": 16.0, "cp": 2.69, "cs_per_min": 0.0}, "리 신": {"pos": "JUG", "players": ["관모"], "dpm": 586, "vspm": 1.04, "kp": 39, "dtpm": 977, "gpm": 381, "ccpm": 0.94, "dpg": 1.54, "piwa": 1.49, "dpmPct": 14.0, "cp": 4.36, "cs_per_min": 0.0}, "에코": {"pos": "MID", "players": ["용인"], "dpm": 769, "vspm": 0.15, "kp": 31, "dtpm": 830, "gpm": 362, "ccpm": 0.84, "dpg": 2.12, "piwa": 0.0, "dpmPct": 18.0, "cp": 3.36, "cs_per_min": 0.0}, "카이사": {"pos": "ADC", "players": ["이또"], "dpm": 1742, "vspm": 1.44, "kp": 78, "dtpm": 756, "gpm": 776, "ccpm": 0.25, "dpg": 2.24, "piwa": 1.49, "dpmPct": 41.0, "cp": 7.08, "cs_per_min": 0.0}, "쓰레쉬": {"pos": "SUP", "players": ["다이스"], "dpm": 437, "vspm": 2.53, "kp": 72, "dtpm": 714, "gpm": 389, "ccpm": 1.89, "dpg": 1.12, "piwa": 5.46, "dpmPct": 10.0, "cp": 5.24, "cs_per_min": 0.0}, "레넥톤": {"pos": "TOP", "players": ["미안"], "dpm": 819, "vspm": 0.79, "kp": 35, "dtpm": 1141, "gpm": 549, "ccpm": 1.19, "dpg": 1.49, "piwa": 0.5, "dpmPct": 24.0, "cp": 4.64, "cs_per_min": 0.0}, "스카너": {"pos": "JUG", "players": ["남탓"], "dpm": 358, "vspm": 1.19, "kp": 30, "dtpm": 1041, "gpm": 333, "ccpm": 0.99, "dpg": 1.08, "piwa": 0.99, "dpmPct": 11.0, "cp": 3.58, "cs_per_min": 0.0}, "리산드라": {"pos": "MID", "players": ["닥터"], "dpm": 759, "vspm": 0.45, "kp": 35, "dtpm": 952, "gpm": 3703, "ccpm": 2.19, "dpg": 0.21, "piwa": 0.0, "dpmPct": 23.0, "cp": 3.78, "cs_per_min": 0.0}, "드레이븐": {"pos": "ADC", "players": ["베이"], "dpm": 712, "vspm": 0.5, "kp": 39, "dtpm": 894, "gpm": 437, "ccpm": 0.5, "dpg": 1.63, "piwa": 0.0, "dpmPct": 21.0, "cp": 3.3, "cs_per_min": 0.0}, "판테온": {"pos": "SUP", "players": ["나사"], "dpm": 706, "vspm": 2.04, "kp": 48, "dtpm": 1048, "gpm": 376, "ccpm": 0.89, "dpg": 1.88, "piwa": 3.97, "dpmPct": 21.0, "cp": 5.4, "cs_per_min": 0.0}};
+const CHAMP_STATS = {"마스터 이": {"pos": "TOP", "players": ["백찬"], "dpm": 666, "vspm": 0.3, "kp": 17, "dtpm": 926, "gpm": 360, "ccpm": 0.0, "dpg": 1.85, "piwa": 0.0, "dpmPct": 16.0, "cp": 2.69, "cs_per_min": 7.4}, "리 신": {"pos": "JUG", "players": ["관모"], "dpm": 586, "vspm": 1.04, "kp": 39, "dtpm": 977, "gpm": 381, "ccpm": 0.94, "dpg": 1.54, "piwa": 1.49, "dpmPct": 14.0, "cp": 4.36, "cs_per_min": 5.1}, "에코": {"pos": "MID", "players": ["용인"], "dpm": 769, "vspm": 0.15, "kp": 31, "dtpm": 830, "gpm": 362, "ccpm": 0.84, "dpg": 2.12, "piwa": 0.0, "dpmPct": 18.0, "cp": 3.36, "cs_per_min": 6.1}, "카이사": {"pos": "ADC", "players": ["이또"], "dpm": 1742, "vspm": 1.44, "kp": 78, "dtpm": 756, "gpm": 776, "ccpm": 0.25, "dpg": 2.24, "piwa": 1.49, "dpmPct": 41.0, "cp": 7.08, "cs_per_min": 8.4}, "쓰레쉬": {"pos": "SUP", "players": ["다이스"], "dpm": 437, "vspm": 2.53, "kp": 72, "dtpm": 714, "gpm": 389, "ccpm": 1.89, "dpg": 1.12, "piwa": 5.46, "dpmPct": 10.0, "cp": 5.24, "cs_per_min": 1.0}, "레넥톤": {"pos": "TOP", "players": ["미안"], "dpm": 819, "vspm": 0.79, "kp": 35, "dtpm": 1141, "gpm": 549, "ccpm": 1.19, "dpg": 1.49, "piwa": 0.5, "dpmPct": 24.0, "cp": 4.64, "cs_per_min": 10.2}, "스카너": {"pos": "JUG", "players": ["남탓"], "dpm": 358, "vspm": 1.19, "kp": 30, "dtpm": 1041, "gpm": 333, "ccpm": 0.99, "dpg": 1.08, "piwa": 0.99, "dpmPct": 11.0, "cp": 3.58, "cs_per_min": 6.1}, "리산드라": {"pos": "MID", "players": ["닥터"], "dpm": 759, "vspm": 0.45, "kp": 35, "dtpm": 952, "gpm": 3703, "ccpm": 2.19, "dpg": 0.21, "piwa": 0.0, "dpmPct": 23.0, "cp": 3.78, "cs_per_min": 5.3}, "드레이븐": {"pos": "ADC", "players": ["베이"], "dpm": 712, "vspm": 0.5, "kp": 39, "dtpm": 894, "gpm": 437, "ccpm": 0.5, "dpg": 1.63, "piwa": 0.0, "dpmPct": 21.0, "cp": 3.3, "cs_per_min": 6.5}, "판테온": {"pos": "SUP", "players": ["나사"], "dpm": 706, "vspm": 2.04, "kp": 48, "dtpm": 1048, "gpm": 376, "ccpm": 0.89, "dpg": 1.88, "piwa": 3.97, "dpmPct": 21.0, "cp": 5.4, "cs_per_min": 1.1}};
 
 // ── 페이지네이션 상태 ────────────────────────────────
 var PAGE = {wr:0, elo:0, cp:0, champ:0};
@@ -573,36 +573,44 @@ function renderPlayer() {
     html += '</div></div>';
   })();
 
-  // 모스트 챔피언 (op.gg 스타일)
-  html += '<div class="card fi fi2"><div class="ct">모스트 챔피언</div>';
-  p.mostChamps.forEach(function(mc){
-    var cn=mc[0],cs=mc[1];
-    var g=cs.games;
-    var kdaR=cs.d>0?(cs.k+cs.a)/cs.d:(cs.k+cs.a);
-    var ak=(cs.k/g).toFixed(1), ad=(cs.d/g).toFixed(1), aa=(cs.a/g).toFixed(1);
-    var kdaC=kdaColor(kdaR);
-    var wrP=Math.round(cs.wins/g*100);
-    var wrC2=wrP>=60?'#e84057':'#8a99ad';
-    var cspm=(p.cs_per_min||0);
-    var csTot=Math.round(cspm*20.13);
-    html+='<div class="mc-row">'+
-      '<div class="mc-th">'+cImg(cn,42,8)+'</div>'+
-      '<div class="mc-info"><div class="mc-name">'+cn+'</div>'+
-      '<div class="mc-sub">CS '+csTot+' ('+cspm.toFixed(1)+')</div></div>'+
-      (function(){
-        var ma = mvpAceData()[name] || {mvpChamps:{},aceChamps:{}};
-        var mv = ma.mvpChamps[cn]||0, ac = ma.aceChamps[cn]||0;
-        return '<div style="text-align:center;min-width:52px;flex-shrink:0">'+
-          '<div style="font-size:11px;font-weight:900;font-family:Rajdhani,sans-serif;color:'+(mv>0?'#f0c030':'#3a4a5e')+'">MVP '+mv+'</div>'+
-          '<div style="font-size:11px;font-weight:900;font-family:Rajdhani,sans-serif;color:'+(ac>0?'#9fb4c8':'#3a4a5e')+';margin-top:2px">ACE '+ac+'</div></div>';
-      })()+
-      '<div class="mc-mid"><div class="mc-kda" style="color:'+kdaC+'">'+kdaR.toFixed(2)+':1 <span class="pt">평점</span></div>'+
-      '<div class="mc-kdadetail">'+ak+' / '+ad+' / '+aa+'</div></div>'+
-      '<div class="mc-right2"><div class="mc-wrp" style="color:'+wrC2+'">'+wrP+'%</div>'+
-      '<div class="mc-games">'+g+' 게임</div></div>'+
-    '</div>';
-  });
-  html += '</div>';
+  // 모스트 챔피언 (ALL 행 + 최대 10개 + 클릭 시 맞라인 펼침)
+  (function(){
+    var champs = p.mostChamps.slice(0,10).map(function(mc){ return mc[0]; });
+    function mcRow(label, champ, idx){
+      var st = champ ? playerChampStat(name, champ) : playerChampStat(name, null);
+      var wC = st.wr>=60?'var(--green)':st.wr>=50?'var(--gold)':'var(--red)';
+      var icon = champ ? cImg(champ,38,7)
+        : '<div style="width:38px;height:38px;border-radius:7px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:var(--gold)">ALL</div>';
+      var mus = playerChampMatchups(name, champ);
+      var expand = mus.length
+        ? mus.map(function(m){
+            var mc2 = m.wr>=60?'var(--green)':m.wr>=50?'var(--gold)':'var(--red)';
+            return '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-top:1px solid var(--dim)">'+
+              '<span style="font-size:10px;color:var(--muted);flex-shrink:0">vs</span>'+
+              '<div style="width:26px;height:26px;border-radius:5px;overflow:hidden;flex-shrink:0;cursor:pointer" onclick="event.stopPropagation();goChampDetail(\''+m.champ+'\')">'+cImg(m.champ,26,5)+'</div>'+
+              '<span style="flex:1;font-size:12px;color:var(--text2)">'+m.champ+'</span>'+
+              '<span style="font-size:11px;color:var(--muted)">'+m.games+'전 '+m.wins+'승 '+m.losses+'패</span>'+
+              '<span style="font-size:13px;font-weight:700;font-family:Rajdhani,sans-serif;color:'+mc2+';width:42px;text-align:right">'+m.wr+'%</span></div>';
+          }).join('')
+        : '<div style="padding:10px;text-align:center;font-size:11px;color:var(--muted);border-top:1px solid var(--dim)">맞라인 데이터 없음</div>';
+      return '<div style="border-bottom:1px solid var(--dim)">'+
+        '<div onclick="var e=document.getElementById(\'mcx-'+idx+'\');e.style.display=e.style.display===\'none\'?\'block\':\'none\'" style="display:flex;align-items:center;gap:10px;padding:9px 4px;cursor:pointer">'+
+        '<div style="width:38px;height:38px;border-radius:7px;overflow:hidden;flex-shrink:0">'+icon+'</div>'+
+        '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;color:var(--text2)">'+(champ||'전체 챔피언')+'</div>'+
+        '<div style="font-size:10px;color:var(--muted)">'+st.games+'게임 ▾</div></div>'+
+        '<div style="text-align:center;width:90px;flex-shrink:0"><div style="font-size:11px;color:var(--text2)"><span style="color:var(--blue)">'+st.wins+'</span> / <span style="color:var(--red)">'+st.losses+'</span></div>'+
+        '<div style="font-size:12px;font-weight:700;font-family:Rajdhani,sans-serif;color:'+wC+'">'+st.wr+'%</div></div>'+
+        '<div style="text-align:center;width:50px;flex-shrink:0"><div style="font-size:13px;font-weight:700;font-family:Rajdhani,sans-serif;color:'+kdaColor(st.kda)+'">'+st.kda+'</div><div style="font-size:9px;color:var(--muted)">KDA</div></div>'+
+        '<div style="text-align:center;width:46px;flex-shrink:0"><div style="font-size:13px;font-weight:700;font-family:Rajdhani,sans-serif;color:var(--purp)">'+st.cp+'</div><div style="font-size:9px;color:var(--muted)">CP</div></div>'+
+        '</div>'+
+        '<div id="mcx-'+idx+'" style="display:none;padding-bottom:4px">'+expand+'</div></div>';
+    }
+    html += '<div class="card fi fi2"><div class="ct">모스트 챔피언 <span style="font-weight:400;color:var(--muted);margin-left:6px">클릭 시 맞라인 전적</span></div>'+
+      '<div style="max-height:460px;overflow-y:auto">'+
+      mcRow('전체', null, 'all')+
+      champs.map(function(cn,i){ return mcRow(cn, cn, i); }).join('')+
+      '</div></div>';
+  })();
 
   // 상세 지표 카드 그리드
   html += '<div class="card fi fi3"><div class="ct">상세 지표</div>';
@@ -642,7 +650,7 @@ function renderPlayer() {
       var c = d.wr>=60?'var(--green)':d.wr>=50?'var(--gold)':'var(--red)';
       return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:8px;background:var(--bg2);border:1px solid var(--dim);margin-bottom:6px">'+
         '<div><div class="pn" style="font-size:14px" onclick="goPlayer(\''+d.name+'\')">'+d.name+'</div>'+
-        '<div style="font-size:11px;color:var(--muted);margin-top:2px">'+d.games+'게임 함께</div></div>'+
+        '<div style="font-size:11px;color:var(--muted);margin-top:2px">'+d.games+'전 '+d.wins+'승 '+(d.games-d.wins)+'패 '+d.wr+'% · 함께</div></div>'+
         '<div style="font-size:18px;font-weight:700;font-family:Rajdhani,sans-serif;color:'+c+'">'+d.wr+'%</div></div>';
     }
     html += '<div class="card fi fi2"><div class="ct">베스트 듀오 · 최근 30경기</div>'+best.map(duoRow).join('')+'</div>';
@@ -667,7 +675,7 @@ function renderPlayer() {
       var c = d.wr>=60?'var(--green)':d.wr>=50?'var(--gold)':'var(--red)';
       return '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-radius:8px;background:var(--bg2);border:1px solid var(--dim);margin-bottom:6px">'+
         '<div><div class="pn" style="font-size:13px" onclick="goPlayer(\''+d.name+'\')">'+d.name+'</div>'+
-        '<div style="font-size:10px;color:var(--muted);margin-top:2px">'+d.games+'번 맞대결</div></div>'+
+        '<div style="font-size:10px;color:var(--muted);margin-top:2px">'+d.games+'전 '+d.wins+'승 '+(d.games-d.wins)+'패 '+d.wr+'%</div></div>'+
         '<div style="font-size:16px;font-weight:700;font-family:Rajdhani,sans-serif;color:'+c+'">'+d.wr+'%</div></div>';
     }
     html += '<div class="card fi fi2"><div class="ct" style="color:var(--green)">먹잇감 · 상대전적 우위</div>'+prey.map(rivalRow).join('')+'</div>';
@@ -742,8 +750,15 @@ function comboRow(c, accent){
     '<div style="font-size:16px;font-weight:700;font-family:Rajdhani,sans-serif;color:'+wC+'">'+c.wr+'%</div>'+
     '<div style="font-size:10px;color:var(--muted)">'+c.games+'전 '+c.wins+'승 '+c.losses+'패</div></div></div>';
 }
+var COMBO_LINE = '전체';
+var COMBO_CHAMP = '전체';
+function setComboLine(v){ COMBO_LINE = v; COMBO_CHAMP = '전체'; renderCombo(); }
+function setComboChamp(v){ COMBO_CHAMP = v; renderCombo(); }
 function renderCombo(){
   var stats = comboStats(COMBO_N);
+  // 챔피언 필터 (선택 시 해당 챔피언 포함 조합만)
+  if(COMBO_CHAMP !== '전체') stats = stats.filter(function(c){ return c.champs.indexOf(COMBO_CHAMP) >= 0; });
+
   var btns = [2,3,4,5].map(function(n){
     var on = COMBO_N === n;
     return '<button onclick="setComboN('+n+')" style="padding:7px 14px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:Noto Sans KR,sans-serif;'+
@@ -752,19 +767,30 @@ function renderCombo(){
       '">'+n+'챔피언</button>';
   }).join('');
 
+  // 라인/챔피언 드롭다운
+  var LINES = ['전체','TOP','JUG','MID','ADC','SUP'];
+  var champOpts = Object.keys(CHAMP_STATS).filter(function(cn){ return COMBO_LINE==='전체' || CHAMP_STATS[cn].pos===COMBO_LINE; }).sort();
+  var lineSel = '<select class="nsel" onchange="setComboLine(this.value)">'+LINES.map(function(l){return '<option'+(COMBO_LINE===l?' selected':'')+'>'+l+'</option>';}).join('')+'</select>';
+  var champSel = '<select class="nsel" onchange="setComboChamp(this.value)"><option'+(COMBO_CHAMP==='전체'?' selected':'')+'>전체</option>'+
+    champOpts.map(function(cn){return '<option'+(COMBO_CHAMP===cn?' selected':'')+'>'+cn+'</option>';}).join('')+'</select>';
+
   var high = stats.slice().sort(function(a,b){return b.wr-a.wr||b.games-a.games;}).slice(0,10);
   var keys = high.map(function(c){return c.champs.join('|');});
   var low = stats.filter(function(c){return keys.indexOf(c.champs.join('|')) < 0;})
     .sort(function(a,b){return a.wr-b.wr||b.games-a.games;}).slice(0,10);
 
-  var html = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">'+
+  var html = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">'+
     '<span style="font-size:11px;color:var(--muted);margin-right:4px">조합 크기</span>'+btns+
     '<span style="font-size:10px;color:var(--muted);margin-left:auto">최근 30경기 · 같은 팀 기준</span></div>';
+  html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap">'+
+    '<span style="font-size:11px;color:var(--muted);margin-right:2px">라인</span>'+lineSel+
+    '<span style="font-size:11px;color:var(--muted);margin:0 2px 0 8px">챔피언</span>'+champSel+
+    (COMBO_CHAMP!=='전체'?'<span style="font-size:10px;color:var(--gold);margin-left:6px">「'+COMBO_CHAMP+'」 포함 조합만</span>':'')+'</div>';
 
   html += '<div class="two-col" style="grid-template-columns:1fr 1fr"><div>';
   html += '<div class="card fi"><div class="ct" style="color:var(--green)">▲ 챔피언 조합 높은 승률</div>'+
     (high.length ? high.map(function(c){return comboRow(c);}).join('') :
-     '<div style="padding:20px;text-align:center;font-size:11px;color:var(--muted)">데이터 없음</div>')+'</div>';
+     '<div style="padding:20px;text-align:center;font-size:11px;color:var(--muted)">조건에 맞는 조합이 없어요</div>')+'</div>';
   html += '</div><div>';
   html += '<div class="card fi fi1"><div class="ct" style="color:var(--red)">▼ 챔피언 조합 낮은 승률</div>'+
     (low.length ? low.map(function(c){return comboRow(c);}).join('') :
@@ -829,7 +855,8 @@ function renderChampDetail(){
   var losses = agg.games - agg.wins;
   var kda = agg.d>0 ? Math.round((agg.k+agg.a)/agg.d*100)/100 : (agg.k+agg.a);
   var pickRate = totalGames ? Math.round(agg.games/totalGames*100) : 0;
-  var score = wr*0.7 + Math.min(100, pickRate*2)*0.3;
+  var banRate = champBanRate(champ), immunity = champCounterImmunity(champ);
+  var score = champTierScore(wr, pickRate, banRate, immunity);
   var g = grd(score);
   var wC = wr>=60?'var(--green)':wr>=50?'var(--gold)':'var(--red)';
 
@@ -907,10 +934,11 @@ function renderChampDetail(){
   var counter = mus.filter(function(m){return m.wr<50;}).sort(function(a,b){return a.wr-b.wr||b.games-a.games;});
   function muRow(m, inv){
     var c = inv ? 'var(--red)' : (m.wr>=60?'var(--green)':'var(--gold)');
+    var lo = (m.games - m.wins);
     return '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;background:var(--bg2);border:1px solid var(--dim);margin-bottom:6px">'+
       '<div style="width:34px;height:34px;border-radius:6px;overflow:hidden;flex-shrink:0;cursor:pointer" onclick="goChampDetail(\''+m.champ+'\')">'+cImg(m.champ,34,6)+'</div>'+
       '<div style="flex:1"><div class="pn" style="font-size:13px" onclick="goChampDetail(\''+m.champ+'\')">'+m.champ+'</div>'+
-      '<div style="font-size:10px;color:var(--muted)">'+m.pos+' 맞라인 · '+m.games+'회</div></div>'+
+      '<div style="font-size:10px;color:var(--muted)">'+m.pos+' · '+m.games+'전 '+m.wins+'승 '+lo+'패</div></div>'+
       '<div style="font-size:15px;font-weight:700;font-family:Rajdhani,sans-serif;color:'+c+'">'+m.wr+'%</div></div>';
   }
   h += '<div class="card fi fi1"><div class="ct" style="color:var(--green)">맞라인 우위 (상대로 강함)</div>'+
@@ -920,23 +948,42 @@ function renderChampDetail(){
     (counter.length ? counter.map(function(m){return muRow(m,true);}).join('') :
      '<div style="padding:14px;text-align:center;font-size:11px;color:var(--muted)">아직 카운터 기록이 없어요</div>')+'</div>';
 
-  // 이 챔피언 최고/최저 승률 플레이어
+  // 이 챔피언으로 맞라인 잘 친 / 못 친 멤버 (소통 유도)
+  (function(){
+    var cp = champCounterPlayers(champ);
+    if(!cp.length) return;
+    var good = cp.slice().sort(function(a,b){return b.wr-a.wr||b.games-a.games;}).slice(0,5);
+    var goodNames = good.map(function(x){return x.name;});
+    var bad = cp.filter(function(x){return goodNames.indexOf(x.name)<0;}).sort(function(a,b){return a.wr-b.wr||b.games-a.games;}).slice(0,5);
+    function cmRow(x){
+      var c = x.wr>=60?'var(--green)':x.wr>=50?'var(--gold)':'var(--red)';
+      return '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;background:var(--bg2);border:1px solid var(--dim);margin-bottom:6px">'+
+        '<div style="width:24px;height:24px;flex-shrink:0">'+tierIcon(PLAYERS[x.name]?PLAYERS[x.name].elo:1000,24)+'</div>'+
+        '<div style="flex:1"><div class="pn" style="font-size:13px" onclick="goPlayer(\''+x.name+'\')">'+x.name+'</div>'+
+        '<div style="font-size:10px;color:var(--muted)">'+x.games+'전 '+x.wins+'승 '+x.losses+'패 '+x.wr+'%</div></div>'+
+        '<div style="font-size:15px;font-weight:700;font-family:Rajdhani,sans-serif;color:'+c+'">'+x.wr+'%</div></div>';
+    }
+    h += '<div class="card fi fi3"><div class="ct" style="color:var(--green)">이 챔피언으로 맞라인 잘 친 멤버</div>'+good.map(cmRow).join('')+'</div>';
+    if(bad.length) h += '<div class="card fi fi3"><div class="ct" style="color:var(--red)">이 챔피언으로 고전한 멤버</div>'+bad.map(cmRow).join('')+'</div>';
+  })();
+
+  // 이 챔피언 최고/최저 승률 플레이어 (각 5명)
   (function(){
     var cps = champPlayers(champ);
     if(!cps.length) return;
-    var bestP = cps.slice().sort(function(a,b){return b.wr-a.wr||b.games-a.games;})[0];
-    var rest = cps.filter(function(x){return x.name !== bestP.name;});
-    var worstP = rest.length ? rest.sort(function(a,b){return a.wr-b.wr||b.games-a.games;})[0] : null;
+    var best = cps.slice().sort(function(a,b){return b.wr-a.wr||b.games-a.games;}).slice(0,5);
+    var bestNames = best.map(function(x){return x.name;});
+    var worst = cps.filter(function(x){return bestNames.indexOf(x.name)<0;}).sort(function(a,b){return a.wr-b.wr||b.games-a.games;}).slice(0,5);
     function cpRow(x, color){
       return '<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;background:var(--bg2);border:1px solid var(--dim);margin-bottom:6px">'+
         '<div style="width:24px;height:24px;flex-shrink:0">'+tierIcon(PLAYERS[x.name]?PLAYERS[x.name].elo:1000,24)+'</div>'+
         '<div style="flex:1"><div class="pn" style="font-size:13px" onclick="goPlayer(\''+x.name+'\')">'+x.name+'</div>'+
-        '<div style="font-size:10px;color:var(--muted)">'+x.games+'전 '+x.wins+'승 '+(x.games-x.wins)+'패</div></div>'+
+        '<div style="font-size:10px;color:var(--muted)">'+x.games+'전 '+x.wins+'승 '+(x.games-x.wins)+'패 '+x.wr+'%</div></div>'+
         '<div style="font-size:16px;font-weight:700;font-family:Rajdhani,sans-serif;color:'+color+'">'+x.wr+'%</div></div>';
     }
-    h += '<div class="card fi fi3"><div class="ct" style="color:var(--green)">이 챔피언 최고 승률</div>'+cpRow(bestP, bestP.wr>=50?'var(--green)':'var(--red)')+'</div>';
-    h += '<div class="card fi fi3"><div class="ct" style="color:var(--red)">이 챔피언 최저 승률</div>'+
-      (worstP ? cpRow(worstP, worstP.wr>=50?'var(--gold)':'var(--red)')
+    h += '<div class="card fi fi3"><div class="ct" style="color:var(--green)">이 챔피언 최고 승률 플레이어</div>'+best.map(function(x){return cpRow(x, x.wr>=50?'var(--green)':'var(--red)');}).join('')+'</div>';
+    h += '<div class="card fi fi3"><div class="ct" style="color:var(--red)">이 챔피언 최저 승률 플레이어</div>'+
+      (worst.length ? worst.map(function(x){return cpRow(x, x.wr>=50?'var(--gold)':'var(--red)');}).join('')
         : '<div style="padding:14px 12px;border-radius:8px;background:var(--bg2);border:1px dashed var(--dim);text-align:center;font-size:11px;color:var(--muted)">플레이어가 1명뿐이에요<br>다른 선수가 플레이하면 비교돼요</div>')+'</div>';
   })();
 
@@ -1394,7 +1441,36 @@ function renderAward(){
       '</div></div>';
   })();
 
-  // 역대 기록
+  // Dice of the Season (승/패 전환이 가장 잦은 = ELO 그래프 꺾임 최다)
+  (function(){
+    var seq = {};  // name → ['W','L',...] 시간순
+    GAME_DETAILS.forEach(function(g){
+      g.players.forEach(function(p){
+        seq[p.name] = seq[p.name] || [];
+        seq[p.name].push(p.team==='win'?'W':'L');
+      });
+    });
+    var dice = Object.keys(seq).map(function(n){
+      var s = seq[n], flips = 0;
+      for(var i=1;i<s.length;i++) if(s[i]!==s[i-1]) flips++;
+      return {name:n, flips:flips, games:s.length};
+    }).sort(function(a,b){return b.flips-a.flips||b.games-a.games;});
+    var d = dice[0];
+    if(!d || d.flips === 0){
+      html += '<div class="card fi fi2" style="margin-top:14px"><div class="ct" style="color:#c89b3c">🎲 Dice of the Season</div><div style="padding:14px;text-align:center;font-size:11px;color:var(--muted)">아직 승패 기복 기록이 없어요</div></div>';
+      return;
+    }
+    var ties = dice.filter(function(x){return x.flips===d.flips;});
+    var pick = ties.sort(function(a,b){return b.games-a.games;})[0];
+    html += '<div class="card fi fi2" style="margin-top:14px;border-color:rgba(200,155,60,.3)"><div class="ct" style="color:#c89b3c">🎲 Dice of the Season <span style="font-weight:400;color:var(--muted);margin-left:6px">승패 기복(ELO 꺾임)이 가장 심한 플레이어</span></div>'+
+      '<div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">'+
+      '<div style="text-align:center;min-width:130px">'+
+      '<div style="width:48px;height:48px;margin:0 auto 8px">'+tierIcon(PLAYERS[pick.name]?PLAYERS[pick.name].elo:1000,48)+'</div>'+
+      '<div class="pn" style="font-size:18px;font-weight:900" onclick="goPlayer(\''+pick.name+'\')">'+pick.name+'</div>'+
+      '<div style="font-size:18px;font-weight:900;font-family:Rajdhani,sans-serif;color:#c89b3c;margin-top:4px">🎲 '+pick.flips+'번 뒤집힘</div></div>'+
+      '<div style="flex:1;min-width:280px;background:var(--bg2);border:1px solid var(--dim);border-radius:10px;padding:10px">'+eloChartSvg(pick.name,420,130).svg+'</div>'+
+      '</div></div>';
+  })();
   (function(){
     var records = [
       {l:'단일경기 최다 킬',    pick:function(p,g){return p.k;},   fmt:function(v){return v+'킬';}},
@@ -1404,7 +1480,6 @@ function renderAward(){
       {l:'단일경기 최다 딜량',  pick:function(p,g){return p.dmg;}, fmt:function(v){return v.toLocaleString();}},
       {l:'단일경기 최다 골드',  pick:function(p,g){return p.gold;},fmt:function(v){return v.toLocaleString();}},
       {l:'단일경기 최다 시야',  pick:function(p,g){return p.vs;},  fmt:function(v){return v+'점';}},
-      {l:'단일경기 최다 CS',    pick:function(p,g){return p.cs;},  fmt:function(v){return v;}},
       {l:'단일경기 최고 KDA',   pick:function(p,g){return p.kda;}, fmt:function(v){return v;}},
       {l:'단일경기 최다 CC',    pick:function(p,g){return p.cc;},  fmt:function(v){return v+'초';}},
     ];
@@ -1437,6 +1512,77 @@ function renderAward(){
   document.getElementById('page-award').innerHTML = html;
 }
 
+
+// ── 챔피언/맞라인 헬퍼 (GAMES·GAME_DETAILS 기반) ──────
+function _strip(s){ return s.replace(/\(.*\)$/,''); }
+// 선수가 특정 챔피언으로 플레이한 전적 (champ=null이면 전체)
+function playerChampStat(name, champ){
+  var g=0,w=0,k=0,d=0,a=0,cps=[];
+  GAME_DETAILS.forEach(function(gm){
+    gm.players.forEach(function(pl){
+      if(pl.name!==name) return;
+      if(champ && pl.champ!==champ) return;
+      g++; if(pl.team==='win')w++;
+      k+=pl.k; d+=pl.d; a+=pl.a; if(typeof pl.cp==='number') cps.push(pl.cp);
+    });
+  });
+  return {games:g, wins:w, losses:g-w, wr:g?Math.round(w/g*100):0,
+    kda:d>0?Math.round((k+a)/d*100)/100:(k+a),
+    cp:cps.length?Math.round(cps.reduce(function(s,x){return s+x;},0)/cps.length*100)/100:0};
+}
+// 선수가 특정 챔피언으로 상대한 맞라인 챔프별 전적 (champ=null이면 전체)
+function playerChampMatchups(name, champ){
+  var rec = {};
+  GAMES.slice(-30).forEach(function(gm){
+    if(!gm.winChamps) return;
+    for(var i=0;i<gm.win.length;i++){
+      var wp=_strip(gm.win[i]), lp=_strip(gm.lose[i]);
+      var wc=gm.winChamps[i], lc=gm.loseChamps[i];
+      if(wp===name && (!champ || wc===champ)){ // 이김
+        rec[lc]=rec[lc]||{games:0,wins:0}; rec[lc].games++; rec[lc].wins++;
+      }
+      if(lp===name && (!champ || lc===champ)){ // 짐
+        rec[wc]=rec[wc]||{games:0,wins:0}; rec[wc].games++;
+      }
+    }
+  });
+  return Object.keys(rec).map(function(o){
+    return {champ:o, games:rec[o].games, wins:rec[o].wins, losses:rec[o].games-rec[o].wins, wr:Math.round(rec[o].wins/rec[o].games*100)};
+  }).sort(function(a,b){return b.games-a.games||b.wr-a.wr;});
+}
+// 특정 챔피언으로 맞라인 이긴/진 플레이어별 전적
+function champCounterPlayers(champ){
+  var rec = {};
+  GAMES.slice(-30).forEach(function(gm){
+    if(!gm.winChamps) return;
+    for(var i=0;i<gm.win.length;i++){
+      if(gm.winChamps[i]===champ){ var p=_strip(gm.win[i]); rec[p]=rec[p]||{games:0,wins:0}; rec[p].games++; rec[p].wins++; }
+      if(gm.loseChamps[i]===champ){ var q=_strip(gm.lose[i]); rec[q]=rec[q]||{games:0,wins:0}; rec[q].games++; }
+    }
+  });
+  return Object.keys(rec).map(function(n){
+    return {name:n, games:rec[n].games, wins:rec[n].wins, losses:rec[n].games-rec[n].wins, wr:Math.round(rec[n].wins/rec[n].games*100)};
+  });
+}
+// 챔피언 밴/픽/카운터면역 (밴 데이터는 GAMES[].bans 채워지면 자동 반영)
+function champBanRate(champ){
+  var tot=GAMES.length, b=0;
+  GAMES.forEach(function(g){ if(g.bans && g.bans.indexOf(champ)>=0) b++; });
+  return tot?b/tot*100:0;
+}
+function champCounterImmunity(champ){
+  var mus = matchupsOf(champ);
+  if(!mus.length) return 50; // 중립
+  var weak = mus.filter(function(m){return m.wr<50;}).length;
+  return Math.round((1 - weak/mus.length)*100);
+}
+// 티어 점수: 보정승률(밴↑→가산) 60% + 픽신뢰도 30% + 카운터면역 10%
+function champTierScore(wr, pickRate, banRate, immunity){
+  var adjWR = wr / Math.max(10, 100 - Math.min(banRate,90)) * 100;
+  var pickRel = Math.min(100, pickRate * 2);
+  return adjWR*0.6 + pickRel*0.3 + immunity*0.1;
+}
+
 // ── 챔피언 페이지 (챔피언별 통합 통계 + 등급) ────────
 function renderChampion(){
   var totalGames = GAMES.length;
@@ -1457,8 +1603,9 @@ function renderChampion(){
     var kda=c.d>0?Math.round((c.k+c.a)/c.d*100)/100:(c.k+c.a);
     var pickRate=Math.round(c.games/totalGames*100);
     // 챔피언 등급: 승률 70% + 픽률 30% (픽률점수 = 픽률x2, 최대 100)
-    var score = wr*0.7 + Math.min(100, pickRate*2)*0.3;
-    return {champ:cn, games:c.games, wins:c.wins, losses:losses, wr:wr, kda:kda, pickRate:pickRate, score:score};
+    var banRate=champBanRate(cn), immunity=champCounterImmunity(cn);
+    var score = champTierScore(wr, pickRate, banRate, immunity);
+    return {champ:cn, games:c.games, wins:c.wins, losses:losses, wr:wr, kda:kda, pickRate:pickRate, banRate:banRate, score:score};
   });
   rows.sort(function(a,b){return b.score-a.score||b.kda-a.kda;});
 
