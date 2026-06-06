@@ -394,7 +394,12 @@ function pagerHtml(key, total){
 }
 
 function renderSummary() {
-  var sorted = Object.values(PLAYERS).sort(function(a,b){ return b.wr-a.wr||b.elo-a.elo; });
+  var MIN_G = 3;  // 승률 순위 최소 판수
+  var sorted = Object.values(PLAYERS).sort(function(a,b){
+    var qa = a.games >= MIN_G ? 1 : 0, qb = b.games >= MIN_G ? 1 : 0;
+    if(qa !== qb) return qb - qa;            // 3판 이상 그룹 우선
+    return b.wr - a.wr || b.games - a.games || b.elo - a.elo;
+  });
   var eloSorted = Object.values(PLAYERS).sort(function(a,b){ return b.elo-a.elo; });
   var cpSorted = Object.values(PLAYERS).sort(function(a,b){ return b.cp_avg-a.cp_avg; });
 
@@ -410,12 +415,17 @@ function renderSummary() {
 
   // 승률 순위 (페이지네이션)
   var wrStart = PAGE.wr * PAGE_SIZE;
-  html += '<div class="card fi"><div class="ct">승률 순위</div><table class="rt"><thead><tr><th>#</th><th>선수</th><th>전/승/패</th><th>KDA</th><th>승률</th></tr></thead><tbody>';
+  html += '<div class="card fi"><div class="ct">승률 순위 <span style="font-weight:400;color:var(--muted);margin-left:6px">'+MIN_G+'판 이상 집계</span></div><table class="rt"><thead><tr><th>#</th><th>선수</th><th>전/승/패</th><th>KDA</th><th>승률</th></tr></thead><tbody>';
+  var qCount = sorted.filter(function(p){ return p.games >= MIN_G; }).length;
   sorted.slice(wrStart, wrStart + PAGE_SIZE).forEach(function(p,i){
-    var rank = wrStart + i + 1;
+    var idx = wrStart + i;
+    var qualified = p.games >= MIN_G;
+    var rank = qualified ? (idx + 1) : null;
     var wC=p.wr>=60?'var(--green)':p.wr>=50?'var(--gold)':'var(--red)';
-    html+='<tr><td><span class="rn'+(rank<=3?' top':'')+'">'+rank+'</span></td>'+
-      '<td><span class="pn" onclick="goPlayer(\''+p.name+'\')">'+(p.name||'?')+'</span><span class="pb pb-'+(p.pos||'MID')+'">'+p.pos+'</span></td>'+
+    html+='<tr'+(qualified?'':' style="opacity:.55"')+'><td>'+
+      (qualified ? '<span class="rn'+(rank<=3?' top':'')+'">'+rank+'</span>' : '<span class="rn" style="color:var(--muted)">-</span>')+'</td>'+
+      '<td><span class="pn" onclick="goPlayer(\''+p.name+'\')">'+(p.name||'?')+'</span><span class="pb pb-'+(p.pos||'MID')+'">'+p.pos+'</span>'+
+      (qualified?'':' <span style="font-size:9px;padding:2px 6px;border-radius:4px;background:rgba(138,153,173,.1);border:1px solid var(--dim);color:var(--muted)">판수 부족</span>')+'</td>'+
       '<td style="color:var(--muted);font-size:12px">'+p.games+'게임 '+p.wins+'W '+p.losses+'L</td>'+
       '<td style="color:var(--gold);font-family:Rajdhani,sans-serif;font-weight:700">'+p.kda+'</td>'+
       '<td><div class="wr-bw"><div class="wr-b"><div class="wr-f" style="width:'+p.wr+'%;background:'+wC+'"></div></div><div class="wr-p" style="color:'+wC+'">'+p.wr+'%</div></div></td></tr>';
