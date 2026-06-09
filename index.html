@@ -410,13 +410,24 @@ function pagerHtml(key, total){
 }
 
 function renderSummary() {
-  var MIN_G = 3;  // 승률 순위 최소 판수
-  var sorted = Object.values(PLAYERS).sort(function(a,b){
-    var qa = a.games >= MIN_G ? 1 : 0, qb = b.games >= MIN_G ? 1 : 0;
-    if(qa !== qb) return qb - qa;            // 3판 이상 그룹 우선
-    return b.wr - a.wr || b.games - a.games || b.elo - a.elo;
-  });
+  var MIN_G = 3;  // 승률 지수 최소 판수
+  // 전체 평균 승률 (승률 지수 보정 기준)
+  var allP = Object.values(PLAYERS);
+  var totW = allP.reduce(function(s,p){return s+p.wins;},0);
+  var totG = allP.reduce(function(s,p){return s+p.games;},0);
+  var avgWR = totG>0 ? totW/totG : 0.5;
+  var C = 5;  // 가상 경기 수 (표본 보정 강도)
+  // 승률 지수 = (승수 + C×평균승률) / (판수 + C) × 100
+  function wrIndex(p){ return Math.round((p.wins + C*avgWR) / (p.games + C) * 100); }
+
+  // ELO 순위 (메인)
   var eloSorted = Object.values(PLAYERS).sort(function(a,b){ return b.elo-a.elo; });
+  // 승률 지수 순위 (3판 이상 우선, 그 안에서 지수순)
+  var sorted = Object.values(PLAYERS).map(function(p){ return Object.assign({_wi:wrIndex(p)}, p); }).sort(function(a,b){
+    var qa = a.games >= MIN_G ? 1 : 0, qb = b.games >= MIN_G ? 1 : 0;
+    if(qa !== qb) return qb - qa;
+    return b._wi - a._wi || b.games - a.games || b.elo - a.elo;
+  });
   var cpSorted = Object.values(PLAYERS).sort(function(a,b){ return b.cp_avg-a.cp_avg; });
 
   var totalChamps = {};
@@ -429,24 +440,19 @@ function renderSummary() {
   html += '<div class="ts-box"><div class="ts-l">평균 게임시간</div><div class="ts-v">20:08</div></div>';
   html += '</div><div class="two-col"><div>';
 
-  // 승률 순위 (페이지네이션)
-  var wrStart = PAGE.wr * PAGE_SIZE;
-  html += '<div class="card fi"><div class="ct">승률 순위 <span style="font-weight:400;color:var(--muted);margin-left:6px">'+MIN_G+'판 이상 집계</span></div><table class="rt"><thead><tr><th>#</th><th>선수</th><th>전/승/패</th><th>KDA</th><th>승률</th></tr></thead><tbody>';
-  var qCount = sorted.filter(function(p){ return p.games >= MIN_G; }).length;
-  sorted.slice(wrStart, wrStart + PAGE_SIZE).forEach(function(p,i){
-    var idx = wrStart + i;
-    var qualified = p.games >= MIN_G;
-    var rank = qualified ? (idx + 1) : null;
-    var wC=p.wr>=60?'var(--green)':p.wr>=50?'var(--gold)':'var(--red)';
-    html+='<tr'+(qualified?'':' style="opacity:.55"')+'><td>'+
-      (qualified ? '<span class="rn'+(rank<=3?' top':'')+'">'+rank+'</span>' : '<span class="rn" style="color:var(--muted)">-</span>')+'</td>'+
-      '<td><span class="pn" onclick="goPlayer(\''+p.name+'\')">'+(p.name||'?')+'</span><span class="pb pb-'+(p.pos||'MID')+'">'+p.pos+'</span>'+
-      (qualified?'':' <span style="font-size:9px;padding:2px 6px;border-radius:4px;background:rgba(138,153,173,.1);border:1px solid var(--dim);color:var(--muted)">판수 부족</span>')+'</td>'+
-      '<td style="color:var(--muted);font-size:12px">'+p.games+'게임 '+p.wins+'W '+p.losses+'L</td>'+
-      '<td style="color:var(--gold);font-family:Rajdhani,sans-serif;font-weight:700">'+p.kda+'</td>'+
-      '<td><div class="wr-bw"><div class="wr-b"><div class="wr-f" style="width:'+p.wr+'%;background:'+wC+'"></div></div><div class="wr-p" style="color:'+wC+'">'+p.wr+'%</div></div></td></tr>';
+  // ELO 순위 (메인 · 페이지네이션)
+  var eloStart = PAGE.elo * PAGE_SIZE;
+  html += '<div class="card fi"><div class="ct">ELO 순위 <span style="font-weight:400;color:var(--muted);margin-left:6px">상대 전력·퍼포먼스 반영</span></div>';
+  eloSorted.slice(eloStart, eloStart + PAGE_SIZE).forEach(function(p,i){
+    var rank = eloStart + i + 1;
+    var cls=rank===1?'g1':rank===2?'g2':rank===3?'g3':'';
+    var chg=p.elo-1000, chgS=chg>0?'▲ +'+chg:chg<0?'▼ '+chg:'—', chgC=chg>0?'up':chg<0?'dn':'eq';
+    html+='<div class="elo-row"><div class="elo-num '+cls+'">'+rank+'</div>'+
+      '<div style="width:26px;height:26px;flex-shrink:0;position:relative">'+tierIcon(p.elo,26)+'</div>'+
+      '<div class="elo-name" onclick="goPlayer(\''+p.name+'\')">'+(p.name||'?')+'<span class="pb pb-'+p.pos+'" style="margin-left:6px">'+p.pos+'</span></div>'+
+      '<div style="text-align:right"><div class="elo-sc">'+p.elo+'</div><div class="elo-chg '+chgC+'">'+chgS+'</div></div></div>';
   });
-  html += '</tbody></table>' + pagerHtml('wr') + '</div>';
+  html += pagerHtml('elo') + '</div>';
 
   // 최근 경기 (최대 5경기, 최신순 · 클릭 시 상세 스코어보드)
   html += '<div class="card fi fi1"><div class="ct">최근 경기 <span style="font-weight:400;color:var(--muted);margin-left:6px">클릭하면 스코어보드</span></div>';
@@ -466,9 +472,28 @@ function renderSummary() {
 
   html += '</div><div>';
 
-  // CP 랭킹 (페이지네이션)
+  // 승률 지수 순위 (페이지네이션)
+  var wrStart = PAGE.wr * PAGE_SIZE;
+  html += '<div class="card fi"><div class="ct">승률 지수 <span style="font-weight:400;color:var(--muted);margin-left:6px">판수 적으면 평균에 가깝게 보정</span></div><table class="rt"><thead><tr><th>#</th><th>선수</th><th>전/승/패</th><th>지수</th><th>승률</th></tr></thead><tbody>';
+  sorted.slice(wrStart, wrStart + PAGE_SIZE).forEach(function(p,i){
+    var idx = wrStart + i;
+    var qualified = p.games >= MIN_G;
+    var rank = qualified ? (idx + 1) : null;
+    var wC=p.wr>=60?'var(--green)':p.wr>=50?'var(--gold)':'var(--red)';
+    var iC=p._wi>=60?'var(--green)':p._wi>=50?'var(--gold)':'var(--red)';
+    html+='<tr'+(qualified?'':' style="opacity:.55"')+'><td>'+
+      (qualified ? '<span class="rn'+(rank<=3?' top':'')+'">'+rank+'</span>' : '<span class="rn" style="color:var(--muted)">-</span>')+'</td>'+
+      '<td><span class="pn" onclick="goPlayer(\''+p.name+'\')">'+(p.name||'?')+'</span><span class="pb pb-'+(p.pos||'MID')+'">'+p.pos+'</span>'+
+      (qualified?'':' <span style="font-size:9px;padding:2px 6px;border-radius:4px;background:rgba(138,153,173,.1);border:1px solid var(--dim);color:var(--muted)">판수 부족</span>')+'</td>'+
+      '<td style="color:var(--muted);font-size:12px">'+p.games+'전 '+p.wins+'승 '+p.losses+'패</td>'+
+      '<td style="font-family:Rajdhani,sans-serif;font-weight:800;color:'+iC+'">'+p._wi+'</td>'+
+      '<td style="font-family:Rajdhani,sans-serif;font-weight:600;color:'+wC+'">'+p.wr+'%</td></tr>';
+  });
+  html += '</tbody></table>' + pagerHtml('wr') + '</div>';
+
+  // CP 평균 순위 (페이지네이션)
   var cpStart = PAGE.cp * PAGE_SIZE;
-  html += '<div class="card fi"><div class="ct">CP 평균 순위</div>';
+  html += '<div class="card fi fi1"><div class="ct">CP 평균 순위</div>';
   cpSorted.slice(cpStart, cpStart + PAGE_SIZE).forEach(function(p,i){
     var rank = cpStart + i + 1;
     var bw=Math.min(100,(p.cp_avg/10)*100);
@@ -479,20 +504,6 @@ function renderSummary() {
       '<span style="font-size:14px;font-weight:700;font-family:Rajdhani,sans-serif;color:var(--gold);width:32px;text-align:right">'+p.cp_avg+'</span></div>';
   });
   html += pagerHtml('cp') + '</div>';
-
-  // ELO 랭킹 (페이지네이션)
-  var eloStart = PAGE.elo * PAGE_SIZE;
-  html += '<div class="card fi fi1"><div class="ct">ELO 랭킹</div>';
-  eloSorted.slice(eloStart, eloStart + PAGE_SIZE).forEach(function(p,i){
-    var rank = eloStart + i + 1;
-    var cls=rank===1?'g1':rank===2?'g2':rank===3?'g3':'';
-    var chg=p.elo-1000, chgS=chg>0?'▲ +'+chg:chg<0?'▼ '+chg:'—', chgC=chg>0?'up':chg<0?'dn':'eq';
-    html+='<div class="elo-row"><div class="elo-num '+cls+'">'+rank+'</div>'+
-      '<div style="width:24px;height:24px;flex-shrink:0;position:relative">'+tierIcon(p.elo,24)+'</div>'+
-      '<div class="elo-name" onclick="goPlayer(\''+p.name+'\')">'+(p.name||'?')+'<span class="pb pb-'+p.pos+'" style="margin-left:6px">'+p.pos+'</span></div>'+
-      '<div style="text-align:right"><div class="elo-sc">'+p.elo+'</div><div class="elo-chg '+chgC+'">'+chgS+'</div></div></div>';
-  });
-  html += pagerHtml('elo') + '</div>';
 
   html += '</div></div>';
   document.getElementById('page-summary').innerHTML = html;
