@@ -512,44 +512,35 @@ function renderSummary() {
 }
 
 // ── 선수 상세 렌더 ───────────────────────────────────
-// ── 선수 분석 리포트 데이터 ──────────────────────────
-// 적응형 최소 판수: 충분히 뛴 인원이 늘수록 기준 상향 (3→5→10)
-function reportMinGames(){
-  var richCount = Object.values(PLAYERS).filter(function(p){return p.games>=10;}).length;
-  if(richCount >= 10) return 10;
-  if(richCount >= 5)  return 5;
-  return 3;
+// ── 선수 분석 리포트 (큐레이션 분석글 + 자격 로직) ──────
+// 큐레이션 분석글: 엑셀 갱신 시마다 직접 집필 (해당 회차 데이터 근거)
+var PLAYER_REPORTS = {
+"성제":"내전 최고 ELO를 보유한 서포터. 팀 내 딜 비중·골드·파밍이 모두 상위권에 들 만큼 라인전 단계에서 적극적으로 주도권을 가져오는 공격형 서폿이다. 무엇보다 분당 시야점수가 전체 상위 5%로 압도적이어서, '눈'으로 한타 전 구도를 만들어내는 능력이 승률 83%의 핵심 동력이다. 평균 데스(6.5)가 다소 높은 건 전방에서 시야를 개척하다 생기는 비용으로 보이며, 이는 공격적 운영의 부산물에 가깝다. 현규·재우와 설 때 특히 시너지가 좋다.",
+"현규":"4전 4승, 아직 패배를 모르는 미드라이너. 화려한 지표보다 KDA 상위 11%·파밍 상위 5%가 말해주듯 '안정감'이 무기다. 죽지 않고 꾸준히 성장해 게임을 터뜨리는 운영형으로, 킬 관여율도 최상위권이라 한타 합류가 빠르다. 다만 시야점수는 하위권(상위 79%)으로, 라인전에 집중하느라 맵 장악 기여는 적은 편. 라이즈를 중심으로 한 안정적인 챔프 운용이 무패 행진의 바탕이다.",
+"관모":"5전 4승의 정글러로, 특정 지표가 튀기보다 모든 영역이 평균 이상인 균형형이다. 분당 군중제어와 파밍·딜량이 고르게 받쳐주어 '갱킹과 성장을 둘 다 챙기는' 안정적인 운영을 보여준다. CP가 다소 낮게(상위 79%) 잡히는 건 킬·딜로 직접 캐리하기보다 판을 굴려 팀을 이기게 만드는 스타일이기 때문. 오공 숙련도가 특히 높다.",
+"재우":"이번 시즌 최고의 원거리 딜러. 분당 딜량·팀 내 딜 비중·킬 관여율이 모두 전체 1위(상위 0~1%)로, 말 그대로 팀 화력의 전부를 책임진다. KDA 상위 5%가 보여주듯 딜을 쏟아내면서도 잘 죽지 않는, 이상적인 캐리형이다. 다만 군중제어 기여는 하위 5%로, 본인이 이니시를 여는 타입이 아니라 보호받으며 뒤에서 데미지를 누적하는 포지셔닝형. 성제의 서폿 시야 아래에서 가장 빛난다.",
+"경담":"4전 3승의 서포터로, 파밍과 골드 수급이 서폿치고 높은 적극적인 스타일. 시야점수도 상위 16%로 탄탄해 공격과 시야를 겸비했다. CP 상위 21%가 말해주듯 보조 포지션임에도 게임 영향력이 크다. 카르마·우르곳·클레드 등 폭넓은 픽으로 매 경기 다른 카드를 꺼내는 유연함이 강점이다.",
+"이또":"가장 많은 7경기를 소화한 베테랑 원딜. CP 평균이 전체 1위(상위 0%)일 만큼 매 경기 꾸준히 높은 영향력을 기록하는 '판을 읽는' 플레이어다. 팀 딜 비중·딜 효율·골드 수급 모두 최상위권. 그럼에도 승률이 57%에 그치는 건 평균 데스(6.6)가 높은 탓으로, 영향력을 내려는 공격성이 때때로 과감함을 넘어선다. 카이사를 잡으면 2전 2승으로 가장 안정적이다. '잘하는데 자주 죽는다'는 숙제를 푸는 순간 승률이 따라올 선수.",
+"한울":"4전 2승으로 균형을 맞춰가는 탑라이너. 와드 관련 지표가 전체 1위(상위 95%)일 만큼 시야 장악에 헌신적이고, 킬 관여율도 높아 합류 판단이 좋다. 다만 CP가 하위권(상위 84%)이라 라인전 단계의 영향력을 키우는 게 과제. 암베사·올라프 등 다양한 탑 챔프를 시도 중이며, 표본이 쌓이면 주력 픽이 드러날 것이다.",
+"용인":"미드 멀티 플레이어. 킬 관여율(상위 89%)과 시야(상위 84%)가 뛰어나 로밍과 합류 중심의 활동량형이다. 반면 딜 효율과 탱킹이 낮아, 많이 돌아다니는 만큼 변수도 큰 하이리스크 스타일. 승률 40%는 이 변동성의 결과로 보이며, 영향력을 결과로 연결하는 마무리가 관건이다. 에코 숙련도가 가장 높다.",
+"현준":"4전 1승으로 아직 반등이 필요한 탑라이너. 탱킹 지표(상위 84%)가 높아 앞라인 역할은 충실히 수행하나, 파밍·딜 효율이 하위권이라 성장 단계에서 손해를 보는 경향이 있다. 킬 관여 의지는 높은 만큼, 라인전 안정성과 데스 관리가 받쳐주면 충분히 반등할 여지가 있다. 나르로 거둔 1승이 좋은 신호다.",
+};
+
+// 자격 로직: 인원 ≤30명 → 3경기↑ / >30명 → 10경기↑, >30명부터 최근10경기 기준
+function reportEligibility(){
+  var total = Object.keys(PLAYERS).length;
+  return total > 30 ? {min:10, recent:10} : {min:3, recent:null};
 }
+
 function analyzeePlayer(name){
   var p = PLAYERS[name];
-  var MING = reportMinGames();
-  // 강점/약점 비교 풀: 표본 단계에 맞춰 (3판기준이면 2판+, 그 이상이면 절반 이상)
-  var poolMin = MING<=3 ? 2 : Math.ceil(MING/2);
-  var all = Object.values(PLAYERS).filter(function(x){return x.games>=poolMin;});
-  // 지표별 백분위 (높을수록 좋은 지표)
-  var METRICS = [
-    {k:'cp_avg', label:'캐리력(CP)'}, {k:'kda', label:'KDA'}, {k:'dpm', label:'딜량'},
-    {k:'dpmPct', label:'팀 딜 비중'}, {k:'kp', label:'킬관여'}, {k:'vspm', label:'시야'},
-    {k:'gpm', label:'골드 수급'}, {k:'cs_per_min', label:'파밍'}, {k:'dpg', label:'딜 효율'},
-    {k:'dtpm', label:'탱킹'}, {k:'ccpm', label:'군중제어'}
-  ];
-  function pctRank(metric){
-    var vals = all.map(function(x){return x[metric]||0;});
-    var mine = p[metric]||0;
-    var better = vals.filter(function(v){return v>mine;}).length;
-    return Math.round((better)/vals.length*100); // 0=최상위
-  }
-  var ranked = METRICS.map(function(m){ return {label:m.label, top:pctRank(m.k)}; });
-  var strengths = ranked.filter(function(m){return m.top<=25;}).sort(function(a,b){return a.top-b.top;}).slice(0,3)
-    .map(function(m){return {label:m.label, pct:Math.max(1,m.top)};});
-  var weaknesses = ranked.filter(function(m){return m.top>=70;}).sort(function(a,b){return b.top-a.top;}).slice(0,3)
-    .map(function(m){return {label:m.label, pct:Math.max(1,100-m.top)};});
+  var elig = reportEligibility();
+  var qualified = p.games >= elig.min;
 
-  // 최근 폼 (최근 5경기 승패)
-  var seq = [];
+  // 폼 (최근 5경기)
+  var seq=[];
   GAME_DETAILS.forEach(function(g){ g.players.forEach(function(pl){ if(pl.name===name) seq.push(pl.team==='win'); }); });
-  var recent = seq.slice(-5);
-  var rw = recent.filter(Boolean).length;
+  var recent = seq.slice(-5); var rw = recent.filter(Boolean).length;
   var form;
   if(recent.length<2) form={label:'데이터 부족',color:'var(--muted)',detail:'-'};
   else if(rw/recent.length>=0.7) form={label:'🔥 상승세',color:'var(--green)',detail:'최근 '+recent.length+'판 '+rw+'승'};
@@ -558,32 +549,29 @@ function analyzeePlayer(name){
 
   // 베스트 포지션
   var pr = posRecord(name);
-  var bestPos = {label:'-', detail:'기록 없음'};
   var posList = Object.keys(pr).filter(function(ps){return pr[ps].g>0;})
-    .map(function(ps){return {pos:ps, g:pr[ps].g, w:pr[ps].w, wr:pr[ps].w/pr[ps].g};})
+    .map(function(ps){return {pos:ps,g:pr[ps].g,w:pr[ps].w,wr:pr[ps].w/pr[ps].g};})
     .sort(function(a,b){return b.wr-a.wr||b.g-a.g;});
-  if(posList.length){ var bp=posList[0]; bestPos={label:bp.pos, detail:bp.g+'전 '+Math.round(bp.wr*100)+'%'}; }
+  var bestPos = posList.length ? {label:posList[0].pos, detail:posList[0].g+'전 '+Math.round(posList[0].wr*100)+'%'} : {label:'-',detail:'기록 없음'};
 
-  // 베스트 챔프 (2판 이상 중 승률 최고, 없으면 최다판)
-  var champs = p.mostChamps.map(function(mc){return {champ:mc[0], g:mc[1].games, w:mc[1].wins, wr:mc[1].wins/mc[1].games};});
-  var bestChamp = {label:'-', detail:'기록 없음'};
+  // 베스트 챔프
+  var champs = p.mostChamps.map(function(mc){return {champ:mc[0],g:mc[1].games,w:mc[1].wins,wr:mc[1].wins/mc[1].games};});
+  var bestChamp = {label:'-',detail:'기록 없음'};
   if(champs.length){
-    var qualified = champs.filter(function(c){return c.g>=2;}).sort(function(a,b){return b.wr-a.wr||b.g-a.g;});
-    var pick = qualified.length ? qualified[0] : champs.sort(function(a,b){return b.g-a.g;})[0];
+    var q = champs.filter(function(c){return c.g>=2;}).sort(function(a,b){return b.wr-a.wr||b.g-a.g;});
+    var pick = q.length ? q[0] : champs.sort(function(a,b){return b.g-a.g;})[0];
     bestChamp = {label:pick.champ, detail:pick.g+'전 '+Math.round(pick.wr*100)+'%'};
   }
 
-  // 꿀조합 (함께 MING판 이상 뛴 듀오 중 승률 높은 3명, 적응형 기준)
+  // 꿀조합 (자격 기준 판수 이상 함께)
   var duos = (typeof duoStats==='function') ? duoStats(name) : [];
-  var synergy = duos.filter(function(d){return d.games>=MING && d.wr>=50;}).sort(function(a,b){return b.wr-a.wr||b.games-a.games;}).slice(0,3);
-  // 기준 충족자가 없으면 한 단계 낮춰 보조 표시
-  if(!synergy.length) synergy = duos.filter(function(d){return d.games>=Math.max(2,MING-2) && d.wr>50;}).sort(function(a,b){return b.wr-a.wr||b.games-a.games;}).slice(0,3);
+  var synMin = elig.min;
+  var synergy = duos.filter(function(d){return d.games>=synMin && d.wr>=50;}).sort(function(a,b){return b.wr-a.wr||b.games-a.games;}).slice(0,3);
+  if(!synergy.length) synergy = duos.filter(function(d){return d.games>=Math.max(2,synMin-1) && d.wr>50;}).sort(function(a,b){return b.wr-a.wr||b.games-a.games;}).slice(0,3);
 
-  // 헤드라인 (강점 1개 + 폼)
-  var headline = strengths.length ? (strengths[0].label+' 특화형') : '균형형';
-
-  return {headline:headline, strengths:strengths, weaknesses:weaknesses, form:form,
-    bestPos:bestPos, bestChamp:bestChamp, synergy:synergy, minGames:MING};
+  return {qualified:qualified, minGames:elig.min, needMore:Math.max(0,elig.min-p.games),
+    analysis: PLAYER_REPORTS[name] || null,
+    form:form, bestPos:bestPos, bestChamp:bestChamp, synergy:synergy};
 }
 
 function renderPlayer() {
@@ -657,24 +645,26 @@ function renderPlayer() {
 
   html += '<div class="two-col"><div>';
 
-  // ── 선수 분석 리포트 (강점/약점 + 폼 + 베스트 조건 + 꿀조합) ──
+  // ── 선수 분석 리포트 (서술형 분석글 + 폼/베스트/꿀조합) ──
   (function(){
     var report = analyzeePlayer(name);
     html += '<div class="card fi" style="border-color:rgba(79,195,232,.25);background:linear-gradient(180deg,rgba(79,195,232,.04),transparent)">'+
-      '<div class="ct" style="color:#4fc3e8">📋 선수 분석 리포트 <span style="font-weight:400;color:var(--muted);font-size:11px;margin-left:6px">'+report.headline+'</span></div>';
-    // 강점 / 약점
-    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">';
-    html += '<div style="background:var(--bg2);border:1px solid rgba(61,186,122,.25);border-radius:9px;padding:11px 13px">'+
-      '<div style="font-size:10px;font-weight:700;color:var(--green);margin-bottom:7px">💪 강점</div>'+
-      (report.strengths.length ? report.strengths.map(function(s){
-        return '<div style="font-size:12px;color:var(--text2);margin-bottom:5px">· '+s.label+' <span style="color:var(--green);font-weight:700">상위 '+s.pct+'%</span></div>';
-      }).join('') : '<div style="font-size:11px;color:var(--muted)">표본을 더 모으는 중</div>')+'</div>';
-    html += '<div style="background:var(--bg2);border:1px solid rgba(224,85,85,.25);border-radius:9px;padding:11px 13px">'+
-      '<div style="font-size:10px;font-weight:700;color:var(--red);margin-bottom:7px">🔧 보완점</div>'+
-      (report.weaknesses.length ? report.weaknesses.map(function(s){
-        return '<div style="font-size:12px;color:var(--text2);margin-bottom:5px">· '+s.label+' <span style="color:var(--red);font-weight:700">하위 '+s.pct+'%</span></div>';
-      }).join('') : '<div style="font-size:11px;color:var(--muted)">뚜렷한 약점 없음</div>')+'</div>';
-    html += '</div>';
+      '<div class="ct" style="color:#4fc3e8">📋 선수 분석 리포트</div>';
+
+    // 자격 미달: 판수 부족 안내
+    if(!report.qualified){
+      html += '<div style="padding:22px 16px;text-align:center;background:var(--bg2);border:1px dashed var(--dim);border-radius:10px">'+
+        '<div style="font-size:14px;font-weight:700;color:var(--muted);margin-bottom:6px">분석 준비 중</div>'+
+        '<div style="font-size:12px;color:var(--muted)">신뢰할 수 있는 분석을 위해 <b style="color:var(--text2)">'+report.minGames+'경기 이상</b>의 데이터가 필요합니다<br>(현재 '+PLAYERS[name].games+'경기 · '+report.needMore+'경기 더 필요)</div></div>';
+      html += '</div>';
+      return;
+    }
+
+    // 서술형 분석글
+    html += '<div style="background:var(--bg2);border:1px solid var(--dim);border-radius:10px;padding:15px 17px;margin-bottom:12px">'+
+      '<div style="font-size:13.5px;line-height:1.75;color:var(--text2)">'+
+      (report.analysis || '이번 회차 분석글이 아직 작성되지 않았습니다.')+'</div></div>';
+
     // 폼 + 베스트 포지션/챔프
     html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">';
     html += '<div style="background:var(--bg2);border:1px solid var(--dim);border-radius:9px;padding:11px;text-align:center">'+
@@ -690,7 +680,8 @@ function renderPlayer() {
       '<div style="font-size:14px;font-weight:800;color:var(--text2)">'+report.bestChamp.label+'</div>'+
       '<div style="font-size:10px;color:var(--muted);margin-top:2px">'+report.bestChamp.detail+'</div></div>';
     html += '</div>';
-    // 꿀조합 (시너지 듀오)
+
+    // 꿀조합
     html += '<div style="background:var(--bg2);border:1px solid var(--dim);border-radius:9px;padding:11px 13px">'+
       '<div style="font-size:10px;font-weight:700;color:var(--gold);margin-bottom:8px">🍯 꿀조합 <span style="font-weight:400;color:var(--muted)">함께하면 이기는 팀원 · '+report.minGames+'판+ 기준</span></div>';
     if(report.synergy.length){
@@ -701,7 +692,7 @@ function renderPlayer() {
           '<span style="font-size:14px;font-weight:700;font-family:Rajdhani,sans-serif;color:var(--green);width:44px;text-align:right">'+s.wr+'%</span></div>';
       }).join('');
     } else {
-      html += '<div style="font-size:11px;color:var(--muted)">아직 함께 3판 이상 뛴 팀원이 적어요</div>';
+      html += '<div style="font-size:11px;color:var(--muted)">아직 함께 '+report.minGames+'판 이상 뛴 팀원이 적어요</div>';
     }
     html += '</div></div>';
   })();
@@ -1833,10 +1824,11 @@ function goPlayer(name){
 // Just Joke 카드: 매 업데이트마다 큐레이션 (수치는 데이터 기반)
 var JUST_JOKE = [
   {t:'어시스트가 킬보다 정직하다', b:'승패를 가장 크게 가른 지표는 킬(+1.8)도 골드도 아닌 <b>어시스트(+5.6)</b>. 화려하게 따내는 것보다 같이 묻어가는 게 이기는 길?', tag:'한타'},
-  {t:'정글 CC의 함정', b:'<b>진 팀 정글</b>의 평균 군중제어는 39.7, <b>이긴 정글</b>은 23.6. 5라인 중 격차 최대(-16.1). 정글이 열심히 잡을수록 팀은 지고 있었다.', tag:'정글'},
-  {t:'미드 시야 역설', b:'이긴 미드의 평균 시야점수 22.7 vs 진 미드 27.4. 와드 살 골드로 라인을 미는 게 정답이었을지도?', tag:'시야'},
+  {t:'정글 CC의 함정', b:'<b>진 팀 정글</b>(관모·재우 등이 거쳐간 자리)의 평균 군중제어 39.7 vs <b>이긴 정글</b> 23.6. 5라인 중 격차 최대(-16.1). 정글이 열심히 잡을수록 팀은 지고 있었다.', tag:'정글'},
+  {t:'미드 시야 역설', b:'이긴 미드(현규·용인)의 평균 시야 22.7 vs 진 미드 27.4. 와드 살 골드로 라인을 미는 게 정답이었을지도?', tag:'시야'},
   {t:'미드 딜량 무용론', b:'<b>진 팀 미드</b> 평균 딜량 30,268 vs <b>이긴 미드</b> 28,276. 딜을 더 우겨넣은 미드가 오히려 더 졌다 — 의미 없는 딜 펌핑?', tag:'성장'},
-  {t:'이또의 딜레마', b:'딜량 최상위(41,087)에 CP도 정상급(5.99). 그런데 승률은 57%, 평균 데스는 6.6으로 최다급. <b>잘하는데, 자주 죽고, 자주 진다.</b>', tag:'전투'},
+  {t:'이또의 딜레마', b:'<b>이또</b>, 딜량 최상위(41,087)에 CP 전체 1위(5.99). 그런데 승률 57%, 평균 데스 6.6으로 최다급. 잘하는데, 자주 죽고, 자주 진다.', tag:'전투'},
+  {t:'성제의 무한 헌신', b:'<b>성제</b>의 평균 시야점수 102(전체 상위 5%), 평균 데스도 6.5로 최다급. 팀을 위해 가장 많이 보고 가장 많이 죽는 남자 — 승률 83%가 보답한다.', tag:'서폿'},
 ];
 
 function renderNews(){
