@@ -1036,6 +1036,7 @@ function renderChampDetail(){
     '<div class="badges" style="margin-top:6px">'+
     '<span class="badge" style="background:'+g.bg+';border-color:'+g.bd+';color:'+g.c+'">등급 '+g.g+'</span>'+
     '<span class="badge b-elo">픽률 '+pickRate+'%</span>'+
+    '<span class="badge" style="background:rgba(224,85,85,.08);border-color:rgba(224,85,85,.25);color:'+(banRate>=50?'var(--red)':banRate>=20?'var(--gold)':'var(--muted)')+'">밴률 '+banRate+'%</span>'+
     '<span class="badge b-wr" style="color:'+wC+'">승률 '+wr+'%</span>'+
     '<span class="badge b-kda">KDA '+kda+'</span>'+
     '</div></div>'+
@@ -1051,6 +1052,10 @@ function renderChampDetail(){
     '<div style="background:var(--bg2);border:1px solid var(--dim);border-radius:8px;padding:12px"><div style="font-size:9px;color:var(--muted);margin-bottom:4px">승률</div><div style="font-size:19px;font-weight:700;font-family:Rajdhani,sans-serif;color:'+wC+'">'+wr+'%</div></div>'+
     '<div style="background:var(--bg2);border:1px solid var(--dim);border-radius:8px;padding:12px"><div style="font-size:9px;color:var(--muted);margin-bottom:4px">KDA</div><div style="font-size:19px;font-weight:700;font-family:Rajdhani,sans-serif;color:'+kdaColor(kda)+'">'+kda+'</div></div>'+
     '<div style="background:var(--bg2);border:1px solid var(--dim);border-radius:8px;padding:12px"><div style="font-size:9px;color:var(--muted);margin-bottom:4px">K / D / A</div><div style="font-size:16px;font-weight:700;font-family:Rajdhani,sans-serif;color:var(--text2)">'+agg.k+' / '+agg.d+' / '+agg.a+'</div></div>'+
+    '<div style="background:var(--bg2);border:1px solid var(--dim);border-radius:8px;padding:12px"><div style="font-size:9px;color:var(--muted);margin-bottom:4px">픽률</div><div style="font-size:19px;font-weight:700;font-family:Rajdhani,sans-serif;color:var(--text2)">'+pickRate+'%</div></div>'+
+    '<div style="background:var(--bg2);border:1px solid var(--dim);border-radius:8px;padding:12px"><div style="font-size:9px;color:var(--muted);margin-bottom:4px">밴률</div><div style="font-size:19px;font-weight:700;font-family:Rajdhani,sans-serif;color:'+(banRate>=50?'var(--red)':banRate>=20?'var(--gold)':'var(--text2)')+'">'+banRate+'%</div></div>'+
+    '<div style="background:var(--bg2);border:1px solid var(--dim);border-radius:8px;padding:12px"><div style="font-size:9px;color:var(--muted);margin-bottom:4px">등급</div><div style="font-size:19px;font-weight:900;font-family:Bebas Neue,sans-serif;letter-spacing:1px;color:'+g.c+'">'+g.g+'</div></div>'+
+    '<div style="background:var(--bg2);border:1px solid var(--dim);border-radius:8px;padding:12px"><div style="font-size:9px;color:var(--muted);margin-bottom:4px">밴+픽률</div><div style="font-size:19px;font-weight:700;font-family:Rajdhani,sans-serif;color:var(--purp)">'+Math.min(100,pickRate+banRate)+'%</div></div>'+
     '</div></div>';
 
   // 상세지표
@@ -1809,7 +1814,7 @@ function renderChampion(){
     document.getElementById('page-champion').innerHTML=html;
     return;
   }
-  html += '<table class="rt"><thead><tr><th>#</th><th>챔피언</th><th>등급</th><th>픽률</th><th>전적</th><th>KDA</th></tr></thead><tbody>';
+  html += '<table class="rt"><thead><tr><th>#</th><th>챔피언</th><th>등급</th><th>픽률</th><th>밴률</th><th>전적</th><th>KDA</th></tr></thead><tbody>';
   rows.slice(chStart, chStart + PAGE_SIZE).forEach(function(r,i){
     var rank = chStart + i + 1;
     var wC=r.wr>=60?'var(--green)':r.wr>=50?'var(--gold)':'var(--red)';
@@ -1818,6 +1823,7 @@ function renderChampion(){
       '<td><div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="goChampDetail(\''+r.champ+'\')"><div style="width:36px;height:36px;border-radius:7px;overflow:hidden;flex-shrink:0">'+cImg(r.champ,36,7)+'</div><span class="pn">'+r.champ+'</span>'+(champPosFilter==='전체'&&r.pos?' <span class="pb pb-'+r.pos+'" style="margin-left:2px">'+r.pos+'</span>':'')+'</div></td>'+
       '<td><span style="display:inline-block;min-width:30px;text-align:center;padding:2px 8px;border-radius:5px;font-family:Bebas Neue,sans-serif;font-size:14px;letter-spacing:1px;font-weight:900;background:'+g.bg+';border:1px solid '+g.bd+';color:'+g.c+'">'+g.g+'</span></td>'+
       '<td style="color:var(--text);font-family:Rajdhani,sans-serif;font-weight:600;font-size:13px">'+r.pickRate+'%</td>'+
+      '<td style="font-family:Rajdhani,sans-serif;font-weight:600;font-size:13px;color:'+(r.banRate>=50?'var(--red)':r.banRate>=20?'var(--gold)':'var(--muted)')+'">'+r.banRate+'%</td>'+
       '<td style="font-size:12px"><span style="color:var(--muted)">'+r.games+'전</span> <span style="color:var(--green);font-weight:700">'+r.wins+'승</span> <span style="color:var(--red);font-weight:700">'+r.losses+'패</span> <span style="color:'+wC+';font-weight:700">'+r.wr+'%</span></td>'+
       '<td style="color:'+kdaColor(r.kda)+';font-family:Rajdhani,sans-serif;font-weight:700">'+r.kda+'</td></tr>';
   });
