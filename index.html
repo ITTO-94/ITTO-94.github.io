@@ -1761,6 +1761,8 @@ function champTierScore(wr, pickRate, banRate, immunity){
 }
 
 // ── 챔피언 페이지 (챔피언별 통합 통계 + 등급) ────────
+var champPosFilter = '전체';
+function setChampPos(pos){ champPosFilter = pos; PAGE.champ = 0; renderChampion(); }
 function renderChampion(){
   var totalGames = GAMES.length;
   // 선수 구분 없이 챔피언별로 합산
@@ -1779,21 +1781,41 @@ function renderChampion(){
     var wr=Math.round(c.wins/c.games*100);
     var kda=c.d>0?Math.round((c.k+c.a)/c.d*100)/100:(c.k+c.a);
     var pickRate=Math.round(c.games/totalGames*100);
-    // 챔피언 등급: 승률 70% + 픽률 30% (픽률점수 = 픽률x2, 최대 100)
     var banRate=champBanRate(cn), immunity=champCounterImmunity(cn);
     var score = champTierScore(wr, pickRate, banRate, immunity);
-    return {champ:cn, games:c.games, wins:c.wins, losses:losses, wr:wr, kda:kda, pickRate:pickRate, banRate:banRate, score:score};
+    var pos = (CHAMP_STATS[cn] && CHAMP_STATS[cn].pos) ? CHAMP_STATS[cn].pos : '';
+    return {champ:cn, pos:pos, games:c.games, wins:c.wins, losses:losses, wr:wr, kda:kda, pickRate:pickRate, banRate:banRate, score:score};
   });
+  // 라인 필터 적용
+  if(champPosFilter !== '전체') rows = rows.filter(function(r){return r.pos===champPosFilter;});
   rows.sort(function(a,b){return b.score-a.score||b.kda-a.kda;});
 
+  // 라인 필터 탭 (전체 맨 앞)
+  var POS_TABS=[['전체','전체'],['TOP','탑'],['JUG','정글'],['MID','미드'],['ADC','바텀'],['SUP','서폿']];
+  var tabHtml='<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">';
+  POS_TABS.forEach(function(pt){
+    var active = champPosFilter===pt[0];
+    tabHtml += '<div onclick="setChampPos(\''+pt[0]+'\')" style="cursor:pointer;padding:7px 16px;border-radius:8px;font-size:13px;font-weight:700;transition:.15s;'+
+      (active
+        ? 'background:var(--blue);color:#fff;border:1px solid var(--blue)'
+        : 'background:var(--bg2);color:var(--muted);border:1px solid var(--dim)')+'">'+pt[1]+'</div>';
+  });
+  tabHtml += '</div>';
+
   var chStart = PAGE.champ * PAGE_SIZE;
-  var html='<div class="card"><div class="ct">챔피언 티어리스트</div><table class="rt"><thead><tr><th>#</th><th>챔피언</th><th>등급</th><th>픽률</th><th>전적</th><th>KDA</th></tr></thead><tbody>';
+  var html='<div class="card"><div class="ct">챔피언 티어리스트</div>'+tabHtml;
+  if(!rows.length){
+    html += '<div style="padding:30px;text-align:center;font-size:12px;color:var(--muted)">해당 라인의 챔피언 데이터가 아직 없어요</div></div>';
+    document.getElementById('page-champion').innerHTML=html;
+    return;
+  }
+  html += '<table class="rt"><thead><tr><th>#</th><th>챔피언</th><th>등급</th><th>픽률</th><th>전적</th><th>KDA</th></tr></thead><tbody>';
   rows.slice(chStart, chStart + PAGE_SIZE).forEach(function(r,i){
     var rank = chStart + i + 1;
     var wC=r.wr>=60?'var(--green)':r.wr>=50?'var(--gold)':'var(--red)';
     var g=grd(r.score);
     html+='<tr><td><span class="rn'+(rank<=3?' top':'')+'">'+rank+'</span></td>'+
-      '<td><div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="goChampDetail(\''+r.champ+'\')"><div style="width:36px;height:36px;border-radius:7px;overflow:hidden;flex-shrink:0">'+cImg(r.champ,36,7)+'</div><span class="pn">'+r.champ+'</span></div></td>'+
+      '<td><div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="goChampDetail(\''+r.champ+'\')"><div style="width:36px;height:36px;border-radius:7px;overflow:hidden;flex-shrink:0">'+cImg(r.champ,36,7)+'</div><span class="pn">'+r.champ+'</span>'+(champPosFilter==='전체'&&r.pos?' <span class="pb pb-'+r.pos+'" style="margin-left:2px">'+r.pos+'</span>':'')+'</div></td>'+
       '<td><span style="display:inline-block;min-width:30px;text-align:center;padding:2px 8px;border-radius:5px;font-family:Bebas Neue,sans-serif;font-size:14px;letter-spacing:1px;font-weight:900;background:'+g.bg+';border:1px solid '+g.bd+';color:'+g.c+'">'+g.g+'</span></td>'+
       '<td style="color:var(--text);font-family:Rajdhani,sans-serif;font-weight:600;font-size:13px">'+r.pickRate+'%</td>'+
       '<td style="font-size:12px"><span style="color:var(--muted)">'+r.games+'전</span> <span style="color:var(--green);font-weight:700">'+r.wins+'승</span> <span style="color:var(--red);font-weight:700">'+r.losses+'패</span> <span style="color:'+wC+';font-weight:700">'+r.wr+'%</span></td>'+
