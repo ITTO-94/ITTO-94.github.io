@@ -328,21 +328,44 @@ function grd(s){if(s>=90)return{g:'OP',c:'#f0c030',bg:'rgba(240,192,48,.1)',bd:'
 // KDA 색상: 5점 이상 노란색, 3점 이상 청록, 미만 회색
 function kdaColor(k){return k>=5?'#e8b93b':k>=3?'#00bba3':'#8a99ad';}
 // 2026 MMR 추정값 기반 티어 판정
+// ── 티어 시스템 ──────────────────────────────────────
+// 구간 폭이 위로 갈수록 넓어짐 → 상위 티어 승급이 더 어려움 (ELO 로직은 불변)
+// 각 티어는 4단계(4=낮음 ~ 1=높음)로 세분화
+var TIER_TABLE = [
+  // {n:티어명, id:아이콘, c:색, floor:시작ELO, width:티어전체폭}
+  {n:'아이언',     id:'iron',        c:'#574d4f', floor:0},
+  {n:'브론즈',     id:'bronze',      c:'#8c513a', floor:800,  width:300},
+  {n:'실버',       id:'silver',      c:'#80989d', floor:1100, width:320},
+  {n:'골드',       id:'gold',        c:'#cd8837', floor:1420, width:350},
+  {n:'플래티넘',   id:'platinum',    c:'#4e9996', floor:1770, width:380},
+  {n:'에메랄드',   id:'emerald',     c:'#1ca164', floor:2150, width:420},
+  {n:'다이아몬드', id:'diamond',     c:'#576bce', floor:2570, width:480},
+  {n:'마스터',     id:'master',      c:'#b94ee0', floor:3050, width:550},
+  {n:'그랜드마스터',id:'grandmaster', c:'#e0444e', floor:3600, width:650},
+  {n:'챌린저',     id:'challenger',  c:'#f4c874', floor:4250}
+];
+// elo → {tier 정보, div(1~4), 합쳐진 라벨}
 function tierOf(elo){
-  if(elo>=3500)return{n:'챌린저',id:'challenger',c:'#f4c874'};
-  if(elo>=3200)return{n:'그랜드마스터',id:'grandmaster',c:'#e0444e'};
-  if(elo>=2900)return{n:'마스터',id:'master',c:'#b94ee0'};
-  if(elo>=2550)return{n:'다이아몬드',id:'diamond',c:'#576bce'};
-  if(elo>=2200)return{n:'에메랄드',id:'emerald',c:'#1ca164'};
-  if(elo>=1850)return{n:'플래티넘',id:'platinum',c:'#4e9996'};
-  if(elo>=1500)return{n:'골드',id:'gold',c:'#cd8837'};
-  if(elo>=1150)return{n:'실버',id:'silver',c:'#80989d'};
-  if(elo>=800)return{n:'브론즈',id:'bronze',c:'#8c513a'};
-  return{n:'아이언',id:'iron',c:'#574d4f'};
+  for(var i=TIER_TABLE.length-1;i>=0;i--){
+    var t=TIER_TABLE[i];
+    if(elo>=t.floor){
+      var div=0, divLabel='';
+      // 마스터 이상은 디비전 없음 (단일 티어)
+      if(t.width && i<7){
+        var step=t.width/4;
+        var into=elo-t.floor;
+        div=4-Math.min(3,Math.floor(into/step)); // 4(낮)~1(높)
+        divLabel=' '+div;
+      }
+      return {n:t.n,id:t.id,c:t.c,div:div,label:t.n+divLabel};
+    }
+  }
+  var t0=TIER_TABLE[0];
+  return {n:t0.n,id:t0.id,c:t0.c,div:0,label:t0.n};
 }
 function tierIcon(elo,sz){
   var t=tierOf(elo);
-  return '<img src="https://opgg-static.akamaized.net/images/medals_new/'+t.id+'.png" alt="'+t.n+'" title="'+t.n+'" style="width:'+sz+'px;height:'+sz+'px;object-fit:contain;display:block;" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'+
+  return '<img src="https://opgg-static.akamaized.net/images/medals_new/'+t.id+'.png" alt="'+t.n+'" title="'+t.label+'" style="width:'+sz+'px;height:'+sz+'px;object-fit:contain;display:block;" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'+
   '<span style="display:none;width:'+sz+'px;height:'+sz+'px;border-radius:50%;background:'+t.c+'22;border:2px solid '+t.c+';align-items:center;justify-content:center;font-size:'+Math.round(sz*0.32)+'px;font-weight:900;color:'+t.c+';">'+t.n[0]+'</span>';
 }
 
@@ -517,6 +540,9 @@ function renderSummary() {
 }
 
 // ── 선수 상세 렌더 ───────────────────────────────────
+// 직전 회차 ELO 스냅샷 (승급/강등 감지용 · 매 업데이트마다 갱신)
+var ELO_PREV = {"백찬": 1009, "관모": 995, "용인": 963, "이또": 1037, "다이스": 1011, "미안": 990, "남탓": 990, "닥터": 990, "베이": 989, "나사": 991, "현준": 988, "영준": 1007, "경담": 1032, "정현": 988, "규민": 1001, "재우": 1015, "성제": 1026, "태호": 1019, "현규": 1042, "한울": 1008, "덕구": 981, "하민": 980, "병윤": 980, "현석": 981, "제무": 1000, "희진": 972, "승해": 1034, "진영": 1012, "국영": 1021, "종관": 980, "진우": 979};
+
 // ── 선수 분석 리포트 (큐레이션 분석글 + 자격 로직) ──────
 // 큐레이션 분석글: 엑셀 갱신 시마다 직접 집필 (해당 회차 데이터 근거)
 var PLAYER_REPORTS = {
@@ -1913,7 +1939,53 @@ function renderNews(){
   }
   html += '</div>';
 
-  html += '</div><div>';
+  // ── 티어 변동 (승급 / 강등) ──
+  (function(){
+    var changes = [];
+    Object.keys(PLAYERS).forEach(function(n){
+      var cur = PLAYERS[n].elo;
+      var prev = (typeof ELO_PREV!=='undefined' && ELO_PREV[n]!=null) ? ELO_PREV[n] : cur;
+      var ct = tierOf(cur), pt = tierOf(prev);
+      if(ct.label!==pt.label){
+        // 티어 순위 비교 (floor로 상하 판정)
+        var up = cur > prev;
+        changes.push({name:n, from:pt, to:ct, up:up, elo:cur});
+      }
+    });
+    var ups = changes.filter(function(c){return c.up;});
+    var downs = changes.filter(function(c){return !c.up;});
+
+    html += '<div class="card fi"><div class="ct">📊 티어 변동 <span style="font-weight:400;color:var(--muted);margin-left:6px">지난 업데이트 대비</span></div>';
+    if(!ups.length && !downs.length){
+      html += '<div style="padding:18px;text-align:center;font-size:11px;color:var(--muted)">이번 업데이트에서는 티어 변동이 없었어요</div>';
+    } else {
+      // 승급
+      if(ups.length){
+        html += '<div style="margin-bottom:'+(downs.length?'12px':'0')+'"><div style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:8px">▲ 승급</div>';
+        ups.forEach(function(c){
+          html += '<div style="display:flex;align-items:center;gap:10px;background:rgba(61,186,122,.06);border:1px solid rgba(61,186,122,.2);border-radius:9px;padding:9px 12px;margin-bottom:6px">'+
+            '<div style="width:30px;height:30px;flex-shrink:0">'+tierIcon(c.elo,30)+'</div>'+
+            '<span class="pn" style="flex:1;font-size:14px;font-weight:700" onclick="goPlayer(\''+c.name+'\')">'+c.name+'</span>'+
+            '<span style="font-size:11px;color:var(--muted)">'+c.from.label+'</span>'+
+            '<span style="font-size:11px;color:var(--green);font-weight:700">→ '+c.to.label+'</span></div>';
+        });
+        html += '</div>';
+      }
+      // 강등 (부드러운 톤: 회색 계열, 작게)
+      if(downs.length){
+        html += '<div><div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px">▽ 티어 조정</div>';
+        downs.forEach(function(c){
+          html += '<div style="display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--dim);border-radius:9px;padding:9px 12px;margin-bottom:6px;opacity:.85">'+
+            '<div style="width:30px;height:30px;flex-shrink:0">'+tierIcon(c.elo,30)+'</div>'+
+            '<span class="pn" style="flex:1;font-size:14px;font-weight:600" onclick="goPlayer(\''+c.name+'\')">'+c.name+'</span>'+
+            '<span style="font-size:11px;color:var(--muted)">'+c.from.label+'</span>'+
+            '<span style="font-size:11px;color:var(--text2)">→ '+c.to.label+'</span></div>';
+        });
+        html += '<div style="font-size:9px;color:var(--muted);margin-top:4px;text-align:right">다음 경기에서 다시 올라갈 수 있어요</div></div>';
+      }
+    }
+    html += '</div>';
+  })();
 
   // ── 라인별 라이벌 매치 (최근 10경기, 2회 이상 맞붙은 매치업) ──
   html += '<div class="card fi"><div class="ct">⚔️ 라인별 라이벌 <span style="font-weight:400;color:var(--muted);margin-left:6px">최근 10경기 · 2회+ 맞대결</span></div>';
