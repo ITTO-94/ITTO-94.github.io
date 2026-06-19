@@ -479,7 +479,8 @@ function renderSummary() {
     var chg=p.elo-1000, chgS=chg>0?'▲ +'+chg:chg<0?'▼ '+chg:'—', chgC=chg>0?'up':chg<0?'dn':'eq';
     html+='<div class="elo-row"><div class="elo-num '+cls+'">'+rank+'</div>'+
       '<div style="width:26px;height:26px;flex-shrink:0;position:relative">'+tierIcon(p.elo,26)+'</div>'+
-      '<div class="elo-name" onclick="goPlayer(\''+p.name+'\')">'+(p.name||'?')+'<span class="pb pb-'+p.pos+'" style="margin-left:6px">'+p.pos+'</span></div>'+
+      '<div class="elo-name" onclick="goPlayer(\''+p.name+'\')">'+(p.name||'?')+'<span class="pb pb-'+p.pos+'" style="margin-left:6px">'+p.pos+'</span>'+
+      '<div style="font-size:10px;font-weight:600;color:'+tierOf(p.elo).c+';margin-top:1px">'+tierOf(p.elo).label+'</div></div>'+
       '<div style="text-align:right"><div class="elo-sc">'+p.elo+'</div><div class="elo-chg '+chgC+'">'+chgS+'</div></div></div>';
   });
   html += pagerHtml('elo') + '</div>';
@@ -659,7 +660,7 @@ function renderPlayer() {
     '<div class="badges">'+
     '<span class="badge b-kda">KDA '+p.kda+'</span>'+
     '<span class="badge b-wr" style="color:'+wrC+'">WR '+p.wr+'%</span>'+
-    '<span class="badge b-elo" style="border-color:'+tierOf(p.elo).c+'55;color:'+tierOf(p.elo).c+'">'+tierOf(p.elo).n+' · ELO '+p.elo+'</span>'+
+    '<span class="badge b-elo" style="border-color:'+tierOf(p.elo).c+'55;color:'+tierOf(p.elo).c+'">'+tierOf(p.elo).label+' · ELO '+p.elo+'</span>'+
     '<span class="badge" style="background:'+og.bg+';border-color:'+og.bd+';color:'+og.c+'">'+og.g+' ('+Math.round(total)+'점)</span>'+
     '</div>'+
     (function(){
