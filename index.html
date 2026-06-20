@@ -1787,7 +1787,7 @@ function champCounterPlayers(champ){
 function champBanRate(champ){
   var tot=GAMES.length, b=0;
   GAMES.forEach(function(g){ if(g.bans && g.bans.indexOf(champ)>=0) b++; });
-  return tot?b/tot*100:0;
+  return tot?Math.round(b/tot*10000)/100:0;
 }
 function champCounterImmunity(champ){
   var mus = matchupsOf(champ);
