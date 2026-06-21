@@ -327,6 +327,35 @@ function calcCats(p,pos){
 }
 function calcTotal(cats,pos){var w=CAT_W[pos]||CAT_W['전체'];return cats.전투*(w.전투/100)+cats.시야*(w.시야/100)+cats.생존*(w.생존/100)+cats.성장*(w.성장/100)+cats.챔프폭*(w.챔프폭/100);}
 function grd(s){if(s>=90)return{g:'OP',c:'#f0c030',bg:'rgba(240,192,48,.1)',bd:'rgba(240,192,48,.3)'};if(s>=80)return{g:'S',c:'#c8aa6e',bg:'rgba(200,170,110,.08)',bd:'rgba(200,170,110,.2)'};if(s>=70)return{g:'A',c:'#4fc3e8',bg:'rgba(79,195,232,.08)',bd:'rgba(79,195,232,.2)'};if(s>=55)return{g:'B',c:'#3dba7a',bg:'rgba(61,186,122,.08)',bd:'rgba(61,186,122,.2)'};if(s>=45)return{g:'C',c:'#8899aa',bg:'rgba(136,153,170,.07)',bd:'rgba(136,153,170,.15)'};if(s>=35)return{g:'D',c:'#e08840',bg:'rgba(224,136,64,.08)',bd:'rgba(224,136,64,.2)'};return{g:'F',c:'#e05555',bg:'rgba(224,85,85,.08)',bd:'rgba(224,85,85,.2)'};}
+// ── 선수 능력치 백분위 등급 ──────────────────────────────
+// 등급은 고정 점수컷이 아니라 "전체 선수 대비 상대 위치(백분위)"로 산정.
+// 밴드: OP 상위6% · S 15% · A 30% · B 60% · C 82% · D 94% · 나머지 F
+// (판수가 충분히 쌓이면 이 시점의 백분위 분포에서 절대 컷을 동결해 전환 예정)
+var GSTYLE={
+  OP:{c:'#f0c030',bg:'rgba(240,192,48,.1)',bd:'rgba(240,192,48,.3)'},
+  S :{c:'#c8aa6e',bg:'rgba(200,170,110,.08)',bd:'rgba(200,170,110,.2)'},
+  A :{c:'#4fc3e8',bg:'rgba(79,195,232,.08)',bd:'rgba(79,195,232,.2)'},
+  B :{c:'#3dba7a',bg:'rgba(61,186,122,.08)',bd:'rgba(61,186,122,.2)'},
+  C :{c:'#8899aa',bg:'rgba(136,153,170,.07)',bd:'rgba(136,153,170,.15)'},
+  D :{c:'#e08840',bg:'rgba(224,136,64,.08)',bd:'rgba(224,136,64,.2)'},
+  F :{c:'#e05555',bg:'rgba(224,85,85,.08)',bd:'rgba(224,85,85,.2)'}
+};
+function _pq(s,p){if(s.length<=1)return s.length?s[0]:0;var idx=(p/100)*(s.length-1),lo=Math.floor(idx),hi=Math.ceil(idx);return s[lo]+(s[hi]-s[lo])*(idx-lo);}
+function _pcuts(scores){var s=scores.slice().sort(function(a,b){return a-b;});return {OP:_pq(s,94),S:_pq(s,85),A:_pq(s,70),B:_pq(s,40),C:_pq(s,18),D:_pq(s,6)};}
+var _PCUTS=null;
+function pgradeCuts(){
+  if(_PCUTS) return _PCUTS;
+  var arr=Object.keys(PLAYERS).map(function(k){return PLAYERS[k];});
+  var c={ total:_pcuts(arr.map(function(p){return calcTotal(calcCats(p,p.pos),p.pos);})) };
+  ['전투','시야','생존','성장','챔프폭'].forEach(function(cat){
+    c[cat]=_pcuts(arr.map(function(p){return calcCats(p,p.pos)[cat];}));
+  });
+  _PCUTS=c; return c;
+}
+function pgrd(score,cuts){
+  var g=score>=cuts.OP?'OP':score>=cuts.S?'S':score>=cuts.A?'A':score>=cuts.B?'B':score>=cuts.C?'C':score>=cuts.D?'D':'F';
+  var st=GSTYLE[g];return {g:g,c:st.c,bg:st.bg,bd:st.bd};
+}
 // KDA 색상: 5점 이상 노란색, 3점 이상 청록, 미만 회색
 function kdaColor(k){return k>=5?'#e8b93b':k>=3?'#00bba3':'#8a99ad';}
 // 2026 MMR 추정값 기반 티어 판정
@@ -631,7 +660,7 @@ function renderPlayer() {
   var ds = posMode ? Object.assign({}, p, posOnlyStats(name, selPos)) : p;
   var cats = calcCats(p,pos);
   var total = calcTotal(cats,pos);
-  var og = grd(total);
+  var og = pgrd(total, pgradeCuts().total);
   var catKeys=['전투','시야','생존','성장','챔프폭'];
   var wrC=p.wr>=60?'var(--green)':p.wr>=50?'var(--gold)':'var(--red)';
 
@@ -838,7 +867,7 @@ function renderPlayer() {
     '<div style="display:flex;flex-direction:column;align-items:center;gap:12px">'+
     '<canvas id="rc" width="480" height="460" style="width:240px;height:230px"></canvas>'+
     '<div class="grade-list">'+
-    catKeys.map(function(cat,i){var sc=cats[cat];var gr=grd(sc);return '<div class="gr-row"><div class="gr-dot" style="background:'+CAT_COLORS[i]+'"></div><div class="gr-cat">'+cat+'</div><div class="gr-bw"><div class="gr-bf" style="width:'+sc+'%;background:'+CAT_COLORS[i]+';opacity:.7"></div></div><div class="gr-sc">'+Math.round(sc)+'</div><div class="gr-gd" style="color:'+gr.c+'">'+gr.g+'</div></div>';}).join('')+
+    catKeys.map(function(cat,i){var sc=cats[cat];var gr=pgrd(sc, pgradeCuts()[cat]);return '<div class="gr-row"><div class="gr-dot" style="background:'+CAT_COLORS[i]+'"></div><div class="gr-cat">'+cat+'</div><div class="gr-bw"><div class="gr-bf" style="width:'+sc+'%;background:'+CAT_COLORS[i]+';opacity:.7"></div></div><div class="gr-sc">'+Math.round(sc)+'</div><div class="gr-gd" style="color:'+gr.c+'">'+gr.g+'</div></div>';}).join('')+
     '</div></div></div>';
 
   // 듀오 전적 (최근 30경기, 같은 팀 기준)
@@ -912,7 +941,7 @@ function drawRadar(cats,keys,colors){
   for(var i=0;i<n;i++){var a=(i/n)*Math.PI*2-Math.PI/2;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(a)*R,cy+Math.sin(a)*R);ctx.strokeStyle='rgba(255,255,255,.05)';ctx.lineWidth=1;ctx.stroke();}
   ctx.beginPath();for(var i=0;i<n;i++){var a=(i/n)*Math.PI*2-Math.PI/2,x=cx+Math.cos(a)*R*vals[i],y=cy+Math.sin(a)*R*vals[i];i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}ctx.closePath();ctx.fillStyle='rgba(200,155,60,.12)';ctx.fill();ctx.strokeStyle='rgba(200,155,60,.7)';ctx.lineWidth=2;ctx.stroke();
   ctx.textAlign='center';
-  for(var i=0;i<n;i++){var a=(i/n)*Math.PI*2-Math.PI/2,x=cx+Math.cos(a)*R*vals[i],y=cy+Math.sin(a)*R*vals[i];ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fillStyle=colors[i];ctx.fill();ctx.strokeStyle='rgba(0,0,0,.4)';ctx.lineWidth=1;ctx.stroke();var lr=R+22,lx=cx+Math.cos(a)*lr,ly=cy+Math.sin(a)*lr;var sc=cats[keys[i]],gr=grd(sc);ctx.font='bold 12px Bebas Neue';ctx.fillStyle=gr.c;ctx.fillText(gr.g,lx,ly);ctx.font='500 9px Noto Sans KR';ctx.fillStyle='#4a5a6e';ctx.fillText(keys[i],lx,ly+12);}
+  for(var i=0;i<n;i++){var a=(i/n)*Math.PI*2-Math.PI/2,x=cx+Math.cos(a)*R*vals[i],y=cy+Math.sin(a)*R*vals[i];ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fillStyle=colors[i];ctx.fill();ctx.strokeStyle='rgba(0,0,0,.4)';ctx.lineWidth=1;ctx.stroke();var lr=R+22,lx=cx+Math.cos(a)*lr,ly=cy+Math.sin(a)*lr;var sc=cats[keys[i]],gr=pgrd(sc, pgradeCuts()[keys[i]]);ctx.font='bold 12px Bebas Neue';ctx.fillStyle=gr.c;ctx.fillText(gr.g,lx,ly);ctx.font='500 9px Noto Sans KR';ctx.fillStyle='#4a5a6e';ctx.fillText(keys[i],lx,ly+12);}
 }
 
 
@@ -1514,7 +1543,7 @@ function duoStats(name){
 
 // ── 어워드 시스템 (최근 30경기 기반) ─────────────────
 var AWARD_METRICS = [
-  {key:'total',      label:'종합등급', getter:function(p){return calcTotal(calcCats(p,p.pos),p.pos);}, fmt:function(v){return grd(v).g;}},
+  {key:'total',      label:'종합등급', getter:function(p){return calcTotal(calcCats(p,p.pos),p.pos);}, fmt:function(v){return pgrd(v, pgradeCuts().total).g;}},
   {key:'kda',        label:'KDA'},
   {key:'wr',         label:'승률', fmt:function(v){return v+'%';}},
   {key:'elo',        label:'ELO'},
