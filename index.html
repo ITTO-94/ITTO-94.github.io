@@ -454,7 +454,7 @@ function pagerHtml(key, total){
 }
 
 function renderSummary() {
-  var MIN_G = 3;  // 승률 지수 최소 판수
+  var MIN_G = statMinGames();  // 승률 지수 최소 판수 (CP 순위와 동일 기준 · 게임 수에 따라 자동 상향)
   // 전체 평균 승률 (승률 지수 보정 기준)
   var allP = Object.values(PLAYERS);
   var totW = allP.reduce(function(s,p){return s+p.wins;},0);
@@ -466,7 +466,7 @@ function renderSummary() {
 
   // ELO 순위 (메인)
   var eloSorted = Object.values(PLAYERS).sort(function(a,b){ return b.elo-a.elo; });
-  // 승률 지수 순위 (3판 이상 우선, 그 안에서 지수순)
+  // 승률 지수 순위 (기준 판수 이상 우선, 그 안에서 지수순)
   var sorted = Object.values(PLAYERS).map(function(p){ return Object.assign({_wi:wrIndex(p)}, p); }).sort(function(a,b){
     var qa = a.games >= MIN_G ? 1 : 0, qb = b.games >= MIN_G ? 1 : 0;
     if(qa !== qb) return qb - qa;
@@ -525,7 +525,7 @@ function renderSummary() {
 
   // 승률 지수 순위 (페이지네이션)
   var wrStart = PAGE.wr * PAGE_SIZE;
-  html += '<div class="card fi"><div class="ct">승률 지수 <span style="font-weight:400;color:var(--muted);margin-left:6px">판수 적으면 평균에 가깝게 보정</span></div><table class="rt"><thead><tr><th>#</th><th>선수</th><th>전/승/패</th><th>지수</th><th>승률</th></tr></thead><tbody>';
+  html += '<div class="card fi"><div class="ct">승률 지수 <span style="font-weight:400;color:var(--muted);margin-left:6px">'+MIN_G+'판+ 기준 · 판수 적으면 평균에 가깝게 보정</span></div><table class="rt"><thead><tr><th>#</th><th>선수</th><th>전/승/패</th><th>지수</th><th>승률</th></tr></thead><tbody>';
   sorted.slice(wrStart, wrStart + PAGE_SIZE).forEach(function(p,i){
     var idx = wrStart + i;
     var qualified = p.games >= MIN_G;
