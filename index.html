@@ -1177,24 +1177,34 @@ function renderChampDetail(){
     if(bad.length) h += '<div class="card fi fi3"><div class="ct" style="color:var(--red)">이 챔피언으로 고전한 멤버</div>'+bad.map(cmRow).join('')+'</div>';
   })();
 
-  // 이 챔피언 최고/최저 승률 플레이어 (각 5명)
+  // 이 챔피언 플레이어별 성적
+  // · 플레이어 5명 이하: 최고/최저로 가르지 않고 한 카드에 승률순 정렬
+  // · 6명 이상: 최고 5명 + '고전'(승률 50% 미만)인 플레이어만 최저 카드에 표시
   (function(){
     var cps = champPlayers(champ);
     if(!cps.length) return;
-    var best = cps.slice().sort(function(a,b){return b.wr-a.wr||b.games-a.games;}).slice(0,5);
-    var bestNames = best.map(function(x){return x.name;});
-    var worst = cps.filter(function(x){return bestNames.indexOf(x.name)<0;}).sort(function(a,b){return a.wr-b.wr||b.games-a.games;}).slice(0,5);
     function cpRow(x, color){
       return '<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;background:var(--bg2);border:1px solid var(--dim);margin-bottom:6px">'+
         '<div style="width:24px;height:24px;flex-shrink:0">'+tierIcon(PLAYERS[x.name]?PLAYERS[x.name].elo:1000,24)+'</div>'+
         '<div style="flex:1"><div class="pn" style="font-size:13px" onclick="goPlayer(\''+x.name+'\')">'+x.name+'</div>'+
         '<div style="font-size:10px;color:var(--muted)">'+x.games+'전 '+x.wins+'승 '+(x.games-x.wins)+'패 '+x.wr+'%</div></div>'+
-        '<div style="font-size:16px;font-weight:700;font-family:Rajdhani,sans-serif;color:'+color+'">'+x.wr+'%</div></div>';
+        '<div style="font-size:16px;font-weight:700;font-family:Rajdhani,sans-serif;color:'+color+'\">'+x.wr+'%</div></div>';
     }
-    h += '<div class="card fi fi3"><div class="ct" style="color:var(--green)">이 챔피언 최고 승률 플레이어</div>'+best.map(function(x){return cpRow(x, x.wr>=50?'var(--green)':'var(--red)');}).join('')+'</div>';
-    h += '<div class="card fi fi3"><div class="ct" style="color:var(--red)">이 챔피언 최저 승률 플레이어</div>'+
-      (worst.length ? worst.map(function(x){return cpRow(x, x.wr>=50?'var(--gold)':'var(--red)');}).join('')
-        : '<div style="padding:14px 12px;border-radius:8px;background:var(--bg2);border:1px dashed var(--dim);text-align:center;font-size:11px;color:var(--muted)">플레이어가 1명뿐이에요<br>다른 선수가 플레이하면 비교돼요</div>')+'</div>';
+    function wrColor(x){ return x.wr>=60?'var(--green)':x.wr>=50?'var(--gold)':'var(--red)'; }
+    var sorted = cps.slice().sort(function(a,b){return b.wr-a.wr||b.games-a.games;});
+    if(sorted.length <= 5){
+      h += '<div class="card fi fi3"><div class="ct">이 챔피언 플레이어별 성적 <span style="font-weight:400;font-size:11px;color:var(--muted);margin-left:6px">승률순</span></div>'+
+        sorted.map(function(x){return cpRow(x, wrColor(x));}).join('')+'</div>';
+    } else {
+      var best = sorted.slice(0,5);
+      var bestNames = best.map(function(x){return x.name;});
+      var struggling = sorted.filter(function(x){return bestNames.indexOf(x.name)<0 && x.wr<50;})
+        .sort(function(a,b){return a.wr-b.wr||b.games-a.games;}).slice(0,5);
+      h += '<div class="card fi fi3"><div class="ct" style="color:var(--green)">이 챔피언 최고 승률 플레이어</div>'+best.map(function(x){return cpRow(x, wrColor(x));}).join('')+'</div>';
+      h += '<div class="card fi fi3"><div class="ct" style="color:var(--red)">이 챔피언으로 고전한 플레이어 <span style="font-weight:400;font-size:11px;color:var(--muted);margin-left:6px">승률 50% 미만</span></div>'+
+        (struggling.length ? struggling.map(function(x){return cpRow(x, 'var(--red)');}).join('')
+          : '<div style="padding:14px 12px;border-radius:8px;background:var(--bg2);border:1px dashed var(--dim);text-align:center;font-size:11px;color:var(--muted)">승률 50% 미만인 플레이어가 없어요<br>모두 준수한 성적이에요</div>')+'</div>';
+    }
   })();
 
   h += '</div></div>';
