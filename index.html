@@ -456,7 +456,12 @@ function renderSummary() {
     if(qa !== qb) return qb - qa;
     return b._wi - a._wi || b.games - a.games || b.elo - a.elo;
   });
-  var cpSorted = Object.values(PLAYERS).sort(function(a,b){ return b.cp_avg-a.cp_avg; });
+  var cpMin = statMinGames();
+  var cpSorted = Object.values(PLAYERS).sort(function(a,b){
+    var qa = a.games >= cpMin ? 1 : 0, qb = b.games >= cpMin ? 1 : 0;
+    if(qa !== qb) return qb - qa;
+    return b.cp_avg - a.cp_avg;
+  });
 
   var totalChamps = {};
   Object.values(PLAYERS).forEach(function(p){ p.mostChamps.forEach(function(mc){ totalChamps[mc[0]]=1; }); });
@@ -523,11 +528,12 @@ function renderSummary() {
 
   // CP 평균 순위 (페이지네이션)
   var cpStart = PAGE.cp * PAGE_SIZE;
-  html += '<div class="card fi fi1"><div class="ct">CP 평균 순위</div>';
+  html += '<div class="card fi fi1"><div class="ct">CP 평균 순위 <span style="font-weight:400;font-size:11px;color:var(--muted);margin-left:6px">'+cpMin+'판+ 기준 · 미달 선수는 하단</span></div>';
   cpSorted.slice(cpStart, cpStart + PAGE_SIZE).forEach(function(p,i){
     var rank = cpStart + i + 1;
+    var cpQ = p.games >= cpMin;
     var bw=Math.min(100,(p.cp_avg/10)*100);
-    html+='<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--dim)">'+
+    html+='<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--dim)'+(cpQ?'':';opacity:.42')+'">'+
       '<span style="font-size:11px;color:var(--muted);width:16px">'+rank+'</span>'+
       '<span class="pn" style="font-size:13px;font-weight:600;color:var(--text2);flex:1" onclick="goPlayer(\''+p.name+'\')">'+(p.name||'?')+'</span>'+
       '<div style="width:80px;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden"><div style="width:'+bw+'%;height:100%;background:var(--gold);border-radius:2px;"></div></div>'+
@@ -1521,9 +1527,13 @@ function awardScore(p){
   });
   return Math.round(s);
 }
-// 지표 1등 선수 (동률 시 어워드 총점 높은 쪽)
+// 지표 랭킹/어워드 최소 판수: 전체 게임 수에 따라 단계 상향 (~29게임: 3판 / 30~59: 5판 / 60+: 10판)
+function statMinGames(){ var t = GAMES.length; return t >= 60 ? 10 : t >= 30 ? 5 : 3; }
+// 지표 1등 선수 (최소 판수 충족자 대상 · 동률 시 어워드 총점 높은 쪽)
 function metricFirst(m){
-  var players = Object.values(PLAYERS);
+  var mg = statMinGames();
+  var players = Object.values(PLAYERS).filter(function(p){ return p.games >= mg; });
+  if(!players.length) players = Object.values(PLAYERS);
   var sorted = players.slice().sort(function(a,b){
     var va = metricVal(a,m), vb = metricVal(b,m);
     if(va !== vb) return m.lowerBetter ? va - vb : vb - va;
@@ -1534,9 +1544,10 @@ function metricFirst(m){
 function renderAward(){
   var players = Object.values(PLAYERS);
   var POS = ['TOP','JUG','MID','ADC','SUP'];
+  var awMin = statMinGames();
   var byPos = {};
   POS.forEach(function(ps){
-    byPos[ps] = players.filter(function(p){ return p.pos === ps; })
+    byPos[ps] = players.filter(function(p){ return p.pos === ps && p.games >= awMin; })
       .map(function(p){ return {p:p, score:awardScore(p)}; })
       .sort(function(a,b){ return b.score - a.score; });
   });
@@ -1566,13 +1577,13 @@ function renderAward(){
     return h;
   }
 
-  var html = '<div style="font-size:11px;color:var(--muted);margin-bottom:14px">🏆 최근 30경기 기준 · 어워드 총점 = 상세지표 15개 백분위 점수 합산 (최대 1500pt)</div>';
+  var html = '<div style="font-size:11px;color:var(--muted);margin-bottom:14px">🏆 최근 30경기 · '+statMinGames()+'판 이상 출전자 기준 · 어워드 총점 = 상세지표 15개 백분위 점수 합산 (최대 1500pt)</div>';
   html += teamCard('퍼스트 팀', 0, '#f0c030', '🥇');
   html += teamCard('세컨드 팀', 1, '#9fb4c8', '🥈');
   html += teamCard('써드 팀',   2, '#c08850', '🥉');
 
   // 레이아웃4: 상세지표 15개 각 1등
-  html += '<div class="card fi fi1"><div class="ct">지표별 1위</div>'+
+  html += '<div class="card fi fi1"><div class="ct">지표별 1위 <span style="font-weight:400;font-size:11px;color:var(--muted);margin-left:6px">'+statMinGames()+'판+ 기준</span></div>'+
     '<div class="stat-card-grid">';
   AWARD_METRICS.forEach(function(m){
     var w = metricFirst(m);
