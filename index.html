@@ -918,88 +918,101 @@ function drawRadar(cats,keys,colors){
 
 
 // ── 조합 통계 ────────────────────────────────────────
-var COMBO_N = 2;
-function setComboN(n){ COMBO_N = n; renderCombo(); }
-function combinations(arr, n){
-  var res = [];
-  (function rec(start, cur){
-    if(cur.length === n){ res.push(cur.slice()); return; }
-    for(var i=start;i<arr.length;i++){ cur.push(arr[i]); rec(i+1, cur); cur.pop(); }
-  })(0, []);
-  return res;
-}
-function comboStats(n){
+// 포지션 조합 정의 (고정 4종). 각 게임의 같은 팀에서 해당 포지션의 챔피언들을 묶어 집계.
+var COMBO_DEFS = [
+  {key:'ADC_SUP',   pos:['ADC','SUP'],       label:'원딜 + 서폿'},
+  {key:'MID_JUG',   pos:['MID','JUG'],       label:'미드 + 정글'},
+  {key:'TOP_JUG',   pos:['TOP','JUG'],       label:'탑 + 정글'},
+  {key:'MID_TOP_JUG',pos:['MID','TOP','JUG'],label:'미드 + 탑 + 정글'}
+];
+var COMBO_SEL = 'ADC_SUP';   // 선택된 포지션 조합
+var COMBO_METRIC = 'wr';     // 'wr'(승률) | 'pick'(픽률)
+var COMBO_MIN = 2;           // 최소 표본(게임) 필터 — 1게임 노이즈 제거
+function setComboSel(k){ COMBO_SEL = k; renderCombo(); }
+function setComboMetric(m){ COMBO_METRIC = m; renderCombo(); }
+function setComboMin(n){ COMBO_MIN = n; renderCombo(); }
+
+// 포지션 조합 기준 챔피언 묶음 집계 (최근 30경기, 같은 팀)
+// 픽률 = 이 챔프조합 게임수 / 해당 포지션쌍이 (온전히) 등장한 전체 게임수
+function comboStatsByDef(def){
   var agg = {};
-  GAMES.slice(-30).forEach(function(g){
-    [[g.winChamps,true],[g.loseChamps,false]].forEach(function(t){
-      var champs = t[0]; if(!champs || champs.length < n) return;
-      combinations(champs.slice().sort(), n).forEach(function(c){
-        var key = c.join('|');
-        if(!agg[key]) agg[key] = {champs:c, games:0, wins:0};
-        agg[key].games++;
-        if(t[1]) agg[key].wins++;
-      });
+  var posTotal = 0;  // 해당 포지션쌍이 온전히 존재한 팀-게임 수 (픽률 분모)
+  GAME_DETAILS.slice(-30).forEach(function(g){
+    ['win','lose'].forEach(function(team){
+      var byPos = {};
+      g.players.forEach(function(p){ if(p.team===team) byPos[p.pos]=p.champ; });
+      if(!def.pos.every(function(ps){ return byPos[ps]; })) return;
+      posTotal++;
+      var champs = def.pos.map(function(ps){ return byPos[ps]; });  // 포지션 순서 유지
+      var key = champs.join('|');
+      if(!agg[key]) agg[key] = {champs:champs, games:0, wins:0};
+      agg[key].games++;
+      if(team==='win') agg[key].wins++;
     });
   });
-  return Object.keys(agg).map(function(k){
-    var a = agg[k];
-    return {champs:a.champs, games:a.games, wins:a.wins, losses:a.games-a.wins, wr:Math.round(a.wins/a.games*100)};
-  });
+  return {total:posTotal, rows:Object.keys(agg).map(function(k){
+    var a=agg[k];
+    return {champs:a.champs, games:a.games, wins:a.wins, losses:a.games-a.wins,
+            wr:Math.round(a.wins/a.games*100),
+            pick: posTotal? Math.round(a.games/posTotal*100) : 0};
+  })};
 }
-function comboRow(c, accent){
+function comboRow(c, def){
   var wC = c.wr>=60?'var(--green)':c.wr>=50?'var(--gold)':'var(--red)';
+  var posLabel = def.pos.join(' · ');
   return '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;background:var(--bg2);border:1px solid var(--dim);margin-bottom:6px">'+
     '<div style="display:flex;gap:4px;flex-shrink:0">'+c.champs.map(function(cn){return '<div style="width:34px;height:34px;border-radius:6px;overflow:hidden">'+cImg(cn,34,6)+'</div>';}).join('')+'</div>'+
-    '<div style="flex:1;font-size:12px;font-weight:600;color:var(--text2);line-height:1.4">'+c.champs.join(' + ')+'</div>'+
+    '<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600;color:var(--text2);line-height:1.4">'+c.champs.join(' + ')+'</div>'+
+    '<div style="font-size:9px;color:var(--muted);margin-top:2px">'+posLabel+'</div></div>'+
     '<div style="text-align:right;flex-shrink:0">'+
-    '<div style="font-size:16px;font-weight:700;font-family:Rajdhani,sans-serif;color:'+wC+'">'+c.wr+'%</div>'+
-    '<div style="font-size:10px;color:var(--muted)">'+c.games+'전 '+c.wins+'승 '+c.losses+'패</div></div></div>';
+    (COMBO_METRIC==='pick'
+      ? '<div style="font-size:16px;font-weight:700;font-family:Rajdhani,sans-serif;color:var(--blue)">'+c.pick+'%</div><div style="font-size:10px;color:var(--muted)">'+c.games+'전 · 승률 '+c.wr+'%</div>'
+      : '<div style="font-size:16px;font-weight:700;font-family:Rajdhani,sans-serif;color:'+wC+'">'+c.wr+'%</div><div style="font-size:10px;color:var(--muted)">'+c.games+'전 '+c.wins+'승 '+c.losses+'패</div>')+
+    '</div></div>';
 }
-var COMBO_LINE = '전체';
-var COMBO_CHAMP = '전체';
-function setComboLine(v){ COMBO_LINE = v; COMBO_CHAMP = '전체'; renderCombo(); }
-function setComboChamp(v){ COMBO_CHAMP = v; renderCombo(); }
 function renderCombo(){
-  var stats = comboStats(COMBO_N);
-  // 챔피언 필터 (선택 시 해당 챔피언 포함 조합만)
-  if(COMBO_CHAMP !== '전체') stats = stats.filter(function(c){ return c.champs.indexOf(COMBO_CHAMP) >= 0; });
+  var def = COMBO_DEFS.filter(function(d){return d.key===COMBO_SEL;})[0] || COMBO_DEFS[0];
+  var res = comboStatsByDef(def);
+  var stats = res.rows.filter(function(c){ return c.games >= COMBO_MIN; });
 
-  var btns = [2,3,4,5].map(function(n){
-    var on = COMBO_N === n;
-    return '<button onclick="setComboN('+n+')" style="padding:7px 14px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:Noto Sans KR,sans-serif;'+
-      (on ? 'background:rgba(200,155,60,.12);border:1px solid var(--gold);color:var(--gold)'
-          : 'background:var(--bg2);border:1px solid var(--border);color:var(--muted)')+
-      '">'+n+'챔피언</button>';
-  }).join('');
+  // 지표 선택 토글
+  function segBtn(label, active, onclick){
+    return '<button onclick="'+onclick+'" style="padding:7px 16px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:Noto Sans KR,sans-serif;'+
+      (active ? 'background:rgba(200,155,60,.12);border:1px solid var(--gold);color:var(--gold)'
+              : 'background:var(--bg2);border:1px solid var(--border);color:var(--muted)')+'">'+label+'</button>';
+  }
+  var metricBtns = segBtn('승률', COMBO_METRIC==='wr', "setComboMetric('wr')")+segBtn('픽률', COMBO_METRIC==='pick', "setComboMetric('pick')");
+  var comboBtns = COMBO_DEFS.map(function(d){ return segBtn(d.label, COMBO_SEL===d.key, "setComboSel('"+d.key+"')"); }).join('');
+  var minBtns = [1,2,3].map(function(n){ return segBtn(n+'게임+', COMBO_MIN===n, 'setComboMin('+n+')'); }).join('');
 
-  // 라인/챔피언 드롭다운
-  var LINES = ['전체','TOP','JUG','MID','ADC','SUP'];
-  var champOpts = Object.keys(CHAMP_STATS).filter(function(cn){ return COMBO_LINE==='전체' || CHAMP_STATS[cn].pos===COMBO_LINE; }).sort();
-  var lineSel = '<select class="nsel" onchange="setComboLine(this.value)">'+LINES.map(function(l){return '<option'+(COMBO_LINE===l?' selected':'')+'>'+l+'</option>';}).join('')+'</select>';
-  var champSel = '<select class="nsel" onchange="setComboChamp(this.value)"><option'+(COMBO_CHAMP==='전체'?' selected':'')+'>전체</option>'+
-    champOpts.map(function(cn){return '<option'+(COMBO_CHAMP===cn?' selected':'')+'>'+cn+'</option>';}).join('')+'</select>';
+  var html = '';
+  html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">'+
+    '<span style="font-size:11px;color:var(--muted);margin-right:2px;width:64px">지표 선택</span>'+metricBtns+
+    '<span style="font-size:10px;color:var(--muted);margin-left:auto">최근 30경기 · 같은 팀 기준</span></div>';
+  html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">'+
+    '<span style="font-size:11px;color:var(--muted);margin-right:2px;width:64px">조합 선택</span>'+comboBtns+'</div>';
+  html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap">'+
+    '<span style="font-size:11px;color:var(--muted);margin-right:2px;width:64px">표본 필터</span>'+minBtns+
+    '<span style="font-size:10px;color:var(--muted);margin-left:6px">'+def.label+' 등장 '+res.total+'게임 · 조합 '+stats.length+'종</span></div>';
 
-  var high = stats.slice().sort(function(a,b){return b.wr-a.wr||b.games-a.games;}).slice(0,10);
+  var high = stats.slice().sort(function(a,b){
+    return COMBO_METRIC==='pick' ? (b.pick-a.pick||b.wr-a.wr) : (b.wr-a.wr||b.games-a.games);
+  }).slice(0,10);
   var keys = high.map(function(c){return c.champs.join('|');});
   var low = stats.filter(function(c){return keys.indexOf(c.champs.join('|')) < 0;})
-    .sort(function(a,b){return a.wr-b.wr||b.games-a.games;}).slice(0,10);
+    .sort(function(a,b){ return COMBO_METRIC==='pick' ? (a.pick-b.pick||a.wr-b.wr) : (a.wr-b.wr||b.games-a.games); }).slice(0,10);
 
-  var html = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">'+
-    '<span style="font-size:11px;color:var(--muted);margin-right:4px">조합 크기</span>'+btns+
-    '<span style="font-size:10px;color:var(--muted);margin-left:auto">최근 30경기 · 같은 팀 기준</span></div>';
-  html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap">'+
-    '<span style="font-size:11px;color:var(--muted);margin-right:2px">라인</span>'+lineSel+
-    '<span style="font-size:11px;color:var(--muted);margin:0 2px 0 8px">챔피언</span>'+champSel+
-    (COMBO_CHAMP!=='전체'?'<span style="font-size:10px;color:var(--gold);margin-left:6px">「'+COMBO_CHAMP+'」 포함 조합만</span>':'')+'</div>';
+  var highTitle = COMBO_METRIC==='pick' ? '▲ 자주 나온 조합' : '▲ 높은 승률 조합';
+  var lowTitle  = COMBO_METRIC==='pick' ? '▽ 드물게 나온 조합' : '▽ 낮은 승률 조합';
+  var emptyMsg = '<div style="padding:24px 12px;text-align:center;font-size:11px;color:var(--muted)">'+COMBO_MIN+'게임 이상 나온 '+def.label+' 조합이 아직 없어요<br>경기가 쌓이면 채워집니다</div>';
 
   html += '<div class="two-col" style="grid-template-columns:1fr 1fr"><div>';
-  html += '<div class="card fi"><div class="ct" style="color:var(--green)">▲ 챔피언 조합 높은 승률</div>'+
-    (high.length ? high.map(function(c){return comboRow(c);}).join('') :
-     '<div style="padding:20px;text-align:center;font-size:11px;color:var(--muted)">조건에 맞는 조합이 없어요</div>')+'</div>';
+  html += '<div class="card fi"><div class="ct" style="color:'+(COMBO_METRIC==='pick'?'var(--blue)':'var(--green)')+'">'+highTitle+'</div>'+
+    (high.length ? high.map(function(c){return comboRow(c, def);}).join('') : emptyMsg)+'</div>';
   html += '</div><div>';
-  html += '<div class="card fi fi1"><div class="ct" style="color:var(--red)">▼ 챔피언 조합 낮은 승률</div>'+
-    (low.length ? low.map(function(c){return comboRow(c);}).join('') :
-     '<div style="padding:20px;text-align:center;font-size:11px;color:var(--muted)">아직 승률 차이가 없거나 데이터가 부족해요</div>')+'</div>';
+  html += '<div class="card fi fi1"><div class="ct" style="color:var(--muted)">'+lowTitle+'</div>'+
+    (low.length ? low.map(function(c){return comboRow(c, def);}).join('') :
+     '<div style="padding:24px 12px;text-align:center;font-size:11px;color:var(--muted)">비교할 조합이 더 없어요</div>')+'</div>';
   html += '</div></div>';
   document.getElementById('page-combo').innerHTML = html;
 }
