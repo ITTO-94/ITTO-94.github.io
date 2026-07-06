@@ -211,6 +211,70 @@ body{zoom:1.45;background:var(--bg);color:var(--text);font-family:'Noto Sans KR'
 .fi1{animation-delay:.04s;}
 .fi2{animation-delay:.08s;}
 .fi3{animation-delay:.12s;}
+
+/* ── SCOUT 탭 ── */
+*{margin:0;padding:0;box-sizing:border-box;}
+.hero{text-align:center;margin-bottom:18px;}
+.hero-t{font-size:24px;font-weight:900;color:var(--gold);letter-spacing:1px;}
+.hero-s{font-size:11px;color:var(--muted);margin-top:4px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px;}
+.ct{font-size:13px;font-weight:800;color:var(--text2);margin-bottom:10px;}
+.ct-sub{font-size:10px;color:var(--muted);font-weight:400;margin-left:6px;}
+.sec{margin-bottom:22px;}
+.sec-t{font-size:16px;font-weight:900;color:var(--gold);margin-bottom:10px;border-left:3px solid var(--gold);padding-left:9px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.power{display:flex;align-items:center;gap:12px;margin-bottom:4px;}
+.pw{font-size:13px;font-weight:800;white-space:nowrap;}
+.side-a-t{color:var(--red);}
+.side-b-t{color:var(--blue);}
+.pw-bar{flex:1;height:22px;background:rgba(79,195,232,.18);border-radius:11px;position:relative;overflow:hidden;}
+.pw-fill{height:100%;background:rgba(224,85,85,.35);border-right:2px solid var(--red);}
+.pw-bar span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;font-family:Rajdhani,sans-serif;}
+.lane{margin-bottom:12px;}
+.lane-tag{display:inline-block;font-size:10px;font-weight:800;color:var(--gold);background:rgba(200,155,60,.1);border:1px solid rgba(200,155,60,.3);border-radius:5px;padding:2px 9px;margin-bottom:6px;}
+.lane-grid{display:grid;grid-template-columns:1fr 90px 1fr;gap:10px;align-items:stretch;}
+.lane-vs{display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:20px;font-weight:900;font-family:Rajdhani,sans-serif;color:var(--text2);}
+.vs-sub{font-size:9px;color:var(--muted);font-weight:400;font-family:'Noto Sans KR';margin-top:2px;}
+.vs-elo{font-size:10px;color:var(--gold);margin-top:6px;font-family:'Noto Sans KR';font-weight:700;}
+.pcard{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;}
+.pcard.side-a{border-top:2px solid rgba(224,85,85,.5);}
+.pcard.side-b{border-top:2px solid rgba(79,195,232,.5);}
+.pc-head{display:flex;align-items:center;gap:9px;margin-bottom:6px;}
+.pc-tier{width:26px;height:26px;flex-shrink:0;}
+.pc-name{flex:1;font-size:16px;font-weight:900;}
+.pc-sub{font-size:9px;color:var(--muted);font-weight:400;}
+.pc-grade{font-size:14px;font-weight:900;font-family:'Bebas Neue',sans-serif;border:1px solid;border-radius:6px;padding:2px 9px;}
+.pc-grade .cap{font-size:8px;font-family:'Noto Sans KR';margin-left:3px;opacity:.7;}
+.pc-line{font-size:11px;color:var(--text2);margin:3px 0;}
+.pc-line.muted{color:var(--muted);font-size:10px;}
+.pc-radar{width:190px;height:168px;max-width:100%;display:block;margin:4px auto;}
+.pc-champs{display:flex;gap:8px;margin:6px 0;}
+.pc-champ{display:flex;align-items:center;gap:5px;background:var(--bg2);border:1px solid var(--dim);border-radius:7px;padding:4px 7px;flex:1;min-width:0;}
+.pc-champ img{border-radius:6px;flex-shrink:0;}
+.pc-cinfo{font-size:9px;font-weight:700;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pc-cinfo span{display:block;color:var(--muted);font-weight:400;}
+.ban-row{display:flex;align-items:center;gap:9px;padding:7px 9px;background:var(--bg2);border:1px solid var(--dim);border-radius:8px;margin-bottom:6px;}
+.ban-rank{font-size:14px;font-weight:900;font-family:Rajdhani,sans-serif;color:var(--gold);width:18px;text-align:center;}
+.ban-row img{border-radius:6px;}
+.ban-info{flex:1;font-size:12px;font-weight:700;}
+.ban-info span{display:block;font-size:9px;color:var(--muted);font-weight:400;}
+.obs-row{font-size:11.5px;line-height:1.6;padding:7px 10px;background:var(--bg2);border:1px solid var(--dim);border-radius:8px;margin-bottom:6px;color:var(--text2);}
+.sb{font-size:8px;font-weight:700;color:var(--muted);background:rgba(90,106,126,.15);border:1px solid rgba(90,106,126,.3);border-radius:4px;padding:1px 5px;margin-left:4px;vertical-align:middle;}
+.sb-ok{color:var(--green);background:rgba(61,186,122,.1);border-color:rgba(61,186,122,.3);}
+.sb-mid{color:var(--gold);background:rgba(200,155,60,.1);border-color:rgba(200,155,60,.3);}
+.warn{color:#e08840;font-weight:700;}
+.up{color:var(--green);} .down{color:var(--red);}
+.note{font-size:9px;color:var(--muted);margin-top:6px;}
+.empty{padding:14px;text-align:center;font-size:11px;color:var(--muted);}
+.btn{background:rgba(200,155,60,.1);border:1px solid var(--gold);color:var(--gold);border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR';}
+.ed-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:11px;color:var(--muted);}
+.ed-row select{flex:1;background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-size:12px;font-family:'Noto Sans KR';}
+@media (max-width:768px){
+  .lane-grid{grid-template-columns:1fr;}
+  .lane-vs{flex-direction:row;gap:10px;padding:4px 0;}
+  .grid2{grid-template-columns:1fr;}
+  .power{flex-wrap:wrap;}
+}
 </style>
 </head>
 <body>
@@ -218,6 +282,7 @@ body{zoom:1.45;background:var(--bg);color:var(--text);font-family:'Noto Sans KR'
 <div class="nav">
   <div class="logo" onclick="showPage('news')">HuB<span>.GG</span></div>
   <div class="nav-tabs">
+    <div class="nav-tab" onclick="showPage('scout')">🎮 오늘의 경기</div>
     <div class="nav-tab on" onclick="showPage('news')">📰 뉴스</div>
     <div class="nav-tab" onclick="showPage('summary')">⊞ 종합</div>
     <div class="nav-tab" onclick="showPage('player')">👤 선수</div>
@@ -246,6 +311,7 @@ body{zoom:1.45;background:var(--bg);color:var(--text);font-family:'Noto Sans KR'
   </div>
 </div>
 
+<div class="page" id="page-scout"></div>
 <div class="page on" id="page-news"></div>
 <div class="page" id="page-summary"></div>
 <div class="page" id="page-player"></div>
@@ -2002,12 +2068,13 @@ function showPage(id){
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('on');});
   document.querySelectorAll('.nav-tab').forEach(function(t){t.classList.remove('on');});
   document.getElementById('page-'+id).classList.add('on');
-  var tabs=['news','summary','player','champion','combo','detail','award','balance'];
+  var tabs=['scout','news','summary','player','champion','combo','detail','award','balance'];
   document.querySelectorAll('.nav-tab')[tabs.indexOf(id)].classList.add('on');
   // 선수/포지션 드롭다운은 선수 탭에서만 표시
   document.getElementById('navRight').style.display = (id==='player') ? 'flex' : 'none';
   if(id==='player') renderPlayer();
   if(id==='news') renderNews();
+  if(id==='scout') renderScout();
   if(id==='champion') renderChampion();
   if(id==='combo') renderCombo();
   if(id==='detail') renderChampDetail();
@@ -2205,6 +2272,338 @@ function renderNews(){
 renderNews();
 renderSummary();
 renderPlayer();
+
+// ════════ HuB.GG SCOUT — 내전 사전 분석 리포트 ════════
+// ── 오늘의 경기: 매치데이 데이터 (경기 전 시딩 점수는 매 회차 갱신) ──
+var MATCHDAY = {
+  date: '2026.07.05',
+  teams: {
+    a: {TOP:{n:'용인',s:3600}, JUG:{n:'관모',s:1400,note:'+300 정글격차'}, MID:{n:'성제',s:1600}, ADC:{n:'생불',s:1300}, SUP:{n:'영민',s:1400}},
+    b: {TOP:{n:'경담',s:2700}, JUG:{n:'영준',s:1030}, MID:{n:'제무',s:1300}, ADC:{n:'이또',s:2800}, SUP:{n:'현석',s:2300}}
+  },
+  power: {a:9600, b:10130, expA:48, note:'점수차 530 → B팀 약 52 : 48 · 정글 격차 패널티 +300 (관모 → A팀)'}
+};
+var POSN=['TOP','JUG','MID','ADC','SUP'];
+var POS_KR={TOP:'탑',JUG:'정글',MID:'미드',ADC:'원딜',SUP:'서폿'};
+var SC_KEYS=['전투','시야','생존','성장','챔프폭'];
+
+// ── 로스터: URL ?a=이름:POS,... 우선, 없으면 최근 게임 팀 ──
+function parseTeamParam(s){
+  if(!s) return null;
+  var out={};
+  s.split(',').forEach(function(t){
+    var m=t.split(':'); if(m.length===2 && PLAYERS[m[0]] && POSN.indexOf(m[1])>=0) out[m[1]]=m[0];
+  });
+  return POSN.every(function(p){return out[p];}) ? out : null;
+}
+function defaultTeams(){
+  var g=GAMES[GAMES.length-1];
+  function parse(arr){var o={};arr.forEach(function(s){var m=s.match(/^(.+)\(([A-Z]+)\)$/);if(m)o[m[2]]=m[1];});return o;}
+  return {a:parse(g.win), b:parse(g.lose), src:'게임 #'+g.no+' ('+g.date+') 팀 구성'};
+}
+var _q=new URLSearchParams(location.search);
+var _pa=parseTeamParam(_q.get('a')), _pb=parseTeamParam(_q.get('b'));
+function matchdayTeams(){
+  if(typeof MATCHDAY==='undefined'||!MATCHDAY.teams) return null;
+  var o={a:{},b:{}};
+  POSN.forEach(function(p){ o.a[p]=MATCHDAY.teams.a[p].n; o.b[p]=MATCHDAY.teams.b[p].n; });
+  o.src='매치데이 '+MATCHDAY.date+' 로스터';
+  return o;
+}
+var TEAMS = (_pa&&_pb) ? {a:_pa,b:_pb,src:'URL 로스터'} : (matchdayTeams() || defaultTeams());
+
+// ── 유틸 ──
+function P(n){ return PLAYERS[n]; }
+function streakOf(name){
+  var seq=[];
+  GAMES.forEach(function(g){
+    if(g.win.some(function(s){return _strip(s)===name;})) seq.push(1);
+    else if(g.lose.some(function(s){return _strip(s)===name;})) seq.push(0);
+  });
+  if(!seq.length) return {n:0,w:true};
+  var last=seq[seq.length-1],k=0;
+  for(var i=seq.length-1;i>=0;i--){ if(seq[i]===last)k++; else break; }
+  return {n:k,w:last===1};
+}
+function h2h(a,b){ // 같은 포지션 맞대결 전적 (a 기준 승)
+  var g=0,aw=0;
+  GAMES.forEach(function(gm){
+    for(var i=0;i<gm.win.length;i++){
+      var wn=_strip(gm.win[i]), ln=_strip(gm.lose[i]);
+      var wpos=(gm.win[i].match(/\(([^)]+)\)/)||[])[1], lpos=(gm.lose[i].match(/\(([^)]+)\)/)||[])[1];
+      if(wpos!==lpos) continue;
+      if(wn===a&&ln===b){g++;aw++;}
+      if(wn===b&&ln===a){g++;}
+    }
+  });
+  return {games:g,aWins:aw};
+}
+function scPosRecord(name){
+  var rec={};
+  GAME_DETAILS.forEach(function(g){
+    g.players.forEach(function(r){
+      if(r.name!==name) return;
+      if(!rec[r.pos]) rec[r.pos]=[0,0];
+      rec[r.pos][r.team==='win'?0:1]++;
+    });
+  });
+  return rec;
+}
+function posMean(field,pos){ // 게임 가중 포지션 평균
+  var s=0,g=0;
+  Object.values(PLAYERS).forEach(function(p){ if(p.pos===pos){s+=p[field]*p.games;g+=p.games;} });
+  return g? s/g : 0;
+}
+function sBadge(g){ return '<span class="sb'+(g>=5?' sb-ok':g>=3?' sb-mid':'')+'">'+g+'판</span>'; }
+
+// ── 선수 카드 ──
+function playerCard(name,pos,side,idx){
+  var p=P(name); if(!p) return '<div class="pcard">데이터 없음: '+name+'</div>';
+  var tg=totalGrade(p), st=streakOf(name);
+  var mains=p.mostChamps.slice(0,3);
+  var spread=Math.round((p.cp_best-p.cp_worst)*10)/10;
+  var offPos = pos!==p.pos ? '<span class="warn">주 포지션 '+POS_KR[p.pos]+' → 오늘 '+POS_KR[pos]+'</span>' : '';
+  var pr=scPosRecord(name)[pos];
+  var posRec = pr ? POS_KR[pos]+' '+(pr[0]+pr[1])+'전 '+pr[0]+'승' : POS_KR[pos]+' 첫 출전';
+  return '<div class="pcard side-'+side+'">'+
+    '<div class="pc-head"><div class="pc-tier">'+tierIcon(p.elo,26)+'</div>'+
+    '<div class="pc-name">'+name+'<div class="pc-sub">'+POS_KR[pos]+' · ELO '+p.elo+'</div></div>'+
+    '<div class="pc-grade" style="color:'+tg.c+';border-color:'+tg.bd+';background:'+tg.bg+'">'+tg.g+(tg.capped?'<span class="cap">캡</span>':'')+'</div></div>'+
+    (function(){
+      var md=(typeof MATCHDAY!=='undefined'&&MATCHDAY.teams)?MATCHDAY.teams[side][pos]:null;
+      return (md&&md.n===name)?'<div class="pc-line" style="color:var(--gold);font-weight:700">시딩 점수 '+md.s.toLocaleString()+(md.note?' <span class="warn">('+md.note+')</span>':'')+'</div>':'';
+    })()+
+    '<div class="pc-line">'+p.games+'전 '+p.wins+'승 '+p.losses+'패 ('+p.wr+'%) · '+
+      (st.n>=2?'<b class="'+(st.w?'up':'down')+'">'+st.n+'연'+(st.w?'승':'패')+'</b>':'연속 없음')+'</div>'+
+    '<div class="pc-line muted">'+posRec+' '+offPos+'</div>'+
+    '<canvas id="rd_'+side+idx+'" width="380" height="336" class="pc-radar"></canvas>'+
+    '<div class="pc-champs">'+mains.map(function(mc){
+      var c=mc[0],d=mc[1];
+      return '<div class="pc-champ">'+cImg(c,30,6)+'<div class="pc-cinfo">'+c+'<span>'+d.games+'전'+d.wins+'승</span></div></div>';
+    }).join('')+'</div>'+
+    '<div class="pc-line muted">기복 CP '+p.cp_worst+'~'+p.cp_best+' (폭 '+spread+') · 챔프 '+p.champPool+'종 '+sBadge(p.games)+'</div>'+
+    '</div>';
+}
+
+// ── 라인별 맞대결 ──
+function laneSection(){
+  var h='<div class="sec"><div class="sec-t">⚔️ 라인별 맞대결</div>';
+  POSN.forEach(function(pos,i){
+    var a=TEAMS.a[pos], b=TEAMS.b[pos];
+    var hh=h2h(a,b);
+    var eA=P(a)?P(a).elo:1000, eB=P(b)?P(b).elo:1000;
+    var vs = hh.games ? hh.aWins+' : '+(hh.games-hh.aWins)+'<div class="vs-sub">맞대결 '+hh.games+'회</div>'
+                      : 'VS<div class="vs-sub">첫 맞대결</div>';
+    h+='<div class="lane"><div class="lane-tag">'+POS_KR[pos]+'</div><div class="lane-grid">'+
+      playerCard(a,pos,'a',i)+
+      '<div class="lane-vs">'+vs+'<div class="vs-elo">'+(eA>eB?'◀ +'+(eA-eB):eB>eA?'+'+(eB-eA)+' ▶':'동률')+'</div></div>'+
+      playerCard(b,pos,'b',i)+'</div></div>';
+  });
+  return h+'</div>';
+}
+
+// ── 밴 우선순위 ──
+function banList(team,label,side){
+  var rows=[];
+  POSN.forEach(function(pos){
+    var p=P(team[pos]); if(!p) return;
+    p.mostChamps.forEach(function(mc){
+      var c=mc[0],d=mc[1];
+      if(d.wins<1) return;
+      rows.push({champ:c,player:p.name,games:d.games,wins:d.wins,wr:Math.round(d.wins/d.games*100)});
+    });
+  });
+  rows.sort(function(x,y){ return y.wins-x.wins || y.wr-x.wr || y.games-x.games; });
+  var top=rows.slice(0,6);
+  return '<div class="card"><div class="ct side-'+side+'-t">'+label+'</div>'+
+    (top.length?top.map(function(r,i){
+      return '<div class="ban-row">'+
+        '<span class="ban-rank">'+(i+1)+'</span>'+cImg(r.champ,30,6)+
+        '<div class="ban-info">'+r.champ+'<span>'+r.player+' · '+r.games+'전 '+r.wins+'승 ('+r.wr+'%)</span></div>'+
+        (r.games<2?'<span class="sb">1게임</span>':sBadge(r.games))+'</div>';
+    }).join(''):'<div class="empty">승리 기록 챔프가 없어요</div>')+
+    '<div class="note">승수 → 승률 → 판수 순 정렬 · 1게임 표본은 참고만</div></div>';
+}
+
+// ── 기습 카드 ──
+function surpriseSection(){
+  var items=[];
+  var roster=POSN.map(function(p){return [TEAMS.a[p],p,'A'];}).concat(POSN.map(function(p){return [TEAMS.b[p],p,'B'];}));
+  roster.forEach(function(r){
+    var name=r[0], rec=scPosRecord(name), p=P(name); if(!p) return;
+    Object.keys(rec).forEach(function(ps){
+      if(ps===p.pos) return;
+      var w=rec[ps][0],l=rec[ps][1];
+      if(w+l>=1 && w>l) items.push('🔄 <b>'+name+'</b> ('+r[2]+'팀) — '+POS_KR[ps]+' 스왑 시 '+(w+l)+'전 '+w+'승'+(w+l>=2&&l===0?' <b class="up">전승</b>':''));
+    });
+  });
+  // 최근 3게임 첫 픽 챔프
+  var before={}, recent=[];
+  GAME_DETAILS.slice(0,-3).forEach(function(g){g.players.forEach(function(r){before[r.name+'|'+r.champ]=1;});});
+  GAME_DETAILS.slice(-3).forEach(function(g){g.players.forEach(function(r){
+    var names=roster.map(function(x){return x[0];});
+    if(names.indexOf(r.name)>=0 && !before[r.name+'|'+r.champ]){
+      recent.push('🆕 <b>'+r.name+'</b> — 최근 첫 픽 「'+r.champ+'」 ('+(r.team==='win'?'승':'패')+')');
+      before[r.name+'|'+r.champ]=1;
+    }
+  });});
+  var all=items.concat(recent);
+  return '<div class="card"><div class="ct">🃏 기습 카드 <span class="ct-sub">예상 밖 요소</span></div>'+
+    (all.length?all.map(function(t){return '<div class="obs-row">'+t+'</div>';}).join(''):'<div class="empty">특이 사항 없음</div>')+'</div>';
+}
+
+// ── 관찰 포인트 (관찰+가설 톤, 고정 규칙만) ──
+function obsSection(){
+  function teamObs(team,label,side){
+    var out=[];
+    POSN.forEach(function(pos){
+      var p=P(team[pos]); if(!p) return;
+      var st=streakOf(p.name);
+      if(st.n>=3) out.push((st.w?'📈':'📉')+' <b>'+p.name+'</b> '+st.n+'연'+(st.w?'승 — 기세 유지 중':'패 — 초반 흔들면 무너질 여지')+' '+sBadge(p.games));
+      var dm=posMean('d',pos);
+      if(p.games>=4 && dm>0 && p.d>dm*1.3) out.push('💀 <b>'+p.name+'</b> 평균 데스 '+p.d+' (포지션 평균 '+Math.round(dm*10)/10+') — 집중 공략 시 이득 가설 '+sBadge(p.games));
+      var vm=POS_AVG[pos]?POS_AVG[pos].VSPM:1;
+      if(p.games>=4 && p.vspm<vm*0.7) out.push('👁️ <b>'+p.name+'</b> 시야 '+p.vspm+' (포지션 기준 '+vm+') — 오브젝트 전 시야 싸움 우위 여지 '+sBadge(p.games));
+      var spread=p.cp_best-p.cp_worst;
+      if(p.games>=5 && spread>=4) out.push('🎢 <b>'+p.name+'</b> 기복 큼 (CP '+p.cp_worst+'~'+p.cp_best+') — 초반 흐름이 경기 전체를 좌우 '+sBadge(p.games));
+    });
+    return '<div class="card"><div class="ct side-'+side+'-t">'+label+' 관찰 포인트</div>'+
+      (out.length?out.map(function(t){return '<div class="obs-row">'+t+'</div>';}).join(''):'<div class="empty">두드러진 패턴 없음</div>')+
+      '</div>';
+  }
+  return '<div class="grid2">'+teamObs(TEAMS.a,'A팀','a')+teamObs(TEAMS.b,'B팀','b')+'</div>';
+}
+
+// ── 팀 편집 ──
+function editSection(){
+  function sel(side,pos){
+    var cur=TEAMS[side][pos];
+    return '<select data-side="'+side+'" data-pos="'+pos+'">'+Object.keys(PLAYERS).sort().map(function(n){
+      return '<option'+(n===cur?' selected':'')+'>'+n+'</option>';}).join('')+'</select>';
+  }
+  return '<div class="card" id="editBox" style="display:none"><div class="ct">팀 편집</div>'+
+    '<div class="grid2">'+['a','b'].map(function(s){
+      return '<div><div class="ct-sub" style="margin-bottom:6px">'+(s==='a'?'A팀':'B팀')+'</div>'+
+        POSN.map(function(p){return '<div class="ed-row"><span>'+POS_KR[p]+'</span>'+sel(s,p)+'</div>';}).join('')+'</div>';
+    }).join('')+'</div>'+
+    '<div style="display:flex;gap:8px;margin-top:10px"><button class="btn" onclick="scApplyEdit()">적용</button>'+
+    '<button class="btn" onclick="scCopyLink()">🔗 로스터 링크 복사</button></div></div>';
+}
+function scApplyEdit(){
+  document.querySelectorAll('#editBox select').forEach(function(s){
+    TEAMS[s.dataset.side][s.dataset.pos]=s.value;
+  });
+  TEAMS.src='수동 편집 로스터';
+  var enc=function(t){return POSN.map(function(p){return t[p]+':'+p;}).join(',');};
+  history.replaceState(null,'','?a='+encodeURIComponent(enc(TEAMS.a))+'&b='+encodeURIComponent(enc(TEAMS.b)));
+  renderScout();
+}
+function scCopyLink(){
+  navigator.clipboard.writeText(location.href).then(function(){alert('로스터 링크가 복사됐어요. 디스코드에 붙여넣으면 모두 같은 리포트를 봐요.');});
+}
+function scToggleEdit(){ var b=document.getElementById('editBox'); b.style.display=b.style.display==='none'?'block':'none'; }
+
+// ── 렌더 ──
+function matchdayGames(){
+  if(typeof MATCHDAY==='undefined') return [];
+  return GAMES.filter(function(g){ return g.date===MATCHDAY.date; });
+}
+function teamSideOfWin(g){
+  // 승리 5인이 어느 쪽 로스터인지 판별
+  var wnames=g.win.map(_strip);
+  var aNames=POSN.map(function(p){return TEAMS.a[p];});
+  var hits=wnames.filter(function(n){return aNames.indexOf(n)>=0;}).length;
+  return hits>=3 ? 'a' : 'b';
+}
+function resultSection(){
+  var mg=matchdayGames();
+  if(!mg.length) return '';
+  var h='<div class="sec"><div class="sec-t">🏁 경기 결과 — '+MATCHDAY.date+'</div>';
+  mg.forEach(function(g){
+    var side=teamSideOfWin(g);
+    var det=GAME_DETAILS.filter(function(d){return d.no===g.no;})[0];
+    var mvp=null,ace=null;
+    if(det){
+      mvp=det.players.filter(function(p){return p.team==='win';}).sort(function(a,b){return b.cp-a.cp;})[0];
+      ace=det.players.filter(function(p){return p.team==='lose';}).sort(function(a,b){return b.cp-a.cp;})[0];
+    }
+    h+='<div class="card"><div class="ct">게임 #'+g.no+' <span class="ct-sub">'+g.time+' 경기 · '+
+      '<b class="side-'+side+'-t">'+(side==='a'?'A팀':'B팀')+' 승리</b></span></div>';
+    if(mvp&&ace){
+      h+='<div class="grid2" style="margin-bottom:8px">'+
+        '<div class="obs-row">👑 <b>MVP</b> '+mvp.name+' — '+mvp.champ+' (CP '+mvp.cp+', '+mvp.k+'/'+mvp.d+'/'+mvp.a+')</div>'+
+        '<div class="obs-row">🛡️ <b>ACE</b> '+ace.name+' — '+ace.champ+' (CP '+ace.cp+', '+ace.k+'/'+ace.d+'/'+ace.a+')</div></div>';
+    }
+    if(g.bans&&g.bans.length){
+      h+='<div class="pc-line muted" style="margin-bottom:4px">밴 (블루 진영)</div>'+
+        '<div style="display:flex;gap:5px;margin-bottom:8px;flex-wrap:wrap">'+g.bans.slice(0,5).map(function(c){return cImg(c,28,6);}).join('')+'</div>'+
+        '<div class="pc-line muted" style="margin-bottom:4px">밴 (레드 진영)</div>'+
+        '<div style="display:flex;gap:5px;flex-wrap:wrap">'+g.bans.slice(5,10).map(function(c){return cImg(c,28,6);}).join('')+'</div>';
+    }
+    h+='</div>';
+  });
+  // 이날의 ELO 변동 (지난 업데이트 대비)
+  if(typeof ELO_PREV!=='undefined'){
+    var rows=[];
+    POSN.forEach(function(p){['a','b'].forEach(function(s){
+      var n=TEAMS[s][p], pl=P(n); if(!pl) return;
+      var prev=ELO_PREV[n]; 
+      var d=(prev!=null)?(pl.elo-prev):null;
+      rows.push({n:n,s:s,d:d,elo:pl.elo});
+    });});
+    rows.sort(function(x,y){return (y.d==null?-999:y.d)-(x.d==null?-999:x.d);});
+    h+='<div class="card"><div class="ct">📊 이날의 ELO 변동</div><div class="grid2">'+
+      rows.map(function(r){
+        var tag = r.d==null ? '<span class="sb">NEW</span>' : '<b class="'+(r.d>=0?'up':'down')+'">'+(r.d>=0?'+':'')+r.d+'</b>';
+        return '<div class="obs-row"><span class="side-'+r.s+'-t" style="font-weight:800">'+(r.s==='a'?'A':'B')+'</span> '+r.n+' → ELO '+r.elo+' '+tag+'</div>';
+      }).join('')+'</div></div>';
+  }
+  return h+'</div>';
+}
+function renderScout(){
+  var mg=matchdayGames();
+  var phase = mg.length ? '경기 종료 · '+mg.length+'경기 완료' : '경기 전 · 사전 분석';
+  var md=(typeof MATCHDAY!=='undefined'&&MATCHDAY.power)?MATCHDAY.power:null;
+  var h='';
+  h+='<div class="hero"><div class="hero-t">🎮 오늘의 경기</div>'+
+    '<div class="hero-s"><b style="color:'+(mg.length?'var(--green)':'var(--gold)')+'">'+phase+'</b> · '+TEAMS.src+' · 총 '+GAMES.length+'게임 데이터 기준</div>'+
+    '<button class="btn" style="margin-top:8px" onclick="scToggleEdit()">✏️ 팀 편집 / 링크 공유</button></div>';
+  h+=editSection();
+  if(md){
+    var expA=md.expA;
+    h+='<div class="power"><div class="pw side-a-t">A팀 전력 '+md.a.toLocaleString()+'</div>'+
+      '<div class="pw-bar"><div class="pw-fill" style="width:'+expA+'%"></div><span>'+expA+'% : '+(100-expA)+'%</span></div>'+
+      '<div class="pw side-b-t">B팀 전력 '+md.b.toLocaleString()+'</div></div>'+
+      '<div class="note" style="text-align:center;margin-bottom:16px">시딩 점수 기반 기대 승률'+(md.note?' · '+md.note:'')+'</div>';
+  } else {
+    var eA=POSN.reduce(function(s,p){return s+(P(TEAMS.a[p])?P(TEAMS.a[p]).elo:1000);},0)/5;
+    var eB=POSN.reduce(function(s,p){return s+(P(TEAMS.b[p])?P(TEAMS.b[p]).elo:1000);},0)/5;
+    var expE=Math.round(100/(1+Math.pow(10,(eB-eA)/400)));
+    h+='<div class="power"><div class="pw side-a-t">A팀 평균 ELO '+Math.round(eA)+'</div>'+
+      '<div class="pw-bar"><div class="pw-fill" style="width:'+expE+'%"></div><span>'+expE+'% : '+(100-expE)+'%</span></div>'+
+      '<div class="pw side-b-t">B팀 평균 ELO '+Math.round(eB)+'</div></div>'+
+      '<div class="note" style="text-align:center;margin-bottom:16px">ELO 기반 기대 승률 — 시딩 점수 미입력 시 대체</div>';
+  }
+  h+=resultSection();
+  h+=laneSection();
+  h+='<div class="sec"><div class="sec-t">🚫 밴 우선순위</div><div class="grid2">'+
+    banList(TEAMS.b,'A팀이 밴할 것 (B팀 주력)','a')+banList(TEAMS.a,'B팀이 밴할 것 (A팀 주력)','b')+'</div></div>';
+  h+='<div class="sec"><div class="sec-t">🎯 기습 & 관찰</div>'+surpriseSection()+obsSection()+'</div>';
+  h+='<div class="note" style="text-align:center;margin:20px 0">※ 표본이 적은 항목은 판수 뱃지를 확인하세요. 5판+ 녹색 / 3~4판 노랑 / 그 미만 회색은 참고만.</div>';
+  document.getElementById('page-scout').innerHTML=h;
+  setTimeout(function(){
+    POSN.forEach(function(pos,i){
+      ['a','b'].forEach(function(s){
+        var nm=TEAMS[s][pos], p=P(nm);
+        if(p) drawMiniRadar('rd_'+s+i, calcCats(p,p.pos), SC_KEYS, CAT_COLORS);
+      });
+    });
+  },30);
+}
+
+// URL에 로스터 파라미터가 있으면 내전 분석 탭으로 자동 진입
+if(_pa&&_pb){ showPage('scout'); }
+
 </script>
 </body>
 </html>
