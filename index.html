@@ -2340,6 +2340,20 @@ function h2h(a,b){ // 같은 포지션 맞대결 전적 (a 기준 승)
   });
   return {games:g,aWins:aw};
 }
+// 특정 라인에서 사용한 챔피언 기록 (모스트·밴 우선순위용)
+function posChamps(name,pos){
+  var agg={};
+  GAME_DETAILS.forEach(function(g){
+    g.players.forEach(function(r){
+      if(r.name!==name||r.pos!==pos) return;
+      if(!agg[r.champ]) agg[r.champ]={games:0,wins:0};
+      agg[r.champ].games++;
+      if(r.team==='win') agg[r.champ].wins++;
+    });
+  });
+  return Object.keys(agg).map(function(c){return [c,agg[c]];})
+    .sort(function(a,b){return b[1].games-a[1].games||b[1].wins-a[1].wins;});
+}
 function scPosRecord(name){
   var rec={};
   GAME_DETAILS.forEach(function(g){
@@ -2375,7 +2389,7 @@ function playerCard(name,pos,side,idx){
       '</div>';
   }
   var tg=totalGrade(p), st=streakOf(name);
-  var mains=p.mostChamps.slice(0,3);
+  var mains=posChamps(name,pos).slice(0,3);  // 참가 라인에서 사용한 챔프만
   var spread=Math.round((p.cp_best-p.cp_worst)*10)/10;
   var offPos = pos!==p.pos ? '<span class="warn">주 포지션 '+POS_KR[p.pos]+' → 오늘 '+POS_KR[pos]+'</span>' : '';
   var pr=scPosRecord(name)[pos];
@@ -2392,6 +2406,8 @@ function playerCard(name,pos,side,idx){
       (st.n>=2?'<b class="'+(st.w?'up':'down')+'">'+st.n+'연'+(st.w?'승':'패')+'</b>':'연속 없음')+'</div>'+
     '<div class="pc-line muted">'+posRec+' '+offPos+'</div>'+
     '<canvas id="rd_'+side+idx+'" width="380" height="336" class="pc-radar"></canvas>'+
+    '<div class="pc-line muted" style="margin-top:4px">'+POS_KR[pos]+' 모스트 <span style="font-size:8px">*참가 라인 기록만</span></div>'+
+    (mains.length?'':'<div class="empty" style="padding:10px">'+POS_KR[pos]+' 포지션 기록이 아직 없어요</div>')+
     '<div class="pc-champs">'+mains.map(function(mc){
       var c=mc[0],d=mc[1];
       var losses=d.games-d.wins;
@@ -2432,7 +2448,7 @@ function banList(team,label,side){
   var rows=[];
   POSN.forEach(function(pos){
     var p=P(team[pos]); if(!p) return;
-    p.mostChamps.forEach(function(mc){
+    posChamps(p.name,pos).forEach(function(mc){   // 참가 라인에서 사용한 챔프만
       var c=mc[0],d=mc[1];
       if(d.wins<1) return;
       rows.push({champ:c,player:p.name,games:d.games,wins:d.wins,wr:Math.round(d.wins/d.games*100)});
@@ -2447,7 +2463,7 @@ function banList(team,label,side){
         '<div class="ban-info">'+r.champ+'<span>'+r.player+' · '+r.games+'전 '+r.wins+'승 ('+r.wr+'%)</span></div>'+
         (r.games<2?'<span class="sb">1게임</span>':sBadge(r.games))+'</div>';
     }).join(''):'<div class="empty">승리 기록 챔프가 없어요</div>')+
-    '<div class="note">승수 → 승률 → 판수 순 정렬 · 1게임 표본은 참고만</div></div>';
+    '<div class="note">*참가 라인에서 사용한 챔피언만 표시 · 승수 → 승률 → 판수 순 정렬 · 1게임 표본은 참고만</div></div>';
 }
 
 // ── 기습 카드 ──
