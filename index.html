@@ -248,8 +248,8 @@ body{zoom:1.45;background:var(--bg);color:var(--text);font-family:'Noto Sans KR'
 .pc-line{font-size:11px;color:var(--text2);margin:3px 0;}
 .pc-line.muted{color:var(--muted);font-size:10px;}
 .pc-radar{width:190px;height:168px;max-width:100%;display:block;margin:4px auto;}
-.pc-champs{display:flex;gap:8px;margin:6px 0;}
-.pc-champ{display:flex;align-items:center;gap:5px;background:var(--bg2);border:1px solid var(--dim);border-radius:7px;padding:4px 7px;flex:1;min-width:0;}
+.pc-champs{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0;}
+.pc-champ{display:flex;align-items:center;gap:5px;background:var(--bg2);border:1px solid var(--dim);border-radius:7px;padding:4px 7px;flex:0 0 calc(33.33% - 4px);min-width:0;box-sizing:border-box;}
 .pc-champ img{border-radius:6px;flex-shrink:0;}
 .pc-cinfo{font-size:9px;font-weight:700;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .pc-cinfo span{display:block;color:var(--muted);font-weight:400;}
@@ -2389,7 +2389,7 @@ function playerCard(name,pos,side,idx){
       '</div>';
   }
   var tg=totalGrade(p), st=streakOf(name);
-  var mains=posChamps(name,pos).slice(0,3);  // 참가 라인에서 사용한 챔프만
+  var mains=posChamps(name,pos).slice(0,6);  // 참가 라인에서 사용한 챔프만 (최대 6개)
   var spread=Math.round((p.cp_best-p.cp_worst)*10)/10;
   var offPos = pos!==p.pos ? '<span class="warn">주 포지션 '+POS_KR[p.pos]+' → 오늘 '+POS_KR[pos]+'</span>' : '';
   var pr=scPosRecord(name)[pos];
