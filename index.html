@@ -2396,7 +2396,7 @@ function playerCard(name,pos,side,idx){
   var posRec = pr ? POS_KR[pos]+' '+(pr[0]+pr[1])+'전 '+pr[0]+'승' : POS_KR[pos]+' 첫 출전';
   return '<div class="pcard side-'+side+'">'+
     '<div class="pc-head"><div class="pc-tier">'+tierIcon(p.elo,26)+'</div>'+
-    '<div class="pc-name">'+name+'<div class="pc-sub">'+POS_KR[pos]+' · ELO '+p.elo+'</div></div>'+
+    '<div class="pc-name pn" onclick="goPlayer(\''+name+'\')">'+name+'<div class="pc-sub">'+POS_KR[pos]+' · ELO '+p.elo+'</div></div>'+
     '<div class="pc-grade" style="color:'+tg.c+';border-color:'+tg.bd+';background:'+tg.bg+'">'+tg.g+(tg.capped?'<span class="cap">캡</span>':'')+'</div></div>'+
     (function(){
       var md=(typeof MATCHDAY!=='undefined'&&MATCHDAY.teams)?MATCHDAY.teams[side][pos]:null;
@@ -2460,7 +2460,7 @@ function banList(team,label,side){
     (top.length?top.map(function(r,i){
       return '<div class="ban-row">'+
         '<span class="ban-rank">'+(i+1)+'</span>'+cImg(r.champ,30,6)+
-        '<div class="ban-info">'+r.champ+'<span>'+r.player+' · '+r.games+'전 '+r.wins+'승 ('+r.wr+'%)</span></div>'+
+        '<div class="ban-info">'+r.champ+'<span><span class="pn" style="font-size:9px" onclick="goPlayer(\''+r.player+'\')">'+r.player+'</span> · '+r.games+'전 '+r.wins+'승 ('+r.wr+'%)</span></div>'+
         (r.games<2?'<span class="sb">1게임</span>':sBadge(r.games))+'</div>';
     }).join(''):'<div class="empty">승리 기록 챔프가 없어요</div>')+
     '<div class="note">*참가 라인에서 사용한 챔피언만 표시 · 승수 → 승률 → 판수 순 정렬 · 1게임 표본은 참고만</div></div>';
@@ -2475,7 +2475,7 @@ function surpriseSection(){
     Object.keys(rec).forEach(function(ps){
       if(ps===p.pos) return;
       var w=rec[ps][0],l=rec[ps][1];
-      if(w+l>=1 && w>l) items.push('🔄 <b>'+name+'</b> ('+r[2]+'팀) — '+POS_KR[ps]+' 스왑 시 '+(w+l)+'전 '+w+'승'+(w+l>=2&&l===0?' <b class="up">전승</b>':''));
+      if(w+l>=1 && w>l) items.push('🔄 <b class="pn" onclick="goPlayer(\''+name+'\')">'+name+'</b> ('+r[2]+'팀) — '+POS_KR[ps]+' 스왑 시 '+(w+l)+'전 '+w+'승'+(w+l>=2&&l===0?' <b class="up">전승</b>':''));
     });
   });
   // 최근 3게임 첫 픽 챔프
@@ -2484,7 +2484,7 @@ function surpriseSection(){
   GAME_DETAILS.slice(-3).forEach(function(g){g.players.forEach(function(r){
     var names=roster.map(function(x){return x[0];});
     if(names.indexOf(r.name)>=0 && !before[r.name+'|'+r.champ]){
-      recent.push('🆕 <b>'+r.name+'</b> — 최근 첫 픽 「'+r.champ+'」 ('+(r.team==='win'?'승':'패')+')');
+      recent.push('🆕 <b class="pn" onclick="goPlayer(\''+r.name+'\')">'+r.name+'</b> — 최근 첫 픽 「'+r.champ+'」 ('+(r.team==='win'?'승':'패')+')');
       before[r.name+'|'+r.champ]=1;
     }
   });});
@@ -2500,13 +2500,13 @@ function obsSection(){
     POSN.forEach(function(pos){
       var p=P(team[pos]); if(!p) return;
       var st=streakOf(p.name);
-      if(st.n>=3) out.push((st.w?'📈':'📉')+' <b>'+p.name+'</b> '+st.n+'연'+(st.w?'승 — 기세 유지 중':'패 — 초반 흔들면 무너질 여지')+' '+sBadge(p.games));
+      if(st.n>=3) out.push((st.w?'📈':'📉')+' <b class="pn" onclick="goPlayer(\''+p.name+'\')">'+p.name+'</b> '+st.n+'연'+(st.w?'승 — 기세 유지 중':'패 — 초반 흔들면 무너질 여지')+' '+sBadge(p.games));
       var dm=posMean('d',pos);
-      if(p.games>=4 && dm>0 && p.d>dm*1.3) out.push('💀 <b>'+p.name+'</b> 평균 데스 '+p.d+' (포지션 평균 '+Math.round(dm*10)/10+') — 집중 공략 시 이득 가설 '+sBadge(p.games));
+      if(p.games>=4 && dm>0 && p.d>dm*1.3) out.push('💀 <b class="pn" onclick="goPlayer(\''+p.name+'\')">'+p.name+'</b> 평균 데스 '+p.d+' (포지션 평균 '+Math.round(dm*10)/10+') — 집중 공략 시 이득 가설 '+sBadge(p.games));
       var vm=POS_AVG[pos]?POS_AVG[pos].VSPM:1;
-      if(p.games>=4 && p.vspm<vm*0.7) out.push('👁️ <b>'+p.name+'</b> 시야 '+p.vspm+' (포지션 기준 '+vm+') — 오브젝트 전 시야 싸움 우위 여지 '+sBadge(p.games));
+      if(p.games>=4 && p.vspm<vm*0.7) out.push('👁️ <b class="pn" onclick="goPlayer(\''+p.name+'\')">'+p.name+'</b> 시야 '+p.vspm+' (포지션 기준 '+vm+') — 오브젝트 전 시야 싸움 우위 여지 '+sBadge(p.games));
       var spread=p.cp_best-p.cp_worst;
-      if(p.games>=5 && spread>=4) out.push('🎢 <b>'+p.name+'</b> 기복 큼 (CP '+p.cp_worst+'~'+p.cp_best+') — 초반 흐름이 경기 전체를 좌우 '+sBadge(p.games));
+      if(p.games>=5 && spread>=4) out.push('🎢 <b class="pn" onclick="goPlayer(\''+p.name+'\')">'+p.name+'</b> 기복 큼 (CP '+p.cp_worst+'~'+p.cp_best+') — 초반 흐름이 경기 전체를 좌우 '+sBadge(p.games));
     });
     return '<div class="card"><div class="ct side-'+side+'-t">'+label+' 관찰 포인트</div>'+
       (out.length?out.map(function(t){return '<div class="obs-row">'+t+'</div>';}).join(''):'<div class="empty">두드러진 패턴 없음</div>')+
@@ -2572,8 +2572,8 @@ function resultSection(){
       '<b class="side-'+side+'-t">'+(side==='a'?'A팀':'B팀')+' 승리</b></span></div>';
     if(mvp&&ace){
       h+='<div class="grid2" style="margin-bottom:8px">'+
-        '<div class="obs-row">👑 <b>MVP</b> '+mvp.name+' — '+mvp.champ+' (CP '+mvp.cp+', '+mvp.k+'/'+mvp.d+'/'+mvp.a+')</div>'+
-        '<div class="obs-row">🛡️ <b>ACE</b> '+ace.name+' — '+ace.champ+' (CP '+ace.cp+', '+ace.k+'/'+ace.d+'/'+ace.a+')</div></div>';
+        '<div class="obs-row">👑 <b>MVP</b> <span class="pn" onclick="goPlayer(\''+mvp.name+'\')">'+mvp.name+'</span> — '+mvp.champ+' (CP '+mvp.cp+', '+mvp.k+'/'+mvp.d+'/'+mvp.a+')</div>'+
+        '<div class="obs-row">🛡️ <b>ACE</b> <span class="pn" onclick="goPlayer(\''+ace.name+'\')">'+ace.name+'</span> — '+ace.champ+' (CP '+ace.cp+', '+ace.k+'/'+ace.d+'/'+ace.a+')</div></div>';
     }
     if(g.bans&&g.bans.length){
       // 엑셀 기록 관례: 팀1(앞 5개 밴) = 승리팀. blueWin으로 일반화 처리.
@@ -2606,7 +2606,7 @@ function resultSection(){
     h+='<div class="card"><div class="ct">📊 이날의 ELO 변동</div><div class="grid2">'+
       rows.map(function(r){
         var tag = r.d==null ? '<span class="sb">NEW</span>' : '<b class="'+(r.d>=0?'up':'down')+'">'+(r.d>=0?'+':'')+r.d+'</b>';
-        return '<div class="obs-row"><span class="side-'+r.s+'-t" style="font-weight:800">'+(r.s==='a'?'A':'B')+'</span> '+r.n+' → ELO '+r.elo+' '+tag+'</div>';
+        return '<div class="obs-row"><span class="side-'+r.s+'-t" style="font-weight:800">'+(r.s==='a'?'A':'B')+'</span> <span class="pn" onclick="goPlayer(\''+r.n+'\')">'+r.n+'</span> → ELO '+r.elo+' '+tag+'</div>';
       }).join('')+'</div></div>';
   }
   return h+'</div>';
