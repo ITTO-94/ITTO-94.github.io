@@ -2276,12 +2276,14 @@ renderPlayer();
 // ════════ HuB.GG SCOUT — 내전 사전 분석 리포트 ════════
 // ── 오늘의 경기: 매치데이 데이터 (경기 전 시딩 점수는 매 회차 갱신) ──
 var MATCHDAY = {
-  date: '2026.07.12',
+  date: '2026.07.14',
   teams: {
-    a: {TOP:{n:'용인',s:3600,note:'탑 스왑'}, JUG:{n:'성재',s:2000}, MID:{n:'대혁',s:1014}, ADC:{n:'이또',s:2800}, SUP:{n:'예담',s:1978}},
-    b: {TOP:{n:'윤호',s:3600,note:'탑 스왑'}, JUG:{n:'바쁘다',s:4100,note:'+900 정글격차'}, MID:{n:'진우',s:800}, ADC:{n:'병준',s:2200}, SUP:{n:'롤투맨',s:1558}}
+    a: {TOP:{n:'용인',s:3600}, JUG:{n:'영준',s:1030}, MID:{n:'현준',s:3600}, ADC:{n:'진우',s:1200}, SUP:{n:'하민',s:1500}},
+    b: {TOP:{n:'대혁',s:1414}, JUG:{n:'진영',s:2850,note:'+1,100 정글격차 · 부라인 출전',opgg:'https://op.gg/ko/lol/summoners/kr/%EA%B9%80%EC%A7%84%EC%98%81%20%EC%A0%95%EA%B8%80%EA%B0%84%EB%8B%A4-%EA%B9%80%EC%A7%84%EC%98%81'},
+        MID:{n:'은환',s:1920,opgg:'https://op.gg/ko/lol/summoners/kr/%ED%95%98%EB%8A%98%20%ED%8E%B8%EC%A7%80-mk2'},
+        ADC:{n:'제무',s:1700}, SUP:{n:'성재',s:1600}}
   },
-  power: {a:11392, b:13158, expA:42, note:'점수차 1,766 → B팀 약 58 : 42 · 정글 격차 패널티 +900 (바쁘다 → B팀) · 1안(탑 스왑) 채택'}
+  power: {a:10930, b:10584, expA:52, note:'점수차 346 → A팀 약 52 : 48 · 정글 격차 패널티 +1,100 (진영 → B팀)'}
 };
 var POSN=['TOP','JUG','MID','ADC','SUP'];
 var POS_KR={TOP:'탑',JUG:'정글',MID:'미드',ADC:'원딜',SUP:'서폿'};
