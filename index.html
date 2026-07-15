@@ -2000,70 +2000,116 @@ function champTierScore(wr, pickRate, banRate, immunity){
 // ── 챔피언 페이지 (챔피언별 통합 통계 + 등급) ────────
 var champPosFilter = '전체';
 function setChampPos(pos){ champPosFilter = pos; PAGE.champ = 0; renderChampion(); }
+// 지난 업데이트 시점의 라인별 티어 순위 (변동 뱃지용 · 매 데이터 업데이트 시 갱신)
+var CHAMP_PREV = {"아트록스|TOP": 1, "우르곳|TOP": 2, "클레드|TOP": 3, "볼리베어|TOP": 4, "오른|TOP": 5, "크산테|TOP": 6, "나르|TOP": 7, "워윅|TOP": 8, "잭스|TOP": 9, "암베사|TOP": 10, "마오카이|TOP": 11, "레넥톤|TOP": 12, "마오카이|JUG": 1, "리 신|JUG": 2, "녹턴|JUG": 3, "신 짜오|JUG": 4, "오공|JUG": 5, "워윅|JUG": 6, "판테온|JUG": 7, "바이|JUG": 8, "나피리|JUG": 9, "스카너|JUG": 10, "오리아나|MID": 1, "빅토르|MID": 2, "라이즈|MID": 3, "애니비아|MID": 4, "아칼리|MID": 5, "요네|MID": 6, "신드라|MID": 7, "에코|MID": 8, "다이애나|MID": 9, "애니|MID": 10, "로크|MID": 11, "리산드라|MID": 12, "카이사|ADC": 1, "애쉬|ADC": 2, "자야|ADC": 3, "루시안|ADC": 4, "트리스타나|ADC": 5, "진|ADC": 6, "바루스|ADC": 7, "세나|ADC": 8, "제리|ADC": 9, "이즈리얼|ADC": 10, "카르마|SUP": 1, "노틸러스|SUP": 2, "블리츠크랭크|SUP": 3, "파이크|SUP": 4, "브라움|SUP": 5, "레오나|SUP": 6, "쓰레쉬|SUP": 7, "소라카|SUP": 8, "룰루|SUP": 9, "브랜드|SUP": 10};
+var CHAMP_MIN = 2;  // 티어리스트 최소 표본 (기본 2게임)
+function setChampMin(n){ CHAMP_MIN = n; PAGE.champ = 0; renderChampion(); }
 // [임시] 티어리스트 제외 챔피언 — 부포지션 1회 픽이 라인 티어를 왜곡하는 케이스.
 // TODO: 라인별 챔프 티어 산정 시 부포지션 픽 처리 규칙 확정 후 이 목록 제거
-var TIER_LIST_EXCLUDE = ['사일러스'];
+var TIER_LIST_EXCLUDE = [];  // 라인 분리 집계로 사일러스 문제 해결 — 수동 제외 장치만 유지
 function renderChampion(){
   var totalGames = GAMES.length;
-  // 선수 구분 없이 챔피언별로 합산
+  // ── (챔피언 × 라인) 분리 집계 — 부포지션 픽이 다른 라인 티어를 오염시키지 않음 ──
   var agg = {};
-  Object.values(PLAYERS).forEach(function(p){
-    p.mostChamps.forEach(function(mc){
-      var cn=mc[0],cs=mc[1];
-      if(!agg[cn]) agg[cn]={games:0,wins:0,k:0,d:0,a:0};
-      agg[cn].games+=cs.games; agg[cn].wins+=cs.wins;
-      agg[cn].k+=cs.k; agg[cn].d+=cs.d; agg[cn].a+=cs.a;
+  GAME_DETAILS.forEach(function(g){
+    g.players.forEach(function(r){
+      var key = r.champ+'|'+r.pos;
+      if(!agg[key]) agg[key] = {champ:r.champ, pos:r.pos, games:0, wins:0, k:0, d:0, a:0};
+      agg[key].games++; if(r.team==='win') agg[key].wins++;
+      agg[key].k+=r.k; agg[key].d+=r.d; agg[key].a+=r.a;
     });
   });
-  var rows = Object.keys(agg).filter(function(cn){ return TIER_LIST_EXCLUDE.indexOf(cn) < 0; }).map(function(cn){
-    var c=agg[cn];
-    var losses=c.games-c.wins;
-    var wr=Math.round(c.wins/c.games*100);
-    var kda=c.d>0?Math.round((c.k+c.a)/c.d*100)/100:(c.k+c.a);
-    var pickRate=Math.round(c.games/totalGames*100);
-    var banRate=champBanRate(cn), immunity=champCounterImmunity(cn);
-    var score = champTierScore(wr, pickRate, banRate, immunity);
-    var pos = (CHAMP_STATS[cn] && CHAMP_STATS[cn].pos) ? CHAMP_STATS[cn].pos : '';
-    return {champ:cn, pos:pos, games:c.games, wins:c.wins, losses:losses, wr:wr, kda:kda, pickRate:pickRate, banRate:banRate, score:score};
+  // 점수: 보정승률(베이지안 C=3, 50% 수렴) 70% + 등장률(픽+밴) 30%
+  var CHAMP_C = 3;
+  function rowScore(games, wins, banGames){
+    var shrunk = (wins + CHAMP_C*0.5) / (games + CHAMP_C) * 100;
+    var presence = Math.min(100, (games + banGames) / totalGames * 100 * 1.5);
+    return shrunk*0.7 + presence*0.3;
+  }
+  var allRows = Object.keys(agg).filter(function(k){ return TIER_LIST_EXCLUDE.indexOf(agg[k].champ) < 0; }).map(function(k){
+    var c = agg[k];
+    var banGames = Math.round(champBanRate(c.champ)*totalGames/100);
+    var wr = Math.round(c.wins/c.games*100);
+    return {champ:c.champ, pos:c.pos, games:c.games, wins:c.wins, losses:c.games-c.wins,
+      wr:wr, kda:c.d>0?Math.round((c.k+c.a)/c.d*100)/100:(c.k+c.a),
+      pickRate:Math.round(c.games/totalGames*100), banRate:champBanRate(c.champ),
+      score:rowScore(c.games,c.wins,banGames)};
   });
-  // 라인 필터 적용
-  if(champPosFilter !== '전체') rows = rows.filter(function(r){return r.pos===champPosFilter;});
-  rows.sort(function(a,b){return b.score-a.score||b.kda-a.kda;});
+  // 라인별 순위 (변동 뱃지 기준: 해당 라인 · 2게임+ 자격 챔프 내 순위)
+  function laneRanks(pos){
+    var pool = allRows.filter(function(r){ return r.pos===pos && r.games>=2; })
+      .sort(function(a,b){ return b.score-a.score; });
+    var m={}; pool.forEach(function(r,i){ m[r.champ]=i+1; });
+    return m;
+  }
+  var rankNow={}; ['TOP','JUG','MID','ADC','SUP'].forEach(function(ps){ rankNow[ps]=laneRanks(ps); });
 
-  // 라인 필터 탭 (전체 맨 앞)
+  var rows = allRows.filter(function(r){ return r.games >= CHAMP_MIN; });
+  if(champPosFilter !== '전체') rows = rows.filter(function(r){ return r.pos===champPosFilter; });
+  rows.sort(function(a,b){ return b.score-a.score || b.games-a.games; });
+
+  // 1~3티어 밴드 (현재 필터 범위 내 백분위: 상위 20% = 1티어, ~60% = 2티어, 나머지 3티어)
+  var n = rows.length;
+  var t1 = Math.max(1, Math.ceil(n*0.2)), t2 = Math.max(t1+1, Math.ceil(n*0.6));
+  function tierOfIdx(i){ return i < t1 ? 1 : i < t2 ? 2 : 3; }
+  var TIER_STYLE = {1:{c:'#f0c030',bg:'rgba(240,192,48,.12)',bd:'rgba(240,192,48,.4)'},
+                    2:{c:'#4fc3e8',bg:'rgba(79,195,232,.1)',bd:'rgba(79,195,232,.35)'},
+                    3:{c:'#5a6a7e',bg:'rgba(90,106,126,.12)',bd:'rgba(90,106,126,.3)'}};
+
+  // 라인 필터 탭
   var POS_TABS=[['전체','전체'],['TOP','탑'],['JUG','정글'],['MID','미드'],['ADC','바텀'],['SUP','서폿']];
-  var tabHtml='<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">';
+  var tabHtml='<div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">';
   POS_TABS.forEach(function(pt){
     var active = champPosFilter===pt[0];
     tabHtml += '<div onclick="setChampPos(\''+pt[0]+'\')" style="cursor:pointer;padding:7px 16px;border-radius:8px;font-size:13px;font-weight:700;transition:.15s;'+
-      (active
-        ? 'background:var(--blue);color:#fff;border:1px solid var(--blue)'
-        : 'background:var(--bg2);color:var(--muted);border:1px solid var(--dim)')+'">'+pt[1]+'</div>';
+      (active?'background:var(--blue);color:#fff;border:1px solid var(--blue)':'background:var(--bg2);color:var(--muted);border:1px solid var(--dim)')+'">'+pt[1]+'</div>';
   });
   tabHtml += '</div>';
+  // 표본 필터
+  var minHtml='<div style="display:flex;gap:6px;margin-bottom:14px;align-items:center;flex-wrap:wrap"><span style="font-size:11px;color:var(--muted)">표본 필터</span>';
+  [1,2,3].forEach(function(mn){
+    var on=CHAMP_MIN===mn;
+    minHtml+='<div onclick="setChampMin('+mn+')" style="cursor:pointer;padding:5px 12px;border-radius:7px;font-size:11px;font-weight:700;'+
+      (on?'background:rgba(200,155,60,.12);border:1px solid var(--gold);color:var(--gold)':'background:var(--bg2);border:1px solid var(--dim);color:var(--muted)')+'">'+mn+'게임+</div>';
+  });
+  minHtml+='<span style="font-size:10px;color:var(--muted);margin-left:auto">'+rows.length+'개 항목 · 라인별 분리 집계 · 승률은 표본 적을수록 50%로 보정</span></div>';
 
   var chStart = PAGE.champ * PAGE_SIZE;
-  var html='<div class="card"><div class="ct">챔피언 티어리스트</div>'+tabHtml;
+  var html='<div class="card"><div class="ct">챔피언 티어리스트</div>'+tabHtml+minHtml;
   if(!rows.length){
-    html += '<div style="padding:30px;text-align:center;font-size:12px;color:var(--muted)">해당 라인의 챔피언 데이터가 아직 없어요</div></div>';
+    html += '<div style="padding:30px;text-align:center;font-size:12px;color:var(--muted)">'+CHAMP_MIN+'게임 이상 표본의 챔피언이 아직 없어요</div></div>';
     document.getElementById('page-champion').innerHTML=html;
     return;
   }
-  html += '<table class="rt"><thead><tr><th>#</th><th>챔피언</th><th>등급</th><th>픽률</th><th>밴률</th><th>전적</th><th>KDA</th></tr></thead><tbody>';
+  html += '<table class="rt"><thead><tr><th>#</th><th>변동</th><th>챔피언</th><th>티어</th><th>점수</th><th>전적</th><th>승률</th><th>픽률</th><th>밴률</th></tr></thead><tbody>';
   rows.slice(chStart, chStart + PAGE_SIZE).forEach(function(r,i){
     var rank = chStart + i + 1;
-    var wC=r.wr>=60?'var(--green)':r.wr>=50?'var(--gold)':'var(--red)';
-    var g=grd(r.score);
+    var tier = tierOfIdx(chStart + i);
+    var ts = TIER_STYLE[tier];
+    var wC = r.wr>=60?'var(--green)':r.wr>=50?'var(--gold)':'var(--red)';
+    // 변동 뱃지 (라인 내 2게임+ 순위 기준, 지난 업데이트 대비)
+    var mv='';
+    var prevR = (typeof CHAMP_PREV!=='undefined' && CHAMP_PREV[r.champ+'|'+r.pos]!=null) ? CHAMP_PREV[r.champ+'|'+r.pos] : null;
+    var curR = rankNow[r.pos] ? rankNow[r.pos][r.champ] : null;
+    if(r.games>=2 && curR!=null){
+      if(prevR==null) mv='<span style="font-size:8px;font-weight:800;color:var(--green);background:rgba(61,186,122,.1);border:1px solid rgba(61,186,122,.3);border-radius:4px;padding:1px 5px">NEW</span>';
+      else if(curR<prevR) mv='<span style="font-size:10px;font-weight:800;color:var(--green)">▲'+(prevR-curR)+'</span>';
+      else if(curR>prevR) mv='<span style="font-size:10px;font-weight:800;color:var(--red)">▼'+(curR-prevR)+'</span>';
+      else mv='<span style="font-size:10px;color:var(--muted)">—</span>';
+    } else mv='<span style="font-size:10px;color:var(--muted)">·</span>';
     html+='<tr><td><span class="rn'+(rank<=3?' top':'')+'">'+rank+'</span></td>'+
-      '<td><div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="goChampDetail(\''+r.champ+'\')"><div style="width:36px;height:36px;border-radius:7px;overflow:hidden;flex-shrink:0">'+cImg(r.champ,36,7)+'</div><span class="pn">'+r.champ+'</span>'+(champPosFilter==='전체'&&r.pos?' <span class="pb pb-'+r.pos+'" style="margin-left:2px">'+r.pos+'</span>':'')+'</div></td>'+
-      '<td><span style="display:inline-block;min-width:30px;text-align:center;padding:2px 8px;border-radius:5px;font-family:Bebas Neue,sans-serif;font-size:14px;letter-spacing:1px;font-weight:900;background:'+g.bg+';border:1px solid '+g.bd+';color:'+g.c+'">'+g.g+'</span></td>'+
-      '<td style="color:var(--text);font-family:Rajdhani,sans-serif;font-weight:600;font-size:13px">'+r.pickRate+'%</td>'+
-      '<td style="font-family:Rajdhani,sans-serif;font-weight:600;font-size:13px;color:'+(r.banRate>=50?'var(--red)':r.banRate>=20?'var(--gold)':'var(--muted)')+'">'+r.banRate+'%</td>'+
-      '<td style="font-size:12px"><span style="color:var(--muted)">'+r.games+'전</span> <span style="color:var(--green);font-weight:700">'+r.wins+'승</span> <span style="color:var(--red);font-weight:700">'+r.losses+'패</span> <span style="color:'+wC+';font-weight:700">'+r.wr+'%</span></td>'+
-      '<td style="color:'+kdaColor(r.kda)+';font-family:Rajdhani,sans-serif;font-weight:700">'+r.kda+'</td></tr>';
+      '<td>'+mv+'</td>'+
+      '<td><div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="goChampDetail(\''+r.champ+'\')"><div style="width:36px;height:36px;border-radius:7px;overflow:hidden;flex-shrink:0">'+cImg(r.champ,36,7)+'</div><span class="pn">'+r.champ+'</span>'+(champPosFilter==='전체'?' <span class="pb pb-'+r.pos+'" style="margin-left:2px">'+r.pos+'</span>':'')+'</div></td>'+
+      '<td><span style="display:inline-block;min-width:38px;text-align:center;padding:2px 8px;border-radius:5px;font-size:11px;font-weight:900;background:'+ts.bg+';border:1px solid '+ts.bd+';color:'+ts.c+'">'+tier+'티어</span></td>'+
+      '<td style="font-family:Rajdhani,sans-serif;font-weight:700;font-size:13px;color:var(--text2)">'+r.score.toFixed(1)+'</td>'+
+      '<td style="font-size:11px;color:var(--muted)">'+r.games+'전 '+r.wins+'승 '+r.losses+'패</td>'+
+      '<td style="font-family:Rajdhani,sans-serif;font-weight:700;color:'+wC+'">'+r.wr+'%</td>'+
+      '<td style="font-family:Rajdhani,sans-serif;font-weight:600;font-size:13px;color:var(--text)">'+r.pickRate+'%</td>'+
+      '<td style="font-family:Rajdhani,sans-serif;font-weight:600;font-size:13px;color:var(--text)">'+r.banRate.toFixed(0)+'%</td></tr>';
   });
-  html+='</tbody></table>' + pagerHtml('champ', rows.length) +
-    '<div style="margin-top:12px;font-size:10px;color:var(--muted)">등급 산정: 승률 70% + 픽률 30% 가중 · OP(90+) S(80+) A(70+) B(55+) C(45+) D(35+) F</div></div>';
+  html+='</tbody></table>';
+  html+=pagerHtml('champ', rows.length);
+  html+='</div>';
   document.getElementById('page-champion').innerHTML=html;
 }
 
