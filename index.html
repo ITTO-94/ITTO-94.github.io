@@ -4,17 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>HUSH.GG</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Bebas+Neue&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=Noto+Sans+KR:wght@300;400;500;700;900&family=Bebas+Neue&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#eef1f6;--bg1:#ffffff;--bg2:#f3f6fa;--bg3:#e7edf5;--border:#dbe2ec;--gold:#a8781c;--blue:#2287b8;--green:#1f9159;--red:#cf4444;--purp:#7a5bd6;--text:#4a5a6e;--text2:#1e2b3a;--muted:#8a99ab;--dim:#e4eaf2;--card:#ffffff;}
+:root{--bg:#f2efe7;--bg1:#ffffff;--bg2:#f0f6f4;--bg3:#dfeeea;--border:#d5e3df;--gold:#a8781c;--blue:#3368a0;--green:#199473;--red:#cf4444;--purp:#7a5bd6;--text:#41536a;--text2:#1c2b42;--muted:#84929e;--dim:#e2ede9;--card:#ffffff;}
 *{margin:0;padding:0;box-sizing:border-box;}
 /* 전체 배율 - 이 숫자만 바꾸면 사이트 전체 크기 조절 가능 (1.0 = 원래 크기) */
-body{zoom:1.45;background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;min-height:100vh;}
+body{zoom:1.45;background:var(--bg);color:var(--text);font-family:'IBM Plex Sans KR','Noto Sans KR',sans-serif;min-height:100vh;}
 
 /* NAV */
 .nav{background:var(--bg1);border-bottom:1px solid var(--border);padding:0 28px;height:52px;display:flex;align-items:center;gap:0;position:sticky;top:0;z-index:100;}
 .logo{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--gold);margin-right:28px;flex-shrink:0;cursor:pointer;}
-.logo span{color:#fff;opacity:.5;font-size:13px;letter-spacing:0;font-family:'Noto Sans KR',sans-serif;font-weight:300;margin-left:2px;}
+.logo span{color:#fff;opacity:.5;font-size:13px;letter-spacing:0;font-family:'IBM Plex Sans KR','Noto Sans KR',sans-serif;font-weight:300;margin-left:2px;}
 .nav-tabs{display:flex;height:100%;}
 .nav-tab{height:100%;padding:0 16px;display:flex;align-items:center;font-size:13px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:.2s;gap:5px;white-space:nowrap;}
 .nav-tab:hover{color:var(--text);}
@@ -22,7 +22,7 @@ body{zoom:1.45;background:var(--bg);color:var(--text);font-family:'Noto Sans KR'
 .nav-right{margin-left:auto;display:flex;gap:8px;align-items:center;flex-shrink:0;}
 .sel-wrap{display:flex;align-items:center;gap:6px;}
 .sel-label{font-size:11px;color:var(--muted);white-space:nowrap;}
-.nsel{padding:6px 26px 6px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:12px;font-family:'Noto Sans KR',sans-serif;appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%234a5a6e'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;}
+.nsel{padding:6px 26px 6px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:12px;font-family:'IBM Plex Sans KR','Noto Sans KR',sans-serif;appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%234a5a6e'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;}
 .nsel:focus{outline:none;border-color:var(--gold);}
 
 /* PAGES */
@@ -54,8 +54,8 @@ body{zoom:1.45;background:var(--bg);color:var(--text);font-family:'Noto Sans KR'
 .pn:hover{color:var(--gold);}
 .pb{display:inline-block;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;margin-left:4px;}
 .pb-TOP{background:rgba(194,106,29,.12);color:#c26a1d;}
-.pb-JUG{background:rgba(31,145,89,.1);color:var(--green);}
-.pb-MID{background:rgba(34,135,184,.1);color:var(--blue);}
+.pb-JUG{background:rgba(25,148,115,.1);color:var(--green);}
+.pb-MID{background:rgba(51,104,160,.1);color:var(--blue);}
 .pb-ADC{background:rgba(207,68,68,.1);color:var(--red);}
 .pb-SUP{background:rgba(122,91,214,.1);color:var(--purp);}
 .wr-bw{display:flex;align-items:center;gap:6px;}
@@ -81,14 +81,14 @@ body{zoom:1.45;background:var(--bg);color:var(--text);font-family:'Noto Sans KR'
 /* 선수 헤더 */
 .ph{display:flex;align-items:flex-start;gap:14px;padding-bottom:18px;border-bottom:1px solid var(--border);margin-bottom:18px;position:relative;}
 .ph-bg{position:absolute;inset:0;background:linear-gradient(90deg,rgba(200,155,60,.04),transparent 60%);pointer-events:none;}
-.ph-ava{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#e6ecf5,#d6e0ef);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--gold);flex-shrink:0;}
+.ph-ava{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#eaf3f0,#d5e8e2);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--gold);flex-shrink:0;}
 .ph-info{flex:1;}
 .ph-name{font-size:22px;font-weight:900;color:#fff;margin-bottom:2px;}
 .ph-sub{font-size:11px;color:var(--muted);margin-bottom:7px;}
 .badges{display:flex;gap:5px;flex-wrap:wrap;}
 .badge{padding:3px 8px;border-radius:4px;font-size:11px;font-weight:700;border:1px solid;}
-.b-kda{background:rgba(34,135,184,.08);border-color:rgba(34,135,184,.2);color:var(--blue);}
-.b-wr{background:rgba(31,145,89,.08);border-color:rgba(31,145,89,.2);color:var(--green);}
+.b-kda{background:rgba(51,104,160,.08);border-color:rgba(51,104,160,.2);color:var(--blue);}
+.b-wr{background:rgba(25,148,115,.08);border-color:rgba(25,148,115,.2);color:var(--green);}
 .b-elo{background:rgba(200,155,60,.08);border-color:rgba(200,155,60,.2);color:var(--gold);}
 .ph-champs{display:flex;gap:5px;margin-top:10px;}
 .ci{width:32px;height:32px;border-radius:7px;background:var(--bg2);border:1.5px solid var(--border);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--gold);}
@@ -119,7 +119,7 @@ body{zoom:1.45;background:var(--bg);color:var(--text);font-family:'Noto Sans KR'
 .mc-wp{font-size:11px;font-weight:700;font-family:'Rajdhani',sans-serif;}
 .mc-mid{text-align:center;min-width:96px;}
 .mc-kda{font-size:14px;font-weight:700;font-family:'Rajdhani',sans-serif;}
-.mc-kda .pt{font-size:11px;font-weight:500;font-family:'Noto Sans KR',sans-serif;}
+.mc-kda .pt{font-size:11px;font-weight:500;font-family:'IBM Plex Sans KR','Noto Sans KR',sans-serif;}
 .mc-kdadetail{font-size:11px;color:var(--muted);margin-top:2px;font-family:'Rajdhani',sans-serif;}
 .mc-right2{text-align:right;min-width:58px;}
 .mc-wrp{font-size:14px;font-weight:700;font-family:'Rajdhani',sans-serif;}
@@ -146,7 +146,7 @@ body{zoom:1.45;background:var(--bg);color:var(--text);font-family:'Noto Sans KR'
 
 /* 페이지네이션 */
 .pg-wrap{display:flex;justify-content:center;align-items:center;gap:12px;margin-top:10px;}
-.pg-btn{width:26px;height:26px;border-radius:6px;background:var(--bg2);border:1px solid var(--border);color:var(--muted);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;font-family:'Noto Sans KR',sans-serif;}
+.pg-btn{width:26px;height:26px;border-radius:6px;background:var(--bg2);border:1px solid var(--border);color:var(--muted);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;font-family:'IBM Plex Sans KR','Noto Sans KR',sans-serif;}
 .pg-btn:hover{border-color:var(--gold);color:var(--gold);}
 .pg-btn:disabled{opacity:.3;cursor:default;}
 .pg-btn:disabled:hover{border-color:var(--border);color:var(--muted);}
@@ -227,7 +227,7 @@ body{zoom:1.45;background:var(--bg);color:var(--text);font-family:'Noto Sans KR'
 .pw{font-size:13px;font-weight:800;white-space:nowrap;}
 .side-a-t{color:var(--red);}
 .side-b-t{color:var(--blue);}
-.pw-bar{flex:1;height:22px;background:rgba(34,135,184,.18);border-radius:11px;position:relative;overflow:hidden;}
+.pw-bar{flex:1;height:22px;background:rgba(51,104,160,.18);border-radius:11px;position:relative;overflow:hidden;}
 .pw-fill{height:100%;background:rgba(207,68,68,.35);border-right:2px solid var(--red);}
 .pw-bar span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;font-family:Rajdhani,sans-serif;}
 .lane{margin-bottom:12px;}
@@ -238,7 +238,7 @@ body{zoom:1.45;background:var(--bg);color:var(--text);font-family:'Noto Sans KR'
 .vs-elo{font-size:10px;color:var(--gold);margin-top:6px;font-family:'Noto Sans KR';font-weight:700;}
 .pcard{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;box-shadow:0 1px 3px rgba(30,43,58,.06);}
 .pcard.side-a{border-top:2px solid rgba(207,68,68,.5);}
-.pcard.side-b{border-top:2px solid rgba(34,135,184,.5);}
+.pcard.side-b{border-top:2px solid rgba(51,104,160,.5);}
 .pc-head{display:flex;align-items:center;gap:9px;margin-bottom:6px;}
 .pc-tier{width:26px;height:26px;flex-shrink:0;}
 .pc-name{flex:1;font-size:16px;font-weight:900;}
@@ -260,7 +260,7 @@ body{zoom:1.45;background:var(--bg);color:var(--text);font-family:'Noto Sans KR'
 .ban-info span{display:block;font-size:9px;color:var(--muted);font-weight:400;}
 .obs-row{font-size:11.5px;line-height:1.6;padding:7px 10px;background:var(--bg2);border:1px solid var(--dim);border-radius:8px;margin-bottom:6px;color:var(--text2);}
 .sb{font-size:8px;font-weight:700;color:var(--muted);background:rgba(90,106,126,.15);border:1px solid rgba(90,106,126,.3);border-radius:4px;padding:1px 5px;margin-left:4px;vertical-align:middle;}
-.sb-ok{color:var(--green);background:rgba(31,145,89,.1);border-color:rgba(31,145,89,.3);}
+.sb-ok{color:var(--green);background:rgba(25,148,115,.1);border-color:rgba(25,148,115,.3);}
 .sb-mid{color:var(--gold);background:rgba(200,155,60,.1);border-color:rgba(200,155,60,.3);}
 .warn{color:#c26a1d;font-weight:700;}
 .up{color:var(--green);} .down{color:var(--red);}
@@ -340,7 +340,7 @@ const ELO_HISTORY = {"백찬": [1000, 1009], "관모": [1000, 1010, 999, 1010, 1
 
 const POS_AVG={TOP:{DPM:558.5,VSPM:0.862,KP:0.47,DTPM:804.5,GPM:280,CCPM:0.766,DPG:1.44,CS:7.5,PIWA:0.36},JUG:{DPM:443.7,VSPM:1.121,KP:0.61,DTPM:972.2,GPM:260,CCPM:0.622,DPG:1.26,CS:5.5,PIWA:1.68},MID:{DPM:578.8,VSPM:0.957,KP:0.54,DTPM:649.9,GPM:290,CCPM:0.681,DPG:1.46,CS:7.8,PIWA:0.80},ADC:{DPM:667.6,VSPM:0.886,KP:0.58,DTPM:546.5,GPM:310,CCPM:0.490,DPG:1.48,CS:8.5,PIWA:1.18},SUP:{DPM:325.4,VSPM:2.013,KP:0.59,DTPM:497.4,GPM:220,CCPM:0.964,DPG:1.24,CS:1.5,PIWA:3.67},전체:{DPM:515,VSPM:1.17,KP:0.56,DTPM:694,GPM:272,CCPM:0.7,DPG:1.38,CS:6.2,PIWA:1.54}};
 const CAT_W={TOP:{전투:30,시야:20,생존:25,성장:15,챔프폭:10},JUG:{전투:25,시야:30,생존:20,성장:15,챔프폭:10},MID:{전투:35,시야:20,생존:20,성장:15,챔프폭:10},ADC:{전투:40,시야:15,생존:20,성장:20,챔프폭:5},SUP:{전투:25,시야:35,생존:20,성장:10,챔프폭:10},전체:{전투:31,시야:24,생존:21,성장:15,챔프폭:9}};
-const CAT_COLORS=['#c07a10','#2287b8','#1f9159','#7a5bd6','#c33b6b'];
+const CAT_COLORS=['#c07a10','#3368a0','#199473','#7a5bd6','#c33b6b'];
 
 function norm(v,a){return Math.min(100,Math.max(0,(v/a)*50));}
 // 포지션별 PiWA 기준: 현재 데이터에서 게임 가중 평균으로 자동 산출 (수동 갱신 불필요)
@@ -376,7 +376,7 @@ function calcCats(p,pos){
   };
 }
 function calcTotal(cats,pos){var w=CAT_W[pos]||CAT_W['전체'];return cats.전투*(w.전투/100)+cats.시야*(w.시야/100)+cats.생존*(w.생존/100)+cats.성장*(w.성장/100)+cats.챔프폭*(w.챔프폭/100);}
-function grd(s){if(s>=90)return{g:'OP',c:'#b8860f',bg:'rgba(240,192,48,.1)',bd:'rgba(240,192,48,.3)'};if(s>=80)return{g:'S',c:'#8f7434',bg:'rgba(143,116,52,.08)',bd:'rgba(143,116,52,.2)'};if(s>=70)return{g:'A',c:'#2287b8',bg:'rgba(34,135,184,.08)',bd:'rgba(34,135,184,.2)'};if(s>=55)return{g:'B',c:'#1f9159',bg:'rgba(31,145,89,.08)',bd:'rgba(31,145,89,.2)'};if(s>=45)return{g:'C',c:'#6b7d90',bg:'rgba(107,125,144,.07)',bd:'rgba(107,125,144,.15)'};if(s>=35)return{g:'D',c:'#c26a1d',bg:'rgba(194,106,29,.08)',bd:'rgba(194,106,29,.2)'};return{g:'F',c:'#cf4444',bg:'rgba(207,68,68,.08)',bd:'rgba(207,68,68,.2)'};}
+function grd(s){if(s>=90)return{g:'OP',c:'#b8860f',bg:'rgba(240,192,48,.1)',bd:'rgba(240,192,48,.3)'};if(s>=80)return{g:'S',c:'#8f7434',bg:'rgba(143,116,52,.08)',bd:'rgba(143,116,52,.2)'};if(s>=70)return{g:'A',c:'#3368a0',bg:'rgba(51,104,160,.08)',bd:'rgba(51,104,160,.2)'};if(s>=55)return{g:'B',c:'#199473',bg:'rgba(25,148,115,.08)',bd:'rgba(25,148,115,.2)'};if(s>=45)return{g:'C',c:'#6b7d90',bg:'rgba(107,125,144,.07)',bd:'rgba(107,125,144,.15)'};if(s>=35)return{g:'D',c:'#c26a1d',bg:'rgba(194,106,29,.08)',bd:'rgba(194,106,29,.2)'};return{g:'F',c:'#cf4444',bg:'rgba(207,68,68,.08)',bd:'rgba(207,68,68,.2)'};}
 // ── 선수 능력치 백분위 등급 ──────────────────────────────
 // 등급은 고정 점수컷이 아니라 "전체 선수 대비 상대 위치(백분위)"로 산정.
 // 밴드: OP 상위6% · S 15% · A 30% · B 60% · C 82% · D 94% · 나머지 F
@@ -384,8 +384,8 @@ function grd(s){if(s>=90)return{g:'OP',c:'#b8860f',bg:'rgba(240,192,48,.1)',bd:'
 var GSTYLE={
   OP:{c:'#b8860f',bg:'rgba(240,192,48,.1)',bd:'rgba(240,192,48,.3)'},
   S :{c:'#8f7434',bg:'rgba(143,116,52,.08)',bd:'rgba(143,116,52,.2)'},
-  A :{c:'#2287b8',bg:'rgba(34,135,184,.08)',bd:'rgba(34,135,184,.2)'},
-  B :{c:'#1f9159',bg:'rgba(31,145,89,.08)',bd:'rgba(31,145,89,.2)'},
+  A :{c:'#3368a0',bg:'rgba(51,104,160,.08)',bd:'rgba(51,104,160,.2)'},
+  B :{c:'#199473',bg:'rgba(25,148,115,.08)',bd:'rgba(25,148,115,.2)'},
   C :{c:'#6b7d90',bg:'rgba(107,125,144,.07)',bd:'rgba(107,125,144,.15)'},
   D :{c:'#c26a1d',bg:'rgba(194,106,29,.08)',bd:'rgba(194,106,29,.2)'},
   F :{c:'#cf4444',bg:'rgba(207,68,68,.08)',bd:'rgba(207,68,68,.2)'}
@@ -802,15 +802,15 @@ function renderPlayer() {
     {val: dsx.ccpm,  label: 'CCPM',       rank: rk('ccpm'),    color: '#c07a10'},
     {val: dsx.dpmPct+'%', label: '%DPM (팀딜비중)', rank: rk('dpmPct'), color: '#c07a10'},
     // 행3: 시야+생존
-    {val: dsx.vspm,  label: 'VSPM (시야)', rank: rk('vspm'),   color: '#2287b8'},
-    {val: dsx.piwa,  label: 'PiWA/10분',  rank: rk('piwa'),   color: '#2287b8'},
+    {val: dsx.vspm,  label: 'VSPM (시야)', rank: rk('vspm'),   color: '#3368a0'},
+    {val: dsx.piwa,  label: 'PiWA/10분',  rank: rk('piwa'),   color: '#3368a0'},
     {val: dsx.dtpm,  label: 'DTPM (받은딜)',rank: rk('dtpm'),  color: '#7a5bd6'},
-    {val: dsx.gpm,   label: 'GPM (골드)',  rank: rk('gpm'),    color: '#1f9159'},
-    {val: dsx.cs_per_min, label: 'CS/분', rank: rk('cs_per_min'), color: '#1f9159'},
+    {val: dsx.gpm,   label: 'GPM (골드)',  rank: rk('gpm'),    color: '#199473'},
+    {val: dsx.cs_per_min, label: 'CS/분', rank: rk('cs_per_min'), color: '#199473'},
   ];
 
   var html = '<div class="ph fi"><div class="ph-bg"></div>'+
-    '<div class="ph-ava" style="border-color:'+tierOf(p.elo).c+';background:linear-gradient(135deg,'+tierOf(p.elo).c+'18,#e6ecf5);">'+tierIcon(p.elo,44)+'</div>'+
+    '<div class="ph-ava" style="border-color:'+tierOf(p.elo).c+';background:linear-gradient(135deg,'+tierOf(p.elo).c+'18,#eaf3f0);">'+tierIcon(p.elo,44)+'</div>'+
     '<div class="ph-info">'+
     '<div class="ph-name">'+name+'</div>'+
     '<div class="ph-sub">'+p.games+'게임 플레이 · '+p.pos+' 포지션</div>'+
@@ -844,8 +844,8 @@ function renderPlayer() {
   // ── 선수 분석 리포트 (서술형 분석글 + 폼/베스트/꿀조합) ──
   (function(){
     var report = analyzeePlayer(name);
-    html += '<div class="card fi" style="border-color:rgba(34,135,184,.25);background:linear-gradient(180deg,rgba(34,135,184,.04),transparent)">'+
-      '<div class="ct" style="color:#2287b8">📋 선수 분석 리포트</div>';
+    html += '<div class="card fi" style="border-color:rgba(51,104,160,.25);background:linear-gradient(180deg,rgba(51,104,160,.04),transparent)">'+
+      '<div class="ct" style="color:#3368a0">📋 선수 분석 리포트</div>';
 
     // 자격 미달: 판수 부족 안내
     if(!report.qualified){
@@ -1053,7 +1053,7 @@ function renderPlayer() {
   // CP
   html += '<div class="card fi fi1"><div class="ct">CP · Carry Point</div><div class="cp-grid">'+
     '<div class="cp-box" style="border-color:rgba(200,155,60,.2)"><div class="cp-bar" style="background:var(--gold)"></div><div class="cpl">평균</div><div class="cpv" style="color:var(--gold)">'+p.cp_avg+'</div><div class="cpt" style="color:var(--muted)">AVG</div></div>'+
-    '<div class="cp-box" style="border-color:rgba(31,145,89,.2)"><div class="cp-bar" style="background:var(--green)"></div><div class="cpl">최고</div><div class="cpv" style="color:var(--green)">'+p.cp_best+'</div><div class="cpt" style="color:var(--green)">▲ BEST</div></div>'+
+    '<div class="cp-box" style="border-color:rgba(25,148,115,.2)"><div class="cp-bar" style="background:var(--green)"></div><div class="cpl">최고</div><div class="cpv" style="color:var(--green)">'+p.cp_best+'</div><div class="cpt" style="color:var(--green)">▲ BEST</div></div>'+
     '<div class="cp-box" style="border-color:rgba(207,68,68,.2)"><div class="cp-bar" style="background:var(--red)"></div><div class="cpl">최저</div><div class="cpv" style="color:var(--red)">'+p.cp_worst+'</div><div class="cpt" style="color:var(--red)">▼ WORST</div></div>'+
     '</div></div>';
 
@@ -1286,9 +1286,9 @@ function renderChampDetail(){
     {v:cs.dpm, l:'DPM', c:'#c07a10'}, {v:cs.dpg, l:'DPG', c:'#c07a10'},
     {v:cs.kp+'%', l:'%KP', c:'#c07a10'}, {v:cs.ccpm, l:'CCPM', c:'#c07a10'},
     {v:cs.dpmPct+'%', l:'%DPM', c:'#c07a10'},
-    {v:cs.vspm, l:'VSPM', c:'#2287b8'}, {v:cs.piwa, l:'PiWA', c:'#2287b8'},
-    {v:cs.dtpm, l:'DTPM', c:'#7a5bd6'}, {v:cs.gpm, l:'GPM', c:'#1f9159'},
-    {v:cs.cs_per_min, l:'CS/분', c:'#1f9159'},
+    {v:cs.vspm, l:'VSPM', c:'#3368a0'}, {v:cs.piwa, l:'PiWA', c:'#3368a0'},
+    {v:cs.dtpm, l:'DTPM', c:'#7a5bd6'}, {v:cs.gpm, l:'GPM', c:'#199473'},
+    {v:cs.cs_per_min, l:'CS/분', c:'#199473'},
   ];
   h += '<div class="card fi fi2"><div class="ct">상세 지표 (플레이 평균)</div><div class="stat-card-grid">'+
     dCards.map(function(d){
@@ -1455,7 +1455,7 @@ function eloChartSvg(name, w, h){
   var line = pts.map(function(p){return p[0]+','+p[1];}).join(' ');
   var last = hist[hist.length-1], first = hist[0];
   var chg = last - first;
-  var col = chg >= 0 ? '#1f9159' : '#cf4444';
+  var col = chg >= 0 ? '#199473' : '#cf4444';
   var svg = '<svg width="'+w+'" height="'+h+'" style="display:block">';
   svg += '<polyline points="'+line+'" fill="none" stroke="'+col+'" stroke-width="2"/>';
   pts.forEach(function(p,i){
@@ -1499,7 +1499,7 @@ function scoreboardHtml(no){
         '<td style="padding:4px;text-align:center;color:#c07a10">'+p.dmg.toLocaleString()+'</td>'+
         '<td style="padding:4px;text-align:center;color:#7a5bd6">'+p.dt.toLocaleString()+'</td>'+
         '<td style="padding:4px;text-align:center;color:#8f7434">'+p.gold.toLocaleString()+'</td>'+
-        '<td style="padding:4px;text-align:center;color:#2287b8">'+p.vs+'</td>'+
+        '<td style="padding:4px;text-align:center;color:#3368a0">'+p.vs+'</td>'+
         '<td style="padding:4px;text-align:center;font-weight:700;color:var(--purp)">'+p.cp+'</td></tr>';
     });
     return h + '</tbody></table>';
@@ -1620,7 +1620,7 @@ function renderBalance(){
     }
     html += '<div class="card fi fi1"><div class="ct">추천 조합 <span style="font-weight:400;color:var(--muted);margin-left:6px">'+(BAL_IDX+1)+'번째 추천 · ELO 격차 '+c.gap+'점</span></div>'+
       '<div class="bal-vs" style="display:flex;gap:12px;align-items:stretch">'+
-      teamBox(c.a, c.sumA, '🔵 블루팀', '#2287b8', c.posA)+
+      teamBox(c.a, c.sumA, '🔵 블루팀', '#3368a0', c.posA)+
       '<div style="display:flex;align-items:center;font-size:14px;font-weight:900;color:var(--muted)">VS</div>'+
       teamBox(c.b, c.sumB, '🔴 레드팀', '#cf4444', c.posB)+
       '</div>'+
@@ -1905,18 +1905,18 @@ function renderAward(){
     }).sort(function(a,b){ return b.chg-a.chg; });
     var r = rookies[0];
     if(!r || r.chg <= 0){
-      html += '<div class="card fi fi1" style="margin-top:14px"><div class="ct" style="color:#2287b8">🌟 Rookie of the Season</div><div style="padding:14px;text-align:center;font-size:11px;color:var(--muted)">아직 급등 기록이 없어요</div></div>';
+      html += '<div class="card fi fi1" style="margin-top:14px"><div class="ct" style="color:#3368a0">🌟 Rookie of the Season</div><div style="padding:14px;text-align:center;font-size:11px;color:var(--muted)">아직 급등 기록이 없어요</div></div>';
       return;
     }
     var ties = rookies.filter(function(x){return x.chg===r.chg;});
     var pick = ties.sort(function(a,b){return awardScore(PLAYERS[b.name]||{})-awardScore(PLAYERS[a.name]||{});})[0];
     var ec = eloChartSvg(pick.name, 420, 130);
-    html += '<div class="card fi fi1" style="margin-top:14px;border-color:rgba(34,135,184,.3)"><div class="ct" style="color:#2287b8">🌟 Rookie of the Season <span style="font-weight:400;color:var(--muted);margin-left:6px">최근 30경기 ELO 최대 급등</span></div>'+
+    html += '<div class="card fi fi1" style="margin-top:14px;border-color:rgba(51,104,160,.3)"><div class="ct" style="color:#3368a0">🌟 Rookie of the Season <span style="font-weight:400;color:var(--muted);margin-left:6px">최근 30경기 ELO 최대 급등</span></div>'+
       '<div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">'+
       '<div style="text-align:center;min-width:130px">'+
       '<div style="width:48px;height:48px;margin:0 auto 8px">'+tierIcon(PLAYERS[pick.name]?PLAYERS[pick.name].elo:1000,48)+'</div>'+
       '<div class="pn" style="font-size:18px;font-weight:900" onclick="goPlayer(\''+pick.name+'\')">'+pick.name+'</div>'+
-      '<div style="font-size:20px;font-weight:900;font-family:Rajdhani,sans-serif;color:#1f9159;margin-top:4px">▲ +'+pick.chg+'</div></div>'+
+      '<div style="font-size:20px;font-weight:900;font-family:Rajdhani,sans-serif;color:#199473;margin-top:4px">▲ +'+pick.chg+'</div></div>'+
       '<div style="flex:1;min-width:280px;background:var(--bg2);border:1px solid var(--dim);border-radius:10px;padding:10px">'+eloChartSvg(pick.name,420,130).svg+'</div>'+
       '</div></div>';
   })();
@@ -2128,7 +2128,7 @@ function renderChampion(){
   var t1 = Math.max(1, Math.ceil(n*0.2)), t2 = Math.max(t1+1, Math.ceil(n*0.6));
   function tierOfIdx(i){ return i < t1 ? 1 : i < t2 ? 2 : 3; }
   var TIER_STYLE = {1:{c:'#b8860f',bg:'rgba(240,192,48,.12)',bd:'rgba(240,192,48,.4)'},
-                    2:{c:'#2287b8',bg:'rgba(34,135,184,.1)',bd:'rgba(34,135,184,.35)'},
+                    2:{c:'#3368a0',bg:'rgba(51,104,160,.1)',bd:'rgba(51,104,160,.35)'},
                     3:{c:'#5a6a7e',bg:'rgba(90,106,126,.12)',bd:'rgba(90,106,126,.3)'}};
 
   // 라인 필터 탭
@@ -2167,7 +2167,7 @@ function renderChampion(){
     var prevR = (typeof CHAMP_PREV!=='undefined' && CHAMP_PREV[r.champ+'|'+r.pos]!=null) ? CHAMP_PREV[r.champ+'|'+r.pos] : null;
     var curR = rankNow[r.pos] ? rankNow[r.pos][r.champ] : null;
     if(r.games>=2 && curR!=null){
-      if(prevR==null) mv='<span style="font-size:8px;font-weight:800;color:var(--green);background:rgba(31,145,89,.1);border:1px solid rgba(31,145,89,.3);border-radius:4px;padding:1px 5px">NEW</span>';
+      if(prevR==null) mv='<span style="font-size:8px;font-weight:800;color:var(--green);background:rgba(25,148,115,.1);border:1px solid rgba(25,148,115,.3);border-radius:4px;padding:1px 5px">NEW</span>';
       else if(curR<prevR) mv='<span style="font-size:10px;font-weight:800;color:var(--green)">▲'+(prevR-curR)+'</span>';
       else if(curR>prevR) mv='<span style="font-size:10px;font-weight:800;color:var(--red)">▼'+(curR-prevR)+'</span>';
       else mv='<span style="font-size:10px;color:var(--muted)">—</span>';
@@ -2289,9 +2289,9 @@ function renderNews(){
     var rp = PLAYERS[topRiser.name];
     html += '<div style="display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--dim);border-radius:9px;padding:9px 11px">'+
       '<div style="width:30px;height:30px;flex-shrink:0">'+tierIcon(rp?rp.elo:1000,30)+'</div>'+
-      '<div style="flex:1;min-width:0"><div style="font-size:9px;color:#1f9159;font-weight:700">📈 ELO 급상승</div>'+
+      '<div style="flex:1;min-width:0"><div style="font-size:9px;color:#199473;font-weight:700">📈 ELO 급상승</div>'+
       '<div class="pn" style="font-size:14px;font-weight:800" onclick="goPlayer(\''+topRiser.name+'\')">'+topRiser.name+'</div></div>'+
-      '<div style="text-align:right;flex-shrink:0"><div style="font-size:14px;font-weight:900;font-family:Rajdhani,sans-serif;color:#1f9159">▲+'+topRiser.chg+'</div>'+
+      '<div style="text-align:right;flex-shrink:0"><div style="font-size:14px;font-weight:900;font-family:Rajdhani,sans-serif;color:#199473">▲+'+topRiser.chg+'</div>'+
       '<div style="font-size:8px;color:var(--muted)">최근 3경기</div></div></div>';
   }
   html += '</div>';
@@ -2319,7 +2319,7 @@ function renderNews(){
       if(ups.length){
         html += '<div style="margin-bottom:'+(downs.length?'10px':'0')+'"><div style="font-size:10px;font-weight:700;color:var(--green);margin-bottom:6px">▲ 승급</div>';
         ups.forEach(function(c){
-          html += '<div style="display:flex;align-items:center;gap:8px;background:rgba(31,145,89,.06);border:1px solid rgba(31,145,89,.2);border-radius:8px;padding:7px 9px;margin-bottom:5px">'+
+          html += '<div style="display:flex;align-items:center;gap:8px;background:rgba(25,148,115,.06);border:1px solid rgba(25,148,115,.2);border-radius:8px;padding:7px 9px;margin-bottom:5px">'+
             '<div style="width:22px;height:22px;flex-shrink:0">'+tierIcon(c.elo,22)+'</div>'+
             '<span class="pn" style="flex:1;font-size:12px;font-weight:700;min-width:0" onclick="goPlayer(\''+c.name+'\')">'+c.name+'</span>'+
             '<span style="font-size:9px;color:var(--muted)">'+c.from.label+'</span>'+
@@ -2507,7 +2507,7 @@ function playerCard(name,pos,side,idx){
       '<div class="pc-grade" style="color:var(--muted);border-color:var(--dim);background:var(--bg2)">?</div></div>'+
       ((md&&md.n===name)?'<div class="pc-line" style="color:var(--gold);font-weight:700">시딩 점수 '+md.s.toLocaleString()+(md.note?' <span class="warn">('+md.note+')</span>':'')+'</div>':'')+
       '<div class="pc-line muted">내전 데이터가 아직 없어요 — 시딩 점수는 솔로랭크 기반 산정</div>'+
-      ((md&&md.opgg)?'<a href="'+md.opgg+'" target="_blank" rel="noopener" style="display:block;text-align:center;margin:10px 0;padding:8px;border-radius:8px;background:rgba(34,135,184,.08);border:1px solid rgba(34,135,184,.3);color:var(--blue);font-size:12px;font-weight:700;text-decoration:none">🔍 전적 검색으로 솔로랭크 확인 →</a>'+
+      ((md&&md.opgg)?'<a href="'+md.opgg+'" target="_blank" rel="noopener" style="display:block;text-align:center;margin:10px 0;padding:8px;border-radius:8px;background:rgba(51,104,160,.08);border:1px solid rgba(51,104,160,.3);color:var(--blue);font-size:12px;font-weight:700;text-decoration:none">🔍 전적 검색으로 솔로랭크 확인 →</a>'+
         '<div class="pc-line muted" style="text-align:center">최근 티어·주력 챔피언은 전적 사이트 참고</div>':'')+
       '<div class="empty" style="padding:'+((md&&md.opgg)?'14px':'30px')+' 10px">첫 경기 후 레이더·전적이 생성됩니다</div>'+
       '</div>';
@@ -2537,7 +2537,7 @@ function playerCard(name,pos,side,idx){
       var losses=d.games-d.wins;
       var wr=Math.round(d.wins/d.games*100);
       var wrC = wr>=60?'var(--green)':wr>=50?'var(--gold)':'var(--red)';
-      return '<div class="pc-champ" style="border-color:'+(wr>=60?'rgba(31,145,89,.3)':wr>=50?'rgba(200,155,60,.3)':'rgba(207,68,68,.3)')+'">'+cImg(c,30,6)+
+      return '<div class="pc-champ" style="border-color:'+(wr>=60?'rgba(25,148,115,.3)':wr>=50?'rgba(200,155,60,.3)':'rgba(207,68,68,.3)')+'">'+cImg(c,30,6)+
         '<div class="pc-cinfo">'+c+
         '<span>'+d.games+'전 <b style="color:var(--green)">'+d.wins+'승</b> <b style="color:'+(losses>0?'var(--red)':'var(--muted)')+'">'+losses+'패</b>'+
         ' <b style="color:'+wrC+'">'+wr+'%</b></span></div></div>';
