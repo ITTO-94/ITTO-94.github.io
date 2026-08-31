@@ -1007,25 +1007,26 @@ function renderPlayer() {
     // 2게임+ 듀오만 대상 (1게임 100%/0% 노이즈 제거) — 부족하면 전체로 폴백
     var qual = duos.filter(function(d){ return d.games >= 2; });
     if(!qual.length) qual = duos;
-    var best = qual.slice().sort(function(a,b){return b.wr-a.wr||b.games-a.games;}).slice(0,5);
+    // 시너지 지수순 정렬 — 4전 4승(79)이 2전 2승(70)보다 위 (판수 보정)
+    var best = qual.slice().sort(function(a,b){return b.idx-a.idx||b.games-a.games;}).slice(0,5);
     var bestNames = best.map(function(d){return d.name;});
-    var minWr = Math.min.apply(null, qual.map(function(d){return d.wr;}));
-    var maxWr = Math.max.apply(null, qual.map(function(d){return d.wr;}));
-    // 워스트 = '실제로 지는 조합'(승률 50% 미만)만. 단순 하위권 채우기로
-    // 승률 75%·100% 듀오가 워스트에 끌려오던 문제 수정.
-    var worst = qual.filter(function(d){return bestNames.indexOf(d.name) < 0 && d.wr < 50;})
-      .sort(function(a,b){return a.wr-b.wr||b.games-a.games;}).slice(0,5);
+    var minWr = Math.min.apply(null, qual.map(function(d){return d.idx;}));
+    var maxWr = Math.max.apply(null, qual.map(function(d){return d.idx;}));
+    // 워스트 = 지수 50 미만(지는 조합)만, 지수 낮은 순
+    var worst = qual.filter(function(d){return bestNames.indexOf(d.name) < 0 && d.idx < 50;})
+      .sort(function(a,b){return a.idx-b.idx||b.games-a.games;}).slice(0,5);
     function duoRow(d){
-      var c = d.wr>=60?'var(--green)':d.wr>=50?'var(--gold)':'var(--red)';
+      var c = d.idx>=60?'var(--green)':d.idx>=50?'var(--gold)':'var(--red)';
       return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:8px;background:var(--bg2);border:1px solid var(--dim);margin-bottom:6px">'+
         '<div><div class="pn" style="font-size:14px" onclick="goPlayer(\''+d.name+'\')">'+d.name+'</div>'+
-        '<div style="font-size:11px;color:var(--muted);margin-top:2px">'+d.games+'전 '+d.wins+'승 '+(d.games-d.wins)+'패 '+d.wr+'% · 함께</div></div>'+
-        '<div style="font-size:18px;font-weight:700;font-family:Rajdhani,sans-serif;color:'+c+'">'+d.wr+'%</div></div>';
+        '<div style="font-size:11px;color:var(--muted);margin-top:2px">'+d.games+'전 '+d.wins+'승 '+(d.games-d.wins)+'패 ('+d.wr+'%) · 함께</div></div>'+
+        '<div style="text-align:right"><div style="font-family:Rajdhani,sans-serif;font-weight:700;font-size:18px;color:'+c+'">'+d.idx+'</div>'+
+        '<div style="font-size:9px;color:var(--muted)">시너지 지수</div></div></div>';
     }
-    html += '<div class="card fi fi2"><div class="ct">베스트 듀오 · 최근 30경기</div>'+best.map(duoRow).join('')+'</div>';
+    html += '<div class="card fi fi2"><div class="ct">베스트 듀오 <span style="font-weight:400;font-size:11px;color:var(--muted);margin-left:6px">시너지 지수순 · 판수 보정(50 수렴) · 최근 30경기</span></div>'+best.map(duoRow).join('')+'</div>';
     // 모든 듀오 승률이 같거나 워스트 후보가 없으면 표본 부족 안내
     var worstBody = (minWr === maxWr || worst.length === 0)
-      ? '<div style="padding:14px 12px;border-radius:8px;background:var(--bg2);border:1px dashed var(--dim);text-align:center;font-size:11px;color:var(--muted)">함께 지는 조합(승률 50% 미만)이 아직 없어요<br>경기가 쌓이면 표시됩니다</div>'
+      ? '<div style="padding:14px 12px;border-radius:8px;background:var(--bg2);border:1px dashed var(--dim);text-align:center;font-size:11px;color:var(--muted)">시너지 지수 50 미만(지는 조합)이 아직 없어요<br>경기가 쌓이면 표시됩니다</div>'
       : worst.map(duoRow).join('');
     html += '<div class="card fi fi3"><div class="ct">워스트 듀오</div>'+worstBody+'</div>';
   }
@@ -1430,7 +1431,10 @@ function rivalStats(name){
     });
   });
   return Object.keys(rec).map(function(n){
-    return {name:n, games:rec[n].games, wins:rec[n].wins, wr:Math.round(rec[n].wins/rec[n].games*100)};
+    var g=rec[n].games, w=rec[n].wins;
+    // 시너지 지수: 승률지수와 동일한 베이지안 보정(C=3, 50% 수렴) — 판수 적은 듀오의 극단값 완충
+    var idx=Math.round((w + 3*0.5)/(g + 3)*100);
+    return {name:n, games:g, wins:w, wr:Math.round(w/g*100), idx:idx};
   });
 }
 // ── 포지션별 전적 ──
@@ -1708,7 +1712,10 @@ function duoStats(name){
     });
   });
   return Object.keys(rec).map(function(n){
-    return {name:n, games:rec[n].games, wins:rec[n].wins, wr:Math.round(rec[n].wins/rec[n].games*100)};
+    var g=rec[n].games, w=rec[n].wins;
+    // 시너지 지수: 승률지수와 동일한 베이지안 보정(C=5, 50% 수렴)
+    var idx=Math.round((w + 5*0.5)/(g + 5)*100);
+    return {name:n, games:g, wins:w, wr:Math.round(w/g*100), idx:idx};
   });
 }
 
