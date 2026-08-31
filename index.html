@@ -2701,8 +2701,8 @@ function renderScout(){
   },30);
 }
 
-// URL에 로스터 파라미터가 있으면 내전 분석 탭으로 자동 진입
-if(_pa&&_pb){ showPage('scout'); }
+// 첫 진입은 항상 '오늘의 경기' 탭 (로스터 파라미터 유무 무관)
+showPage('scout');
 
 </script>
 </body>
