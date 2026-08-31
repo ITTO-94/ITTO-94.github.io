@@ -716,43 +716,95 @@ function analyzeePlayer(name){
     form:form, bestPos:bestPos, bestChamp:bestChamp, synergy:synergy};
 }
 
+// ── 선수탭 포지션 필터 상태 ──
+var PPOS='전체', PPOS_LAST=null;
+function setPlayerPos(ps){ PPOS=ps; renderPlayer(); }
+// 특정 포지션 기준 전체 지표 (게임별 비율 평균 — 상세 지표 카드용)
+function posFullStats(name,pos){
+  var rows=[];
+  GAME_DETAILS.forEach(function(gm){
+    gm.players.forEach(function(pl){
+      if(pl.name!==name||pl.pos!==pos) return;
+      var mates=gm.players.filter(function(x){return x.team===pl.team;});
+      var tk=mates.reduce(function(s,x){return s+x.k;},0);
+      var td=mates.reduce(function(s,x){return s+x.dmg;},0);
+      rows.push({pl:pl,dur:gm.durMin,tk:tk,td:td});
+    });
+  });
+  function mean(f){var xs=rows.map(f).filter(function(v){return typeof v==='number'&&isFinite(v);});return xs.length?xs.reduce(function(s,x){return s+x;},0)/xs.length:0;}
+  var g=rows.length,w=rows.filter(function(r){return r.pl.team==='win';}).length;
+  var sk=rows.reduce(function(s,r){return s+r.pl.k;},0),sd=rows.reduce(function(s,r){return s+r.pl.d;},0),sa=rows.reduce(function(s,r){return s+r.pl.a;},0);
+  return {games:g,wins:w,losses:g-w,wr:g?Math.round(w/g*100):0,
+    kda:sd>0?Math.round((sk+sa)/sd*100)/100:(sk+sa),
+    cp_avg:Math.round(mean(function(r){return r.pl.cp;})*100)/100,
+    dpm:Math.round(mean(function(r){return r.pl.dpm;})),
+    dpg:Math.round(mean(function(r){return r.pl.gold?r.pl.dmg/r.pl.gold:null;})*100)/100,
+    kp:Math.round(mean(function(r){return r.tk?(r.pl.k+r.pl.a)/r.tk*100:null;})),
+    ccpm:Math.round(mean(function(r){return r.pl.cc/r.dur;})*100)/100,
+    dpmPct:Math.round(mean(function(r){return r.td?r.pl.dmg/r.td*100:null;})*10)/10,
+    vspm:Math.round(mean(function(r){return r.pl.vs/r.dur;})*100)/100,
+    piwa:Math.round(mean(function(r){return r.pl.piwa;})*100)/100,
+    dtpm:Math.round(mean(function(r){return r.pl.dt/r.dur;})),
+    gpm:Math.round(mean(function(r){return r.pl.gold/r.dur;})),
+    cs_per_min:Math.round(mean(function(r){return (typeof r.pl.cs==='number')?r.pl.cs/r.dur:null;})*10)/10};
+}
+// 특정 포지션 기준 챔피언 전적 (champ=null이면 포지션 전체 합산)
+function playerChampStatPos(name,champ,pos){
+  var g=0,w=0,k=0,d=0,a=0,cps=[];
+  GAME_DETAILS.forEach(function(gm){
+    gm.players.forEach(function(pl){
+      if(pl.name!==name||pl.pos!==pos) return;
+      if(champ && pl.champ!==champ) return;
+      g++; if(pl.team==='win')w++;
+      k+=pl.k; d+=pl.d; a+=pl.a; if(typeof pl.cp==='number') cps.push(pl.cp);
+    });
+  });
+  return {games:g,wins:w,losses:g-w,wr:g?Math.round(w/g*100):0,
+    kda:d>0?Math.round((k+a)/d*100)/100:(k+a),
+    cp:cps.length?Math.round(cps.reduce(function(s,x){return s+x;},0)/cps.length*100)/100:0};
+}
 function renderPlayer() {
   var name = document.getElementById('pSel').value;
   var selPos = document.getElementById('posSel').value;
   var p = PLAYERS[name];
   if(!p){ document.getElementById('page-player').innerHTML='<div style="padding:40px;text-align:center;color:var(--muted)">선수를 선택하세요</div>'; return; }
 
-  var pos = selPos==='전체'?p.pos:selPos;
-  // 포지션 뷰: 해당 포지션으로 플레이한 경기만 집계해서 기본 스탯 표시
+  if(PPOS_LAST!==name){ PPOS='전체'; PPOS_LAST=name; }  // 선수 변경 시 필터 리셋
+  var pos = p.pos;  // 레이더는 주 포지션 기준 고정
+  // 포지션 뷰: 페이지 내 탭(PPOS)으로 제어 — 기본 스탯/모스트/상세 지표가 함께 전환
   var posRec = posRecord(name);
-  var posMode = (selPos !== '전체') && posRec[selPos] && posRec[selPos].g > 0;
-  var ds = posMode ? Object.assign({}, p, posOnlyStats(name, selPos)) : p;
+  if(PPOS!=='전체' && (!posRec[PPOS] || posRec[PPOS].g===0)) PPOS='전체';
+  var posMode = (PPOS !== '전체');
+  var ds = posMode ? Object.assign({}, p, posOnlyStats(name, PPOS)) : p;
+  var dsx = posMode ? posFullStats(name, PPOS) : p;   // 상세 지표용
   var cats = calcCats(p,pos);
   var og = totalGrade(p);
   var total = og.adj;
   var catKeys=['전투','시야','생존','성장','챔프폭'];
   var wrC=p.wr>=60?'var(--green)':p.wr>=50?'var(--gold)':'var(--red)';
+  var wrC2=dsx.wr>=60?'var(--green)':dsx.wr>=50?'var(--gold)':'var(--red)';
+  function rk(f){ return posMode ? POS_KR[PPOS]+' 기준 집계' : getRank(name,f); }
 
   // 상세 지표 카드 데이터 (사진 스타일)
   var statCards = [
-    // 행1: 핵심 지표
+    // 행1: 핵심 지표 (종합등급·ELO는 항상 전체 기준)
     {val: og.g,      label: '종합등급',  rank: '보정 총점 '+Math.round(total)+'점'+(og.capped?' · 판수 부족(A 캡)':''), color: og.c, highlight: true},
-    {val: p.kda,     label: 'KDA',        rank: getRank(name,'kda'),     color: 'var(--text2)'},
-    {val: p.wr+'%',  label: '승률',       rank: getRank(name,'wr'),      color: wrC},
+    {val: dsx.kda,   label: 'KDA',        rank: rk('kda'),     color: 'var(--text2)'},
+    {val: dsx.wr+'%',label: '승률',       rank: rk('wr'),      color: wrC2},
     {val: p.elo,     label: 'ELO',        rank: getRank(name,'elo'),     color: 'var(--gold)'},
-    {val: p.cp_avg,  label: 'CP 평균',    rank: getRank(name,'cp_avg'),  color: 'var(--purp)'},
+    {val: dsx.cp_avg,label: 'CP 평균',    rank: rk('cp_avg'),  color: 'var(--purp)'},
     // 행2: 전투
-    {val: p.dpm,     label: 'DPM',        rank: getRank(name,'dpm'),     color: '#c07a10'},
-    {val: p.dpg,     label: 'DPG (골드당 딜)', rank: getRank(name,'dpg'), color: '#c07a10'},
-    {val: p.kp+'%',  label: '%KP (킬관여)',rank: getRank(name,'kp'),     color: '#c07a10'},
-    {val: p.ccpm,    label: 'CCPM',       rank: getRank(name,'ccpm'),    color: '#c07a10'},
-    {val: p.dpmPct+'%', label: '%DPM (팀딜비중)', rank: getRank(name,'dpmPct'), color: '#c07a10'},
+    {val: dsx.dpm,   label: 'DPM',        rank: rk('dpm'),     color: '#c07a10'},
+    {val: dsx.dpg,   label: 'DPG (골드당 딜)', rank: rk('dpg'), color: '#c07a10'},
+    {val: dsx.kp+'%',label: '%KP (킬관여)',rank: rk('kp'),     color: '#c07a10'},
+    {val: dsx.ccpm,  label: 'CCPM',       rank: rk('ccpm'),    color: '#c07a10'},
+    {val: dsx.dpmPct+'%', label: '%DPM (팀딜비중)', rank: rk('dpmPct'), color: '#c07a10'},
     // 행3: 시야+생존
-    {val: p.vspm,    label: 'VSPM (시야)', rank: getRank(name,'vspm'),   color: '#2287b8'},
-    {val: p.piwa,    label: 'PiWA/10분',  rank: getRank(name,'piwa'),   color: '#2287b8'},
-    {val: p.dtpm,    label: 'DTPM (받은딜)',rank: getRank(name,'dtpm'),  color: '#7a5bd6'},
-    {val: p.gpm,     label: 'GPM (골드)',  rank: getRank(name,'gpm'),    color: '#1f9159'},
-    {val: p.cs_per_min, label: 'CS/분',   rank: getRank(name,'cs_per_min'), color: '#1f9159'},
+    {val: dsx.vspm,  label: 'VSPM (시야)', rank: rk('vspm'),   color: '#2287b8'},
+    {val: dsx.piwa,  label: 'PiWA/10분',  rank: rk('piwa'),   color: '#2287b8'},
+    {val: dsx.dtpm,  label: 'DTPM (받은딜)',rank: rk('dtpm'),  color: '#7a5bd6'},
+    {val: dsx.gpm,   label: 'GPM (골드)',  rank: rk('gpm'),    color: '#1f9159'},
+    {val: dsx.cs_per_min, label: 'CS/분', rank: rk('cs_per_min'), color: '#1f9159'},
   ];
 
   var html = '<div class="ph fi"><div class="ph-bg"></div>'+
@@ -839,12 +891,38 @@ function renderPlayer() {
     html += '</div></div>';
   })();
 
+  // ── 포지션별 전적 (탭: 클릭 시 아래 기본 스탯·모스트·상세 지표가 해당 기준으로 전환) ──
+  (function(){
+    var rec = posRecord(name);
+    var tabs=[['전체','전체',p.games,p.wins]].concat(['TOP','JUG','MID','ADC','SUP'].map(function(ps){
+      return [ps, POS_KR[ps], rec[ps].g, rec[ps].w];
+    }));
+    html += '<div class="card fi fi1"><div class="ct">포지션별 전적 <span style="font-weight:400;color:var(--muted);margin-left:6px">탭 선택 시 아래 스탯이 해당 기준으로 표시</span></div>'+
+      '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px">';
+    tabs.forEach(function(t){
+      var key=t[0], label=t[1], g=t[2], w=t[3];
+      var sel = PPOS===key;
+      var playable = key==='전체' || g>0;
+      var wr = g?Math.round(w/g*100):0;
+      var wC = wr>=60?'var(--green)':wr>=50?'var(--gold)':'var(--red)';
+      html += '<div '+(playable?'onclick="setPlayerPos(\''+key+'\')"':'')+' style="text-align:center;padding:10px 4px;border-radius:9px;'+
+        (sel?'background:rgba(168,120,28,.1);border:1.5px solid var(--gold);':'background:var(--bg2);border:1px solid var(--dim);')+
+        (playable?'cursor:pointer;':'opacity:.45;')+'">'+
+        '<div style="font-size:11px;font-weight:800;color:'+(sel?'var(--gold)':'var(--text2)')+'">'+label+'</div>'+
+        (g>0
+          ? '<div style="font-size:10px;color:var(--muted);margin-top:3px">'+g+'전 '+w+'승 '+(g-w)+'패</div><div style="font-size:11px;font-weight:700;font-family:Rajdhani,sans-serif;color:'+wC+'">'+wr+'%</div>'
+          : '<div style="font-size:10px;color:var(--muted);margin-top:3px">미플레이</div>')+
+        '</div>';
+    });
+    html += '</div></div>';
+  })();
+
   // 기본 스탯
-  html += '<div class="card fi fi1"><div class="ct">기본 스탯'+(posMode?' · '+selPos+' 포지션 기준':'')+'</div>'+
+  html += '<div class="card fi fi1"><div class="ct">기본 스탯'+(posMode?' · '+POS_KR[PPOS]+' 기준':' · 전체 기준')+'</div>'+
     '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">'+
     '<div style="background:var(--bg2);border:1px solid var(--dim);border-radius:8px;padding:12px"><div style="font-size:9px;color:var(--muted);margin-bottom:4px">게임 수</div><div style="font-size:19px;font-weight:700;font-family:Rajdhani,sans-serif;color:var(--text2)">'+ds.games+'</div></div>'+
     '<div style="background:var(--bg2);border:1px solid var(--dim);border-radius:8px;padding:12px"><div style="font-size:9px;color:var(--muted);margin-bottom:4px">KDA</div><div style="font-size:19px;font-weight:700;font-family:Rajdhani,sans-serif;color:var(--gold)">'+ds.kda+'</div></div>'+
-    '<div style="background:var(--bg2);border:1px solid var(--dim);border-radius:8px;padding:12px"><div style="font-size:9px;color:var(--muted);margin-bottom:4px">승률</div><div style="font-size:19px;font-weight:700;font-family:Rajdhani,sans-serif;color:'+wrC+'">'+ds.wr+'%</div></div>'+
+    '<div style="background:var(--bg2);border:1px solid var(--dim);border-radius:8px;padding:12px"><div style="font-size:9px;color:var(--muted);margin-bottom:4px">승률</div><div style="font-size:19px;font-weight:700;font-family:Rajdhani,sans-serif;color:'+wrC2+'">'+ds.wr+'%</div></div>'+
     '<div style="background:var(--bg2);border:1px solid var(--dim);border-radius:8px;padding:12px"><div style="font-size:9px;color:var(--muted);margin-bottom:4px">ELO</div><div style="font-size:19px;font-weight:700;font-family:Rajdhani,sans-serif;color:var(--gold)">'+p.elo+'</div></div>'+
     '<div style="background:var(--bg2);border:1px solid var(--dim);border-radius:8px;padding:12px"><div style="font-size:9px;color:var(--muted);margin-bottom:4px">승</div><div style="font-size:19px;font-weight:700;font-family:Rajdhani,sans-serif;color:var(--green)">'+ds.wins+'</div></div>'+
     '<div style="background:var(--bg2);border:1px solid var(--dim);border-radius:8px;padding:12px"><div style="font-size:9px;color:var(--muted);margin-bottom:4px">패</div><div style="font-size:19px;font-weight:700;font-family:Rajdhani,sans-serif;color:var(--red)">'+ds.losses+'</div></div>'+
@@ -852,34 +930,16 @@ function renderPlayer() {
     '<div style="background:var(--bg2);border:1px solid var(--dim);border-radius:8px;padding:12px"><div style="font-size:9px;color:var(--muted);margin-bottom:4px">챔프 폭</div><div style="font-size:19px;font-weight:700;font-family:Rajdhani,sans-serif;color:var(--text2)">'+p.champPool+'</div></div>'+
     '</div></div>';
 
-  // 포지션별 전적
-  (function(){
-    var rec = posRecord(name);
-    var POS_LIST = ['TOP','JUG','MID','ADC','SUP'];
-    html += '<div class="card fi fi1"><div class="ct">포지션별 전적</div>'+
-      '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px">';
-    POS_LIST.forEach(function(ps){
-      var r = rec[ps];
-      var played = r.g > 0;
-      var wr = played ? Math.round(r.w/r.g*100) : 0;
-      var wC = wr>=60?'var(--green)':wr>=50?'var(--gold)':'var(--red)';
-      var isCur = posMode && selPos === ps;
-      html += '<div '+(played?'onclick="setPosView(\''+ps+'\')" ':'')+'style="background:'+(isCur?'rgba(200,155,60,.08)':'var(--bg2)')+';border:1px solid '+(isCur?'var(--gold)':'var(--dim)')+';border-radius:8px;padding:10px 6px;text-align:center'+(played?';cursor:pointer':';opacity:.35')+'">'+
-        '<div class="pb pb-'+ps+'" style="margin:0 0 6px">'+ps+'</div>'+
-        (played
-          ? '<div style="font-size:15px;font-weight:700;font-family:Rajdhani,sans-serif;color:'+wC+'">'+wr+'%</div>'+
-            '<div style="font-size:10px;color:var(--muted);margin-top:2px">'+r.g+'전 '+r.w+'승 '+(r.g-r.w)+'패</div>'
-          : '<div style="font-size:13px;color:var(--muted);padding:6px 0">미플레이</div>')+
-      '</div>';
-    });
-    html += '</div></div>';
-  })();
+
 
   // 모스트 챔피언 (ALL 행 + 최대 10개 + 클릭 시 맞라인 펼침)
   (function(){
-    var champs = p.mostChamps.slice(0,10).map(function(mc){ return mc[0]; });
+    // 포지션 탭 기준: 해당 라인에서 쓴 챔프 전체 / 전체 탭: 모든 챔프 (제한 없음)
+    var champs = posMode
+      ? posChamps(name, PPOS).map(function(mc){ return mc[0]; })
+      : p.mostChamps.map(function(mc){ return mc[0]; });
     function mcRow(label, champ, idx){
-      var st = champ ? playerChampStat(name, champ) : playerChampStat(name, null);
+      var st = posMode ? playerChampStatPos(name, champ, PPOS) : playerChampStat(name, champ);
       var wC = st.wr>=60?'var(--green)':st.wr>=50?'var(--gold)':'var(--red)';
       var icon = champ ? cImg(champ,38,7)
         : '<div style="width:38px;height:38px;border-radius:7px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:var(--gold)">ALL</div>';
@@ -908,7 +968,7 @@ function renderPlayer() {
         '</div>'+
         '<div id="mcx-'+idx+'" style="display:none;padding-bottom:4px">'+expand+'</div></div>';
     }
-    html += '<div class="card fi fi2"><div class="ct">모스트 챔피언 <span style="font-weight:400;color:var(--muted);margin-left:6px">클릭 시 맞라인 전적</span></div>'+
+    html += '<div class="card fi fi2"><div class="ct">모스트 챔피언'+(posMode?' · '+POS_KR[PPOS]+' 기준':' · 전체')+' <span style="font-weight:400;color:var(--muted);margin-left:6px">클릭 시 맞라인 전적</span></div>'+
       '<div style="max-height:460px;overflow-y:auto">'+
       mcRow('전체', null, 'all')+
       champs.map(function(cn,i){ return mcRow(cn, cn, i); }).join('')+
@@ -916,7 +976,7 @@ function renderPlayer() {
   })();
 
   // 상세 지표 카드 그리드
-  html += '<div class="card fi fi3"><div class="ct">상세 지표</div>';
+  html += '<div class="card fi fi3"><div class="ct">상세 지표'+(posMode?' · '+POS_KR[PPOS]+' 기준 <span style="font-weight:400;color:var(--muted)">(등급·ELO는 전체 기준)</span>':' · 전체 기준')+'</div>';
   html += '<div class="stat-card-grid">';
   statCards.forEach(function(s){
     html += '<div class="stat-card'+(s.highlight?' highlight':'')+'">'+
