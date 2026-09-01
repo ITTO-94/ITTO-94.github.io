@@ -2411,14 +2411,17 @@ renderPlayer();
 // ════════ HUSH.GG SCOUT — 내전 사전 분석 리포트 ════════
 // ── 오늘의 경기: 매치데이 데이터 (경기 전 시딩 점수는 매 회차 갱신) ──
 var MATCHDAY = {
-  date: '2026.08.31',
+  date: '2026.09.01',
   teams: {
-    a: {TOP:{n:'해람',s:2700,note:'부라인'}, JUG:{n:'상우',s:7120,note:'부계정 참여 · 그랜드마스터(너굴)'}, MID:{n:'대혁',s:1014}, ADC:{n:'이또',s:2800}, SUP:{n:'예담',s:1978}},
-    b: {TOP:{n:'원태',s:1200,opgg:'https://www.fow.lol/find/kr/djkdks-KR1'},
-        JUG:{n:'성현',s:5360,opgg:'https://www.fow.lol/find/kr/%EA%B3%B5%EC%A3%BC%EC%9D%B4%20%EB%9C%B8-%EC%84%B1%20%ED%98%84'},
-        MID:{n:'현준',s:4100}, ADC:{n:'제무',s:1700}, SUP:{n:'국영',s:3200,note:'부라인'}}
+    a: {TOP:{n:'한울',s:2100},
+        JUG:{n:'승해',s:3000},
+        MID:{n:'명우지인',s:6400,note:'부계정 참여 · 마스터 1000LP · 챔프폭 광범위'},
+        ADC:{n:'이또',s:2800}, SUP:{n:'예담',s:1700}},
+    b: {TOP:{n:'악마의 아이',s:3700,opgg:'https://op.gg/ko/lol/summoners/kr/%EC%95%85%EB%A7%88%EC%9D%98%20%EC%95%84%EC%9D%B4-%EC%9E%90%EC%9C%A0%EC%9D%98%EB%85%B8%EC%98%88'},
+        JUG:{n:'탈리야',s:3000,opgg:'https://op.gg/ko/lol/summoners/kr/%ED%83%88%EB%A6%AC%EC%95%BC-%EC%97%90%20%EC%9A%A9'},
+        MID:{n:'현준',s:4100}, ADC:{n:'제무',s:1700}, SUP:{n:'국영',s:3200}}
   },
-  power: {a:15612, b:15560, expA:50, note:'점수차 52 → 약 50 : 50 — 시즌 최고 밸런스 매치'}
+  power: {a:16000, b:15700, expA:51, note:'점수차 300 → A팀 약 51 : 49'}
 };
 var POSN=['TOP','JUG','MID','ADC','SUP'];
 var POS_KR={TOP:'탑',JUG:'정글',MID:'미드',ADC:'원딜',SUP:'서폿'};
