@@ -1456,6 +1456,22 @@ function posRecord(name){
   return rec;
 }
 // ── ELO 미니 차트 (SVG) ──
+// 전체 최근 N경기 구간 안에서의 ELO 변동 (개인 최근 N판이 아님)
+function eloChangeInWindow(name, winGames){
+  var hist = ELO_HISTORY[name];
+  if(!hist || hist.length < 2) return null;
+  var startNo = Math.max(1, GAMES.length - winGames + 1);
+  var before = 0, inWin = 0;   // 구간 이전 출전수 / 구간 내 출전수
+  GAME_DETAILS.forEach(function(g){
+    var played = g.players.some(function(p){ return p.name===name; });
+    if(!played) return;
+    if(g.no < startNo) before++; else inWin++;
+  });
+  if(inWin < 2) return null;   // 구간 내 2판 미만은 제외 (노이즈 방지)
+  var s = hist[before], e = hist[hist.length-1];
+  if(typeof s!=='number' || typeof e!=='number') return null;
+  return {chg: e-s, games: inWin, hist: hist.slice(before)};
+}
 function eloChartSvg(name, w, h, limit){
   var full = ELO_HISTORY[name] || [1000];
   // limit 지정 시 최근 N경기 구간만 (선수탭 기본 10경기)
@@ -1916,21 +1932,22 @@ function renderAward(){
     (aceRank.length?aceRank.map(function(x,i){return maRow(x,i,'#75879b','회');}).join(''):'<div style="padding:14px;text-align:center;font-size:11px;color:var(--muted)">데이터 없음</div>')+'</div>';
   html += '</div></div>';
 
-  // Rookie of the Season (최근 10경기 ELO 최대 급등)
+  // Rookie of the Season (최근 15경기 구간 ELO 최대 급등)
   (function(){
+    var ROOKIE_WIN = 15;  // 전체 최근 15경기 구간 기준
     var rookies = Object.keys(ELO_HISTORY).map(function(n){
-      var h = ELO_HISTORY[n].slice(-11);  // 최근 10경기 구간
-      return {name:n, chg: h[h.length-1]-h[0], hist:h};
-    }).sort(function(a,b){ return b.chg-a.chg; });
+      var r = eloChangeInWindow(n, ROOKIE_WIN);
+      return r ? {name:n, chg:r.chg, games:r.games, hist:r.hist} : null;
+    }).filter(Boolean).sort(function(a,b){ return b.chg-a.chg; });
     var r = rookies[0];
     if(!r || r.chg <= 0){
-      html += '<div class="card fi fi1" style="margin-top:14px"><div class="ct" style="color:#3368a0">🌟 Rookie of the Season <span style="font-weight:400;font-size:11px;color:var(--muted);margin-left:6px">최근 10경기 ELO 상승</span></div><div style="padding:14px;text-align:center;font-size:11px;color:var(--muted)">아직 급등 기록이 없어요</div></div>';
+      html += '<div class="card fi fi1" style="margin-top:14px"><div class="ct" style="color:#3368a0">🌟 Rookie of the Season <span style="font-weight:400;font-size:11px;color:var(--muted);margin-left:6px">최근 15경기 구간 ELO 상승</span></div><div style="padding:14px;text-align:center;font-size:11px;color:var(--muted)">아직 급등 기록이 없어요</div></div>';
       return;
     }
     var ties = rookies.filter(function(x){return x.chg===r.chg;});
     var pick = ties.sort(function(a,b){return awardScore(PLAYERS[b.name]||{})-awardScore(PLAYERS[a.name]||{});})[0];
-    var ec = eloChartSvg(pick.name, 420, 130, 10);
-    html += '<div class="card fi fi1" style="margin-top:14px;border-color:rgba(51,104,160,.3)"><div class="ct" style="color:#3368a0">🌟 Rookie of the Season <span style="font-weight:400;color:var(--muted);margin-left:6px">최근 10경기 ELO 최대 급등</span></div>'+
+    var ec = eloChartSvg(pick.name, 420, 130, pick.games);
+    html += '<div class="card fi fi1" style="margin-top:14px;border-color:rgba(51,104,160,.3)"><div class="ct" style="color:#3368a0">🌟 Rookie of the Season <span style="font-weight:400;color:var(--muted);margin-left:6px">최근 15경기 구간 ELO 최대 급등</span></div>'+
       '<div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">'+
       '<div style="text-align:center;min-width:130px">'+
       '<div style="width:48px;height:48px;margin:0 auto 8px">'+tierIcon(PLAYERS[pick.name]?PLAYERS[pick.name].elo:1000,48)+'</div>'+
