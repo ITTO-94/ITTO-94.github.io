@@ -584,7 +584,13 @@ function renderSummary() {
   html += '<div class="ts-box"><div class="ts-l">총 게임</div><div class="ts-v" style="color:var(--gold)">'+GAMES.length+'</div></div>';
   html += '<div class="ts-box"><div class="ts-l">참여 선수</div><div class="ts-v" style="color:var(--blue)">'+Object.keys(PLAYERS).length+'</div></div>';
   html += '<div class="ts-box"><div class="ts-l">사용 챔피언</div><div class="ts-v" style="color:var(--purp)">'+Object.keys(totalChamps).length+'</div></div>';
-  html += '<div class="ts-box"><div class="ts-l">평균 게임시간</div><div class="ts-v">20:08</div></div>';
+  (function(){
+    var ds = GAME_DETAILS.map(function(g){return g.durMin;}).filter(function(v){return typeof v==='number'&&isFinite(v);});
+    var avg = ds.length ? ds.reduce(function(s,v){return s+v;},0)/ds.length : 0;
+    var mm = Math.floor(avg), ss = Math.round((avg-mm)*60);
+    if(ss===60){ mm++; ss=0; }
+    html += '<div class="ts-box"><div class="ts-l">평균 게임시간</div><div class="ts-v">'+mm+':'+(ss<10?'0':'')+ss+'</div></div>';
+  })();
   html += '</div><div class="two-col"><div>';
 
   // ELO 순위 (메인 · 페이지네이션)
@@ -829,7 +835,7 @@ function renderPlayer() {
     })()+
     '</div>'+
     (function(){
-      var ec = eloChartSvg(name, 260, 110);
+      var ec = eloChartSvg(name, 260, 110, 10);
       var chgS = ec.chg>0?'+'+ec.chg:''+ec.chg;
       return '<div style="flex-shrink:0;align-self:flex-start;background:var(--bg2);border:1px solid var(--dim);border-radius:10px;padding:10px 12px">'+
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'+
@@ -1283,7 +1289,7 @@ function renderChampDetail(){
     '<div style="background:var(--bg2);border:1px solid var(--dim);border-radius:8px;padding:12px"><div style="font-size:9px;color:var(--muted);margin-bottom:4px">픽률</div><div style="font-size:19px;font-weight:700;font-family:Rajdhani,sans-serif;color:var(--text2)">'+pickRate+'%</div></div>'+
     '<div style="background:var(--bg2);border:1px solid var(--dim);border-radius:8px;padding:12px"><div style="font-size:9px;color:var(--muted);margin-bottom:4px">밴률</div><div style="font-size:19px;font-weight:700;font-family:Rajdhani,sans-serif;color:'+(banRate>=50?'var(--red)':banRate>=20?'var(--gold)':'var(--text2)')+'">'+banRate+'%</div></div>'+
     '<div style="background:var(--bg2);border:1px solid var(--dim);border-radius:8px;padding:12px"><div style="font-size:9px;color:var(--muted);margin-bottom:4px">등급</div><div style="font-size:19px;font-weight:900;font-family:Bebas Neue,sans-serif;letter-spacing:1px;color:'+g.c+'">'+g.g+'</div></div>'+
-    '<div style="background:var(--bg2);border:1px solid var(--dim);border-radius:8px;padding:12px"><div style="font-size:9px;color:var(--muted);margin-bottom:4px">밴+픽률</div><div style="font-size:19px;font-weight:700;font-family:Rajdhani,sans-serif;color:var(--purp)">'+Math.min(100,pickRate+banRate)+'%</div></div>'+
+    
     '</div></div>';
 
   // 상세지표
@@ -1450,8 +1456,10 @@ function posRecord(name){
   return rec;
 }
 // ── ELO 미니 차트 (SVG) ──
-function eloChartSvg(name, w, h){
-  var hist = ELO_HISTORY[name] || [1000];
+function eloChartSvg(name, w, h, limit){
+  var full = ELO_HISTORY[name] || [1000];
+  // limit 지정 시 최근 N경기 구간만 (선수탭 기본 10경기)
+  var hist = (limit && full.length > limit+1) ? full.slice(-(limit+1)) : full;
   if(hist.length < 2) hist = [1000].concat(hist);
   var mn = Math.min.apply(null, hist), mx = Math.max.apply(null, hist);
   var pad = Math.max(8, (mx-mn)*0.25); mn -= pad; mx += pad;
@@ -1908,34 +1916,34 @@ function renderAward(){
     (aceRank.length?aceRank.map(function(x,i){return maRow(x,i,'#75879b','회');}).join(''):'<div style="padding:14px;text-align:center;font-size:11px;color:var(--muted)">데이터 없음</div>')+'</div>';
   html += '</div></div>';
 
-  // Rookie of the Season (최근 30경기 ELO 최대 급등)
+  // Rookie of the Season (최근 10경기 ELO 최대 급등)
   (function(){
     var rookies = Object.keys(ELO_HISTORY).map(function(n){
-      var h = ELO_HISTORY[n].slice(-31);
+      var h = ELO_HISTORY[n].slice(-11);  // 최근 10경기 구간
       return {name:n, chg: h[h.length-1]-h[0], hist:h};
     }).sort(function(a,b){ return b.chg-a.chg; });
     var r = rookies[0];
     if(!r || r.chg <= 0){
-      html += '<div class="card fi fi1" style="margin-top:14px"><div class="ct" style="color:#3368a0">🌟 Rookie of the Season</div><div style="padding:14px;text-align:center;font-size:11px;color:var(--muted)">아직 급등 기록이 없어요</div></div>';
+      html += '<div class="card fi fi1" style="margin-top:14px"><div class="ct" style="color:#3368a0">🌟 Rookie of the Season <span style="font-weight:400;font-size:11px;color:var(--muted);margin-left:6px">최근 10경기 ELO 상승</span></div><div style="padding:14px;text-align:center;font-size:11px;color:var(--muted)">아직 급등 기록이 없어요</div></div>';
       return;
     }
     var ties = rookies.filter(function(x){return x.chg===r.chg;});
     var pick = ties.sort(function(a,b){return awardScore(PLAYERS[b.name]||{})-awardScore(PLAYERS[a.name]||{});})[0];
-    var ec = eloChartSvg(pick.name, 420, 130);
-    html += '<div class="card fi fi1" style="margin-top:14px;border-color:rgba(51,104,160,.3)"><div class="ct" style="color:#3368a0">🌟 Rookie of the Season <span style="font-weight:400;color:var(--muted);margin-left:6px">최근 30경기 ELO 최대 급등</span></div>'+
+    var ec = eloChartSvg(pick.name, 420, 130, 10);
+    html += '<div class="card fi fi1" style="margin-top:14px;border-color:rgba(51,104,160,.3)"><div class="ct" style="color:#3368a0">🌟 Rookie of the Season <span style="font-weight:400;color:var(--muted);margin-left:6px">최근 10경기 ELO 최대 급등</span></div>'+
       '<div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">'+
       '<div style="text-align:center;min-width:130px">'+
       '<div style="width:48px;height:48px;margin:0 auto 8px">'+tierIcon(PLAYERS[pick.name]?PLAYERS[pick.name].elo:1000,48)+'</div>'+
       '<div class="pn" style="font-size:18px;font-weight:900" onclick="goPlayer(\''+pick.name+'\')">'+pick.name+'</div>'+
       '<div style="font-size:20px;font-weight:900;font-family:Rajdhani,sans-serif;color:#199473;margin-top:4px">▲ +'+pick.chg+'</div></div>'+
-      '<div style="flex:1;min-width:280px;background:var(--bg2);border:1px solid var(--dim);border-radius:10px;padding:10px">'+eloChartSvg(pick.name,420,130).svg+'</div>'+
+      '<div style="flex:1;min-width:280px;background:var(--bg2);border:1px solid var(--dim);border-radius:10px;padding:10px">'+ec.svg+'</div>'+
       '</div></div>';
   })();
 
-  // Dice of the Season (승/패 전환이 가장 잦은 = ELO 그래프 꺾임 최다)
+  // Dice of the Season (최근 15경기 승/패 전환 최다)
   (function(){
-    var seq = {};  // name → ['W','L',...] 시간순
-    GAME_DETAILS.forEach(function(g){
+    var seq = {};  // name → ['W','L',...] 시간순 (최근 15경기 구간)
+    GAME_DETAILS.slice(-15).forEach(function(g){
       g.players.forEach(function(p){
         seq[p.name] = seq[p.name] || [];
         seq[p.name].push(p.team==='win'?'W':'L');
@@ -1948,18 +1956,18 @@ function renderAward(){
     }).sort(function(a,b){return b.flips-a.flips||b.games-a.games;});
     var d = dice[0];
     if(!d || d.flips === 0){
-      html += '<div class="card fi fi2" style="margin-top:14px"><div class="ct" style="color:#c89b3c">🎲 Dice of the Season</div><div style="padding:14px;text-align:center;font-size:11px;color:var(--muted)">아직 승패 기복 기록이 없어요</div></div>';
+      html += '<div class="card fi fi2" style="margin-top:14px"><div class="ct" style="color:#c89b3c">🎲 Dice of the Season <span style="font-weight:400;font-size:11px;color:var(--muted);margin-left:6px">최근 15경기 승패 전환</span></div><div style="padding:14px;text-align:center;font-size:11px;color:var(--muted)">아직 승패 기복 기록이 없어요</div></div>';
       return;
     }
     var ties = dice.filter(function(x){return x.flips===d.flips;});
     var pick = ties.sort(function(a,b){return b.games-a.games;})[0];
-    html += '<div class="card fi fi2" style="margin-top:14px;border-color:rgba(200,155,60,.3)"><div class="ct" style="color:#c89b3c">🎲 Dice of the Season <span style="font-weight:400;color:var(--muted);margin-left:6px">승패 기복(ELO 꺾임)이 가장 심한 플레이어</span></div>'+
+    html += '<div class="card fi fi2" style="margin-top:14px;border-color:rgba(200,155,60,.3)"><div class="ct" style="color:#c89b3c">🎲 Dice of the Season <span style="font-weight:400;color:var(--muted);margin-left:6px">최근 15경기 중 승패 전환이 가장 잦은 플레이어</span></div>'+
       '<div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">'+
       '<div style="text-align:center;min-width:130px">'+
       '<div style="width:48px;height:48px;margin:0 auto 8px">'+tierIcon(PLAYERS[pick.name]?PLAYERS[pick.name].elo:1000,48)+'</div>'+
       '<div class="pn" style="font-size:18px;font-weight:900" onclick="goPlayer(\''+pick.name+'\')">'+pick.name+'</div>'+
       '<div style="font-size:18px;font-weight:900;font-family:Rajdhani,sans-serif;color:#c89b3c;margin-top:4px">🎲 '+pick.flips+'번 뒤집힘</div></div>'+
-      '<div style="flex:1;min-width:280px;background:var(--bg2);border:1px solid var(--dim);border-radius:10px;padding:10px">'+eloChartSvg(pick.name,420,130).svg+'</div>'+
+      '<div style="flex:1;min-width:280px;background:var(--bg2);border:1px solid var(--dim);border-radius:10px;padding:10px">'+eloChartSvg(pick.name,420,130,15).svg+'</div>'+
       '</div></div>';
   })();
   (function(){
@@ -2225,7 +2233,7 @@ function goPlayer(name){
 
 // ── 뉴스 탭 ──────────────────────────────────────────
 // Just Joke 카드: 매 업데이트마다 큐레이션 (수치는 데이터 기반)
-var JUST_JOKE = [{"t": "완벽의 경신", "b": "<b>예담</b>의 브라움이 <b>0킬 0데스 20어시</b>. 국영이 세운 완벽 서폿 스탯라인(0/0/15)을 한 주 만에 갈아치웠다. 이 종목, 이제 공식 스포츠로 승격해야 한다.", "tag": "서폿"}, {"t": "조용한 6연승", "b": "<b>승해</b>가 미드로 4승, 정글 스왑으로 2승 — <b>6연승</b>으로 ELO 4위까지 올라왔다. 자르반 11/1/19, 녹턴 노데스. 소리 없이 강한 자가 진짜 무섭다.", "tag": "연승"}, {"t": "탈리야가 고른 탈리야", "b": "소환사명 '탈리야'인 <b>지훈</b>이 챔피언 <b>탈리야</b>를 픽했다. 결과는 패배였지만 이름값은 했다. 다음엔 상대가 탈리야를 밴하면 정체성 위기가 온다.", "tag": "데뷔"}, {"t": "세 개의 이름, 여섯 번의 승리", "b": "수달, 상우, 그리고 이번엔 <b>다준</b> — 명우지인의 세 번째 방문도 신드라 12킬·카시오페아 <b>MVP</b>로 끝났다. 세 이름 합산 <b>6전 전승</b>. 이쯤 되면 현상금을 걸어야 한다.", "tag": "게스트"}, {"t": "악마의 아이, 등록 완료", "b": "명단에 <b>'악마의 아이'</b>가 그대로 등록됐다. 데뷔 2패지만 이름의 임팩트는 전체 1위. 다음 승리 때 뉴스 헤드라인이 벌써 기대된다.", "tag": "데뷔"}, {"t": "이제부터 최근 30경기", "b": "누적 32게임 돌파로 어워드가 <b>최근 30경기</b> 기준으로 전환됐다. 초창기의 영광은 명예의 전당으로, 현재의 폼이 왕좌를 정한다. 오래 쉬면 순위도 쉰다.", "tag": "시스템"}];
+var JUST_JOKE = [{"t": "완벽의 경신", "b": "<b>예담</b>의 브라움이 <b>0킬 0데스 20어시</b>로 승리를 만들었다. 지난주 국영이 세운 완벽 서폿 기록(0/0/15)이 일주일 만에 깨진 것. 이 페이스면 다음 기록은 0/0/25다.", "tag": "서폿"}, {"t": "조용한 6연승", "b": "<b>승해</b>가 미드로 4승, 정글 스왑으로 2승 — <b>6연승</b>으로 ELO 4위까지 올라왔다. 자르반 11/1/19, 녹턴 노데스. 소리 없이 강한 자가 진짜 무섭다.", "tag": "연승"}, {"t": "또 졌다, 또 1등이다", "b": "<b>국영</b>이 최근 4패를 기록하는 동안 그중 <b>3판에서 ACE</b>(패배팀 1위)를 차지했다. 팀은 지는데 본인은 계속 제일 잘한다. 이 억울함, 데이터가 증명한다.", "tag": "역설"}, {"t": "한울의 답안지", "b": "사이온·다리우스·세트·자헨으로 4연패하던 <b>한울</b>이 크산테·올라프로 <b>2연승</b>. 이 두 픽 합산 5판 4승이다. 오래 찾아 헤매던 정답이 몸에 맞는 탱커였다.", "tag": "부활"}, {"t": "공공의 적", "b": "32게임 동안 가장 많이 밴 당한 챔피언은 <b>애쉬, 15회</b> — 두 판 중 한 판꼴로 밴픽창에서 지워졌다. 정작 풀리면 누가 잡을지가 다음 관전 포인트.", "tag": "밴픽"}, {"t": "이제부터 최근 30경기", "b": "누적 32게임 돌파로 어워드가 <b>최근 30경기</b> 기준으로 전환됐다. 초창기의 영광은 명예의 전당으로, 현재의 폼이 왕좌를 정한다. 오래 쉬면 순위도 쉰다.", "tag": "시스템"}];
 
 function renderNews(){
   var html = '';
