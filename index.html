@@ -1999,20 +1999,26 @@ function renderAward(){
       {l:'단일경기 최다 딜량',  pick:function(p,g){return p.dmg;}, fmt:function(v){return v.toLocaleString();}},
       {l:'단일경기 최다 골드',  pick:function(p,g){return p.gold;},fmt:function(v){return v.toLocaleString();}},
       {l:'단일경기 최다 시야',  pick:function(p,g){return p.vs;},  fmt:function(v){return v+'점';}},
-      {l:'단일경기 최고 KDA',   pick:function(p,g){return p.kda;}, fmt:function(v){return v;}},
-      {l:'단일경기 최다 CC',    pick:function(p,g){return p.cc;},  fmt:function(v){return v+'초';}},
+      // 0데스는 KDA가 무한대로 발산해 비교 불가 → 대상에서 제외 (null 반환 시 스킵)
+      {l:'단일경기 최고 KDA',   pick:function(p,g){return p.d>0 ? p.kda : null;}, fmt:function(v){return v;},
+       sub:'0데스 기록 제외'},
+      // 녹턴 궁극기는 광역 시야 차단이 CC 시간으로 과대 집계 → 1/5로 보정
+      {l:'단일경기 최다 CC',    pick:function(p,g){return p.champ==='녹턴' ? p.cc/5 : p.cc;},
+       fmt:function(v){return Math.round(v)+'초';}, sub:'녹턴 1/5 보정'},
     ];
     var cards = records.map(function(rc){
       var best = null;
       GAME_DETAILS.forEach(function(g){
         g.players.forEach(function(p){
           var v = rc.pick(p, g);
+          if(v === null || v === undefined || !isFinite(v)) return;  // 제외 대상
           if(best === null || v > best.v) best = {v:v, name:p.name, champ:p.champ, no:g.no};
         });
       });
       if(!best) return '';
       return '<div class="stat-card" style="cursor:pointer" onclick="goPlayer(\''+best.name+'\')">'+
-        '<div style="font-size:10px;color:var(--gold);margin-bottom:4px">'+rc.l+'</div>'+
+        '<div style="font-size:10px;color:var(--gold);margin-bottom:4px">'+rc.l+
+          (rc.sub?' <span style="color:var(--muted);font-weight:400">('+rc.sub+')</span>':'')+'</div>'+
         '<div class="sc-val" style="color:var(--text2);font-size:17px">'+rc.fmt(best.v)+'</div>'+
         '<div class="sc-rank" style="color:var(--muted)">'+best.name+' · '+best.champ+' · #'+best.no+'</div></div>';
     }).join('');
