@@ -2445,15 +2445,17 @@ renderPlayer();
 // ════════ HUSH.GG SCOUT — 내전 사전 분석 리포트 ════════
 // ── 오늘의 경기: 매치데이 데이터 (경기 전 시딩 점수는 매 회차 갱신) ──
 var MATCHDAY = {
-  date: '2026.09.17',
+  date: '2026.10.28',
   teams: {
-    a: {TOP:{n:'용인',s:3600}, JUG:{n:'지훈',s:3600}, MID:{n:'종관',s:4500},
-        ADC:{n:'제무',s:1700}, SUP:{n:'진영',s:4782,note:'부라인'}},
-    b: {TOP:{n:'대혁',s:1414,note:'부라인'}, JUG:{n:'승해',s:4500,note:'부라인'},
-        MID:{n:'수달',s:6999,note:'부계정 참여 · 모스트 야스오·이렐리아·아칼리·사일러스·요네'},
-        ADC:{n:'이또',s:2800}, SUP:{n:'예담',s:1978}}
+    a: {TOP:{n:'용인',s:3600}, JUG:{n:'지훈',s:3600}, MID:{n:'대혁',s:1046,note:'부라인'},
+        ADC:{n:'이또',s:2800},
+        SUP:{n:'너굴',s:6040,note:'부계정 참여 · 챔프 제한 없음'}},
+    b: {TOP:{n:'호진',s:3600,opgg:'https://op.gg/ko/lol/summoners/kr/%EA%B0%81%EC%84%B1%EB%AC%B4%EC%9D%B4%EC%B9%98%EB%A1%9C-%EC%A3%84%EC%99%80%20%EB%B2%8C'},
+        JUG:{n:'승해',s:4500,note:'부라인'}, MID:{n:'현준',s:4100},
+        ADC:{n:'성한',s:1068,opgg:'https://op.gg/ko/lol/summoners/kr/%EC%9A%B0%EC%9D%B4%EB%8F%99%EA%BF%80%EC%A3%BC%EB%A8%B9-1994'},
+        SUP:{n:'국영',s:3100}}
   },
-  power: {a:18182, b:17691, expA:52, note:'점수차 491 → A팀 약 52 : 48 · 2안 채택'}
+  power: {a:17086, b:16368, expA:53, note:'점수차 718 → A팀 약 53 : 47'}
 };
 var POSN=['TOP','JUG','MID','ADC','SUP'];
 var POS_KR={TOP:'탑',JUG:'정글',MID:'미드',ADC:'원딜',SUP:'서폿'};
