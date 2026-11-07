@@ -356,6 +356,18 @@ function piwaAvg(pos){
   var v=_PIWA[pos];
   return (v && v>0.05) ? v : ((POS_AVG[pos]&&POS_AVG[pos].PIWA)||1);
 }
+var _CPREF=null;
+function champPoolRef(){
+  if(_CPREF) return _CPREF;
+  var minG = Math.max(10, statMinGames());
+  var q = Object.values(PLAYERS).filter(function(p){ return p.games>=minG; });
+  if(!q.length) q = Object.values(PLAYERS);
+  var maxPool = Math.max.apply(null, q.map(function(p){ return p.champPool||0; })) || 1;
+  var avgRatio = q.reduce(function(s,p){ return s+(p.champPool||0)/p.games; },0)/q.length;
+  var maxDiv = Math.max.apply(null, q.map(function(p){ return ((p.champPool||0)+5*avgRatio)/(p.games+5); })) || 1;
+  _CPREF = {minG:minG, maxPool:maxPool, avgRatio:avgRatio, maxDiv:maxDiv};
+  return _CPREF;
+}
 function calcCats(p,pos){
   var a=POS_AVG[pos]||POS_AVG['전체'];
   return {
@@ -366,12 +378,16 @@ function calcCats(p,pos){
     챔프폭: (function(){
       var g = p.games||0;
       if(g<=0) return 0;
-      // 챔프 풀 '크기' 기반 · 판수 반복 무감점
-      // 계수는 데이터 규모에 따라 자동 조정: ~29게임 ×12(8종+≈만점) / 30게임+ ×10(10종=만점)
-      var coef = GAMES.length >= 30 ? 10 : 12;
-      var size = Math.min(100, (p.champPool||0)*coef);
-      var conf = Math.min(1, g/5);              // 표본 신뢰도 (5판 이상 온전 반영)
-      return size*conf;
+      // 판수 보정 챔프폭 (43게임 시점 개편):
+      //  ① 풀 크기 50% — 기준 판수 이상 선수 중 최대 풀 대비 비율 (고정 만점 폐지 → 동점 만점 해소)
+      //  ② 다양성 50% — 판당 다른 챔프 비율을 리그 평균으로 수렴(C=5)시킨 값 (많이 뛰어 풀이 커진 효과 상쇄)
+      //  ③ 판수 신뢰도 — 기준 판수 미만은 비례 감산
+      var ref = champPoolRef();
+      var size = Math.min(100, (p.champPool||0)/ref.maxPool*100);
+      var div  = ((p.champPool||0) + 5*ref.avgRatio)/(g + 5);
+      var dv   = Math.min(100, div/ref.maxDiv*100);
+      var conf = Math.min(1, g/ref.minG);
+      return (size*0.5 + dv*0.5)*conf;
     })(),
   };
 }
