@@ -771,6 +771,63 @@ function playerChampStatPos(name,champ,pos){
     kda:d>0?Math.round((k+a)/d*100)/100:(k+a),
     cp:cps.length?Math.round(cps.reduce(function(s,x){return s+x;},0)/cps.length*100)/100:0};
 }
+// ── 선수 랭킹 (선수탭 헤더 표시용) ──
+function playerRankInfo(name){
+  var all = Object.values(PLAYERS).slice().sort(function(a,b){ return b.elo-a.elo || b.games-a.games; });
+  var eloRank = all.findIndex(function(p){ return p.name===name; }) + 1;
+  // 지난 업데이트 대비 순위 변동 (ELO_PREV 기준)
+  var prevRank = null;
+  if(typeof ELO_PREV!=='undefined' && ELO_PREV[name]!==undefined){
+    var pv = Object.keys(ELO_PREV).map(function(n){ return {n:n,e:ELO_PREV[n]}; })
+      .sort(function(a,b){ return b.e-a.e; });
+    prevRank = pv.findIndex(function(x){ return x.n===name; }) + 1;
+  }
+  // 승률 지수 순위 (종합탭과 동일 기준: 10판+ · C=5 · 전체 평균 수렴)
+  var MIN_G = Math.max(10, statMinGames());
+  var tw=0,tg=0; all.forEach(function(p){ tw+=p.wins; tg+=p.games; });
+  var avg = tg ? tw/tg : 0.5;
+  function wi(p){ return Math.round((p.wins + 5*avg)/(p.games + 5)*100); }
+  var qual = all.filter(function(p){ return p.games>=MIN_G; })
+    .sort(function(a,b){ return wi(b)-wi(a) || b.games-a.games || b.elo-a.elo; });
+  var me = PLAYERS[name];
+  var wiRank = me.games>=MIN_G ? qual.findIndex(function(p){ return p.name===name; })+1 : null;
+  return {eloRank:eloRank, total:all.length, prevRank:prevRank,
+          wiRank:wiRank, wiTotal:qual.length, wiNeed: me.games>=MIN_G ? 0 : MIN_G-me.games, wiMin:MIN_G};
+}
+function rankBadgeHtml(name){
+  var r = playerRankInfo(name);
+  var medal = r.eloRank===1 ? {c:'#b8860f',bg:'linear-gradient(135deg,#fff6d8,#f5e3a6)',bd:'#d9b44a',ic:'🥇'}
+            : r.eloRank===2 ? {c:'#6b7785',bg:'linear-gradient(135deg,#f4f6f8,#dfe4ea)',bd:'#aeb8c4',ic:'🥈'}
+            : r.eloRank===3 ? {c:'#9a5b2e',bg:'linear-gradient(135deg,#fbeee4,#efd3bd)',bd:'#cf9a73',ic:'🥉'}
+            : {c:'var(--blue)',bg:'rgba(51,104,160,.08)',bd:'rgba(51,104,160,.35)',ic:''};
+  var mv = '';
+  if(r.prevRank===null) mv = '<span style="font-size:10px;font-weight:800;color:var(--green);background:rgba(25,148,115,.1);border:1px solid rgba(25,148,115,.35);border-radius:4px;padding:1px 6px">NEW</span>';
+  else if(r.prevRank>r.eloRank) mv = '<span style="font-size:12px;font-weight:800;color:var(--green)">▲'+(r.prevRank-r.eloRank)+'</span>';
+  else if(r.prevRank<r.eloRank) mv = '<span style="font-size:12px;font-weight:800;color:var(--red)">▼'+(r.eloRank-r.prevRank)+'</span>';
+  else mv = '<span style="font-size:12px;font-weight:700;color:var(--muted)">—</span>';
+  var main = '<div style="display:inline-flex;align-items:center;gap:10px;padding:8px 14px;border-radius:12px;background:'+medal.bg+';border:1.5px solid '+medal.bd+'">'+
+      (medal.ic?'<span style="font-size:22px;line-height:1">'+medal.ic+'</span>':'')+
+      '<div style="display:flex;flex-direction:column;line-height:1.05">'+
+        '<span style="font-size:9px;font-weight:700;letter-spacing:.5px;color:'+medal.c+';opacity:.85">ELO 랭킹</span>'+
+        '<span style="font-family:Rajdhani,sans-serif;font-weight:700;font-size:30px;color:'+medal.c+'">'+r.eloRank+'<span style="font-size:15px">위</span>'+
+        '<span style="font-size:13px;font-weight:600;color:var(--muted);margin-left:4px">/ '+r.total+'명</span></span>'+
+      '</div>'+
+      '<div style="padding-left:4px">'+mv+'</div>'+
+    '</div>';
+  var sub;
+  if(r.wiRank){
+    var wc = r.wiRank<=3 ? 'var(--gold)' : 'var(--text2)';
+    sub = '<div style="display:inline-flex;flex-direction:column;justify-content:center;line-height:1.05;padding:8px 14px;border-radius:12px;background:var(--bg2);border:1px solid var(--dim)">'+
+      '<span style="font-size:9px;font-weight:700;letter-spacing:.5px;color:var(--muted)">승률 지수 순위 · '+r.wiMin+'판+</span>'+
+      '<span style="font-family:Rajdhani,sans-serif;font-weight:700;font-size:24px;color:'+wc+'">'+r.wiRank+'<span style="font-size:13px">위</span>'+
+      '<span style="font-size:12px;font-weight:600;color:var(--muted);margin-left:4px">/ '+r.wiTotal+'명</span></span></div>';
+  } else {
+    sub = '<div style="display:inline-flex;flex-direction:column;justify-content:center;line-height:1.2;padding:8px 14px;border-radius:12px;background:var(--bg2);border:1px dashed var(--dim)">'+
+      '<span style="font-size:9px;font-weight:700;letter-spacing:.5px;color:var(--muted)">승률 지수 순위 · '+r.wiMin+'판+</span>'+
+      '<span style="font-size:12px;font-weight:700;color:var(--muted)">'+r.wiNeed+'판 더 뛰면 집계</span></div>';
+  }
+  return '<div class="ph-rank" style="display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 8px">'+main+sub+'</div>';
+}
 function renderPlayer() {
   var name = document.getElementById('pSel').value;
   var selPos = document.getElementById('posSel').value;
@@ -820,6 +877,7 @@ function renderPlayer() {
     '<div class="ph-info">'+
     '<div class="ph-name">'+name+'</div>'+
     '<div class="ph-sub">'+p.games+'게임 플레이 · '+p.pos+' 포지션</div>'+
+    rankBadgeHtml(name)+
     '<div class="badges">'+
     '<span class="badge b-kda">KDA '+p.kda+'</span>'+
     '<span class="badge b-wr" style="color:'+wrC+'">WR '+p.wr+'%</span>'+
@@ -827,7 +885,7 @@ function renderPlayer() {
     '<span class="badge" style="background:'+og.bg+';border-color:'+og.bd+';color:'+og.c+'">'+og.g+' ('+Math.round(total)+'점)</span>'+
     '</div>'+
     (function(){
-      var firsts = AWARD_METRICS.filter(function(m){ return metricFirst(m).name === name; });
+      var firsts = AWARD_METRICS.filter(function(m){ return m.key!=='dtpm' && metricFirst(m).name === name; });  // DTPM은 1위 선정 제외 규칙과 일치
       if(firsts.length === 0) return '';
       return '<div class="ph-champs" style="flex-wrap:wrap;max-width:620px">'+firsts.map(function(m){
         return '<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:5px;font-size:11px;font-weight:700;background:rgba(240,192,48,.08);border:1px solid rgba(240,192,48,.25);color:#b8860f">👑 '+m.label+'</span>';
