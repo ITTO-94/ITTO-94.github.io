@@ -552,7 +552,7 @@ function pagerHtml(key, total){
 }
 
 function renderSummary() {
-  var MIN_G = Math.max(7, statMinGames());  // 승률 지수 최소 판수 7판(이명우 확정) · 60게임부터 자동 10판
+  var MIN_G = Math.max(10, statMinGames());  // 승률 지수 최소 판수 10판(이명우 확정, 43게임 시점 7→10 상향)
   // 전체 평균 승률 (승률 지수 보정 기준)
   var allP = Object.values(PLAYERS);
   var totW = allP.reduce(function(s,p){return s+p.wins;},0);
