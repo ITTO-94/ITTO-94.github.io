@@ -286,6 +286,7 @@ body{zoom:1.45;background:var(--bg);color:var(--text);font-family:'IBM Plex Sans
     <div class="nav-tab on" onclick="showPage('news')">📰 뉴스</div>
     <div class="nav-tab" onclick="showPage('summary')">⊞ 종합</div>
     <div class="nav-tab" onclick="showPage('player')">👤 선수</div>
+    <div class="nav-tab" onclick="showPage('compare')">🆚 비교</div>
     <div class="nav-tab" onclick="showPage('champion')">⚔️ 티어리스트</div>
     <div class="nav-tab" onclick="showPage('combo')">🧩 조합 통계</div>
     <div class="nav-tab" onclick="showPage('detail')">📊 디테일 통계</div>
@@ -315,6 +316,7 @@ body{zoom:1.45;background:var(--bg);color:var(--text);font-family:'IBM Plex Sans
 <div class="page on" id="page-news"></div>
 <div class="page" id="page-summary"></div>
 <div class="page" id="page-player"></div>
+<div class="page" id="page-compare"></div>
 <div class="page" id="page-champion"></div>
 <div class="page" id="page-combo"></div>
 <div class="page" id="page-detail"></div>
@@ -934,6 +936,11 @@ function renderPlayer() {
     '<div class="ph-name">'+name+'</div>'+
     '<div class="ph-sub">'+p.games+'게임 플레이 · '+p.pos+' 포지션</div>'+
     rankBadgeHtml(name)+
+    badgesHtml(name)+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;margin:0 0 8px">'+
+      (isHidden(name)?'':'<span onclick="goCompare(\''+name+'\')" style="cursor:pointer;padding:4px 11px;border-radius:7px;font-size:11px;font-weight:800;color:var(--blue);background:rgba(51,104,160,.08);border:1px solid rgba(51,104,160,.35)">🆚 이 선수와 비교</span>')+
+      '<span onclick="savePlayerCard(\''+name+'\')" style="cursor:pointer;padding:4px 11px;border-radius:7px;font-size:11px;font-weight:800;color:var(--green);background:rgba(25,148,115,.08);border:1px solid rgba(25,148,115,.35)">📸 내 카드 이미지로 저장</span>'+
+    '</div>'+
     '<div class="badges">'+
     '<span class="badge b-kda">KDA '+p.kda+'</span>'+
     '<span class="badge b-wr" style="color:'+wrC+'">WR '+p.wr+'%</span>'+
@@ -1054,6 +1061,8 @@ function renderPlayer() {
 
 
 
+  html += formCompareHtml(name, posMode?PPOS:null);
+
   // 모스트 챔피언 (ALL 행 + 최대 10개 + 클릭 시 맞라인 펼침)
   (function(){
     // 포지션 탭 기준: 해당 라인에서 쓴 챔프 전체 / 전체 탭: 모든 챔프 (제한 없음)
@@ -1109,6 +1118,7 @@ function renderPlayer() {
   });
   html += '</div></div>';
 
+  html += recentGamesHtml(name, posMode?PPOS:null);
   html += '</div>';
 
   // 우측
@@ -1183,6 +1193,7 @@ function renderPlayer() {
     '</div></div>';
 
   html += '</div></div>';
+  html += calendarHtml(name);
   document.getElementById('page-player').innerHTML = html;
   setTimeout(function(){ drawRadar(cats,catKeys,CAT_COLORS); }, 30);
 }
@@ -1213,6 +1224,482 @@ function drawMiniRadar(cvId,cats,keys,colors){
 }
 
 
+
+
+// ═══════════════════════════════════════════════════════════════
+// 2026-11-13 확장 기능: 경기 등급 · 칭호 · 최근10 vs 통산 · 최근 경기 · 출석 캘린더
+//                      · 딜량 막대그래프 · 1:1 비교 탭 · 카드 이미지 저장
+// ═══════════════════════════════════════════════════════════════
+
+// ── 공용: 선수별 경기 행 (시간순) ──
+function playerRows(name){
+  var rows=[];
+  GAME_DETAILS.forEach(function(g){
+    var me=null, tk=0;
+    g.players.forEach(function(p){ if(p.name===name) me=p; });
+    if(!me) return;
+    g.players.forEach(function(p){ if(p.team===me.team) tk+=p.k; });
+    rows.push({no:g.no, date:g.date, dur:g.durMin, p:me, tk:tk, g:g});
+  });
+  return rows;
+}
+function rowsSummary(rows){
+  var n=rows.length; if(!n) return null;
+  var w=0,k=0,d=0,a=0,cp=0,dpm=0,kp=0,vs=0,cs=0,csN=0;
+  rows.forEach(function(r){
+    var p=r.p; if(p.team==='win') w++;
+    k+=p.k; d+=p.d; a+=p.a; cp+=p.cp; dpm+=p.dpm;
+    kp+= r.tk ? (p.k+p.a)/r.tk : 0;
+    vs+= p.vs/r.dur;
+    if(typeof p.cs==='number'){ cs+=p.cs/r.dur; csN++; }
+  });
+  return {games:n, wins:w, wr:Math.round(w/n*100), kda: d? Math.round((k+a)/d*100)/100 : (k+a),
+    cp:Math.round(cp/n*100)/100, dpm:Math.round(dpm/n), kp:Math.round(kp/n*100), deaths:Math.round(d/n*10)/10,
+    vspm:Math.round(vs/n*100)/100, cspm: csN? Math.round(cs/csN*10)/10 : 0};
+}
+
+// ── ① 경기별 성적 등급 (같은 포지션 전체 경기 대비 CP 백분위) ──
+var _GCUTS=null;
+function gameGradeCuts(){
+  if(_GCUTS) return _GCUTS;
+  var by={};
+  GAME_DETAILS.forEach(function(g){ g.players.forEach(function(p){
+    if(isHidden(p.name)) return;
+    (by[p.pos]=by[p.pos]||[]).push(p.cp);
+  }); });
+  var cuts={};
+  Object.keys(by).forEach(function(ps){
+    var s=by[ps].slice().sort(function(a,b){return a-b;});
+    function q(pct){ var i=(pct/100)*(s.length-1), lo=Math.floor(i), hi=Math.ceil(i); return s[lo]+(s[hi]-s[lo])*(i-lo); }
+    cuts[ps]={S:q(90), A:q(70), B:q(40), C:q(15)};
+  });
+  _GCUTS=cuts; return cuts;
+}
+var GGRADE_STYLE={S:{c:'#b8860f',bg:'rgba(240,192,48,.16)',bd:'rgba(240,192,48,.5)'},
+  A:{c:'#199473',bg:'rgba(25,148,115,.12)',bd:'rgba(25,148,115,.45)'},
+  B:{c:'#3368a0',bg:'rgba(51,104,160,.10)',bd:'rgba(51,104,160,.4)'},
+  C:{c:'#6b7d90',bg:'rgba(107,125,144,.10)',bd:'rgba(107,125,144,.35)'},
+  D:{c:'#cf4444',bg:'rgba(207,68,68,.10)',bd:'rgba(207,68,68,.4)'}};
+function gameGrade(cp,pos){
+  var c=gameGradeCuts()[pos]; if(!c) return 'C';
+  return cp>=c.S?'S':cp>=c.A?'A':cp>=c.B?'B':cp>=c.C?'C':'D';
+}
+function gradeBadge(g,size){
+  var st=GGRADE_STYLE[g]; size=size||18;
+  return '<span title="같은 포지션 전체 경기 대비 CP 등급 (S 상위10% · A 30% · B 60% · C 85% · D 하위15%)" style="display:inline-flex;align-items:center;justify-content:center;width:'+size+'px;height:'+size+'px;border-radius:5px;font-family:Rajdhani,sans-serif;font-weight:800;font-size:'+Math.round(size*0.62)+'px;color:'+st.c+';background:'+st.bg+';border:1px solid '+st.bd+';flex-shrink:0">'+g+'</span>';
+}
+function gameMvpAce(g){
+  var w=g.players.filter(function(p){return p.team==='win';}).sort(function(a,b){return b.cp-a.cp;})[0];
+  var l=g.players.filter(function(p){return p.team==='lose';}).sort(function(a,b){return b.cp-a.cp;})[0];
+  return {mvp:w?w.name:null, ace:l?l.name:null};
+}
+
+// ── ② 플레이 스타일 칭호 ──
+var _BADGE_POOL=null;
+function badgePool(){
+  if(_BADGE_POOL) return _BADGE_POOL;
+  _BADGE_POOL = visiblePlayers().filter(function(p){ return p.games>=5; });
+  return _BADGE_POOL;
+}
+function pctRank(val, arr, lowerBetter){
+  // 0 = 최상위, 1 = 최하위
+  var better = arr.filter(function(v){ return lowerBetter ? v<val : v>val; }).length;
+  return arr.length>1 ? better/(arr.length-1) : 0;
+}
+function currentStreak(name){
+  var s=playerRows(name); if(!s.length) return {type:null,n:0};
+  var last=s[s.length-1].p.team, n=0;
+  for(var i=s.length-1;i>=0;i--){ if(s[i].p.team===last) n++; else break; }
+  return {type:last==='win'?'W':'L', n:n};
+}
+function playerBadges(name){
+  if(isHidden(name)) return [];
+  var p=PLAYERS[name]; if(!p || p.games<5) return [];
+  var pool=badgePool(), out=[];
+  function pr(field, lower){ return pctRank(p[field], pool.map(function(x){return x[field];}), lower); }
+  var rules=[
+    {i:'🧱', n:'인간 방패',   f:'dtpm',   why:'분당 받은 딜'},
+    {i:'⛓️', n:'족쇄 장인',   f:'ccpm',   why:'분당 CC'},
+    {i:'🏮', n:'등대지기',    f:'vspm',   why:'분당 시야 점수'},
+    {i:'💥', n:'딜찍누',      f:'dpmPct', why:'팀 내 딜 비중'},
+    {i:'🤝', n:'한타 중독',   f:'kp',     why:'킬관여율'},
+    {i:'🕊️', n:'불사신',     f:'d',      why:'평균 데스(적을수록)', lower:true},
+    {i:'🌾', n:'파밍 기계',   f:'cs_per_min', why:'분당 CS'}
+  ];
+  rules.forEach(function(r){
+    var rk=pr(r.f, r.lower);
+    if(rk<=0.10) out.push({icon:r.i, name:r.n, why:r.why+' 상위 '+Math.max(1,Math.round(rk*100+0.5))+'% (5판+ '+pool.length+'명 중)', score:1-rk});
+  });
+  // 챔피언 도감 / 한우물
+  var cpv=pool.map(function(x){return calcCats(x,x.pos)['챔프폭'];});
+  var rk2=pctRank(calcCats(p,p.pos)['챔프폭'], cpv);
+  if(rk2<=0.10) out.push({icon:'📚', name:'챔피언 도감', why:'챔프폭 점수 상위 (챔프 '+p.champPool+'종)', score:1-rk2});
+  var ratio=pool.map(function(x){return x.champPool/x.games;});
+  var rk3=pctRank(p.champPool/p.games, ratio, true);
+  if(rk3<=0.10) out.push({icon:'⛏️', name:'한우물', why:'판수 대비 챔프 수가 가장 적은 편 ('+p.games+'판 '+p.champPool+'종)', score:1-rk3});
+  // 승리 청부사 / 외로운 늑대
+  var ma=mvpAceAll()[name]||{mvp:0,ace:0};
+  if(p.wins>=3 && ma.mvp/p.wins>=0.5) out.push({icon:'🎯', name:'승리 청부사', why:'이긴 판의 '+Math.round(ma.mvp/p.wins*100)+'%에서 MVP', score:0.85+ma.mvp/p.wins*0.1});
+  if(p.losses>=3 && ma.ace/p.losses>=0.4) out.push({icon:'🐺', name:'외로운 늑대', why:'진 판의 '+Math.round(ma.ace/p.losses*100)+'%에서 ACE', score:0.85+ma.ace/p.losses*0.1});
+  // 만능 열쇠
+  var pr2=posRecord(name), multi=Object.keys(pr2).filter(function(ps){return pr2[ps].g>=3;});
+  if(multi.length>=3) out.push({icon:'🔑', name:'만능 열쇠', why:multi.map(function(ps){return POS_KR[ps];}).join('·')+' 각 3판 이상', score:0.8+multi.length*0.03});
+  // 연승 열차
+  var st=currentStreak(name);
+  if(st.type==='W' && st.n>=5) out.push({icon:'🚂', name:'연승 열차', why:'현재 '+st.n+'연승', score:0.95+st.n*0.005});
+  return out.sort(function(a,b){return b.score-a.score;}).slice(0,3);
+}
+function badgesHtml(name){
+  var b=playerBadges(name); if(!b.length) return '';
+  return '<div style="display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 8px">'+b.map(function(x){
+    return '<span title="'+x.why+'" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:800;color:var(--text2);background:linear-gradient(135deg,rgba(51,104,160,.10),rgba(25,148,115,.10));border:1px solid rgba(51,104,160,.28)">'+x.icon+' '+x.name+'</span>';
+  }).join('')+'</div>';
+}
+
+// ── ③ 최근 10판 vs 통산 ──
+function formCompareHtml(name, posFilter){
+  var all=playerRows(name);
+  if(posFilter) all=all.filter(function(r){return r.p.pos===posFilter;});
+  var title='최근 10판 vs 통산'+(posFilter?' · '+POS_KR[posFilter]+' 기준':'');
+  if(all.length<=10){
+    return '<div class="card fi fi1"><div class="ct">'+title+'</div><div style="padding:14px;text-align:center;font-size:11px;color:var(--muted)">'+(posFilter?'이 포지션 ':'')+'기록이 10판을 넘으면 최근 폼과 통산을 비교해 보여드려요 (현재 '+all.length+'판)</div></div>';
+  }
+  var R=rowsSummary(all.slice(-10)), T=rowsSummary(all);
+  var items=[['승률','wr','%',false],['KDA','kda','',false],['CP','cp','',false],['DPM','dpm','',false],['킬관여','kp','%',false],['데스','deaths','',true],['분당 시야','vspm','',false],['분당 CS','cspm','',false]];
+  var h='<div class="card fi fi1"><div class="ct">'+title+' <span style="font-weight:400;color:var(--muted);margin-left:6px">통산 '+T.games+'판 기준 대비 변화</span></div>'+
+    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">';
+  items.forEach(function(it){
+    var rv=R[it[1]], tv=T[it[1]], diff=rv-tv, good=it[3]?diff<0:diff>0;
+    var eps = (it[1]==='dpm')?5:(it[1]==='wr'||it[1]==='kp')?1:0.05;
+    var arrow = Math.abs(diff)<eps ? '<span style="color:var(--muted)">—</span>'
+      : '<span style="color:'+(good?'var(--green)':'var(--red)')+'">'+(diff>0?'▲':'▼')+(Math.round(Math.abs(diff)*100)/100)+'</span>';
+    h+='<div style="background:var(--bg2);border:1px solid var(--dim);border-radius:8px;padding:10px">'+
+      '<div style="font-size:9px;color:var(--muted);margin-bottom:3px">'+it[0]+'</div>'+
+      '<div style="font-family:Rajdhani,sans-serif;font-weight:700;font-size:18px;color:var(--text2)">'+rv+it[2]+'</div>'+
+      '<div style="font-size:10px;color:var(--muted)">통산 '+tv+it[2]+' · '+arrow+'</div></div>';
+  });
+  return h+'</div></div>';
+}
+
+// ── ④ 선수 최근 경기 (등급 포함) ──
+function togglePsb(no){
+  var e=document.getElementById('psb-'+no);
+  if(e) e.style.display = e.style.display==='none' ? 'block' : 'none';
+}
+function recentGamesHtml(name, posFilter){
+  var all=playerRows(name);
+  if(posFilter) all=all.filter(function(r){return r.p.pos===posFilter;});
+  var rows=all.slice(-10).reverse();
+  var title='최근 경기'+(posFilter?' · '+POS_KR[posFilter]:'');
+  if(!rows.length) return '';
+  var dist={S:0,A:0,B:0,C:0,D:0};
+  rows.forEach(function(r){ dist[gameGrade(r.p.cp, r.p.pos)]++; });
+  var h='<div class="card fi fi1"><div class="ct">'+title+' <span style="font-weight:400;color:var(--muted);margin-left:6px">클릭하면 스코어보드 · 등급은 같은 포지션 경기 대비</span></div>'+
+    '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:10px;font-size:11px;color:var(--muted)">최근 '+rows.length+'판 등급 분포 '+
+    ['S','A','B','C','D'].map(function(g){ return '<span style="display:inline-flex;align-items:center;gap:3px">'+gradeBadge(g,16)+'<b style="color:var(--text2)">'+dist[g]+'</b></span>'; }).join('')+'</div>';
+  rows.forEach(function(r){
+    var p=r.p, gr=gameGrade(p.cp,p.pos), ma=gameMvpAce(r.g), win=p.team==='win';
+    var tag = ma.mvp===name ? '<span style="font-size:9px;font-weight:900;color:#b8860f">👑 MVP</span>' : ma.ace===name ? '<span style="font-size:9px;font-weight:900;color:#75879b">🛡️ ACE</span>' : '';
+    h+='<div onclick="togglePsb('+r.no+')" style="display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:8px;background:var(--bg2);border:1px solid var(--dim);border-left:3px solid '+(win?'var(--green)':'var(--red)')+';margin-bottom:5px;cursor:pointer">'+
+      gradeBadge(gr,22)+
+      '<div style="width:28px;height:28px;border-radius:6px;overflow:hidden;flex-shrink:0">'+cImg(p.champ,28,6)+'</div>'+
+      '<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:700;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.champ+' <span style="font-weight:500;color:var(--muted);font-size:10px">'+POS_KR[p.pos]+'</span> '+tag+'</div>'+
+      '<div style="font-size:10px;color:var(--muted)">#'+r.no+' · '+r.date.slice(5)+' · '+(win?'승':'패')+'</div></div>'+
+      '<div style="text-align:right;flex-shrink:0"><div style="font-family:Rajdhani,sans-serif;font-weight:700;font-size:14px;color:'+kdaColor(p.kda)+'">'+p.k+'/'+p.d+'/'+p.a+'</div>'+
+      '<div style="font-size:10px;color:var(--purp);font-weight:700">CP '+p.cp+'</div></div></div>'+
+      '<div id="psb-'+r.no+'" style="display:none;margin:0 0 8px">'+scoreboardHtml(r.no)+'</div>';
+  });
+  return h+'</div>';
+}
+
+// ── ⑤ 출석 캘린더 ──
+var CAL_YEAR=null;
+function setCalYear(y){ CAL_YEAR=y; var e=document.getElementById('calBox'); if(e) e.innerHTML=calendarInner(document.getElementById('calBox').getAttribute('data-name')); }
+function parseD(s){ var a=s.split('.'); return new Date(+a[0], +a[1]-1, +a[2]); }   // 로컬(한국) 날짜로 생성 → 날짜 밀림 없음
+function dKey(dt){ return dt.getFullYear()+'.'+('0'+(dt.getMonth()+1)).slice(-2)+'.'+('0'+dt.getDate()).slice(-2); }
+function calendarInner(name){
+  var held={}, years={};
+  GAMES.forEach(function(g){ held[g.date]=(held[g.date]||0)+1; years[g.date.slice(0,4)]=1; });
+  var ylist=Object.keys(years).sort();
+  if(!CAL_YEAR || !years[CAL_YEAR]) CAL_YEAR=ylist[ylist.length-1];
+  var my={};
+  playerRows(name).forEach(function(r){
+    var o=my[r.date]=my[r.date]||{g:0,w:0,ch:[]};
+    o.g++; if(r.p.team==='win') o.w++; o.ch.push(r.p.champ);
+  });
+  var Y=+CAL_YEAR, start=new Date(Y,0,1), end=new Date(Y,11,31);
+  var off=(start.getDay()+6)%7;                      // 월요일 시작
+  var gridStart=new Date(Y,0,1-off);
+  var weeks=Math.ceil((off + (Math.round((end-start)/86400000)+1))/7);
+  var DOW=['월','화','수','목','금','토','일'], CELL=13, GAP=3;
+  var h='';
+  if(ylist.length>1) h+='<div style="display:flex;gap:6px;margin-bottom:8px">'+ylist.map(function(y){
+    var on=y===CAL_YEAR; return '<span onclick="setCalYear(\''+y+'\')" style="cursor:pointer;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700;'+(on?'background:var(--blue);color:#fff':'background:var(--bg2);color:var(--muted);border:1px solid var(--dim)')+'">'+y+'</span>'; }).join('')+'</div>';
+  // 월 라벨
+  var months='<div style="display:flex;margin-left:22px;height:14px;position:relative">';
+  for(var w=0;w<weeks;w++){
+    var d0=new Date(gridStart.getFullYear(),gridStart.getMonth(),gridStart.getDate()+w*7);
+    var lab='';
+    for(var k=0;k<7;k++){ var dk=new Date(d0.getFullYear(),d0.getMonth(),d0.getDate()+k); if(dk.getDate()===1 && dk.getFullYear()===Y){ lab=(dk.getMonth()+1)+'월'; } }
+    months+='<span style="position:absolute;left:'+(w*(CELL+GAP))+'px;font-size:9px;color:var(--muted);white-space:nowrap">'+lab+'</span>';
+  }
+  months+='</div>';
+  var grid='<div style="display:flex;gap:'+GAP+'px"><div style="display:flex;flex-direction:column;gap:'+GAP+'px;margin-right:2px">'+
+    DOW.map(function(d,i){ return '<span style="height:'+CELL+'px;font-size:8px;line-height:'+CELL+'px;color:var(--muted);width:16px">'+(i%2===0?d:'')+'</span>'; }).join('')+'</div>';
+  var days=0, heldDays=0, streak=0, best=0;
+  var heldDates=Object.keys(held).filter(function(d){return d.slice(0,4)===CAL_YEAR;}).sort();
+  heldDates.forEach(function(d){ if(my[d]){ streak++; best=Math.max(best,streak);} else streak=0; });
+  for(var w2=0;w2<weeks;w2++){
+    grid+='<div style="display:flex;flex-direction:column;gap:'+GAP+'px">';
+    for(var k2=0;k2<7;k2++){
+      var dt=new Date(gridStart.getFullYear(),gridStart.getMonth(),gridStart.getDate()+w2*7+k2);
+      var key=dKey(dt), inYear=dt.getFullYear()===Y, st='', tip='';
+      if(!inYear){ st='background:transparent'; }
+      else if(my[key]){
+        var o=my[key], l=o.g-o.w, base=o.w>l?'25,148,115':o.w<l?'207,68,68':'168,120,28';
+        var alpha=Math.min(1,0.45+0.2*o.g);
+        st='background:rgba('+base+','+alpha+')';
+        tip=key+' ('+DOW[(dt.getDay()+6)%7]+') · '+o.g+'판 '+o.w+'승 '+l+'패 · '+o.ch.join(', ');
+        days++;
+      } else if(held[key]){ st='background:var(--bg1);border:1.5px solid rgba(51,104,160,.45)'; tip=key+' 내전 있었음 · 불참'; }
+      else { st='background:var(--dim);opacity:.55'; tip=key; }
+      grid+='<span title="'+tip+'" style="width:'+CELL+'px;height:'+CELL+'px;border-radius:3px;box-sizing:border-box;'+st+'"></span>';
+    }
+    grid+='</div>';
+  }
+  grid+='</div>';
+  heldDays=heldDates.length;
+  var rate=heldDays?Math.round(days/heldDays*100):0;
+  h+='<div style="overflow-x:auto;padding-bottom:4px"><div style="min-width:'+(weeks*(CELL+GAP)+24)+'px">'+months+grid+'</div></div>';
+  h+='<div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;font-size:11px;color:var(--muted);align-items:center">'+
+    '<span>참가 <b style="color:var(--text2)">'+days+'일</b></span>'+
+    '<span>내전 열린 날 중 <b style="color:var(--text2)">'+rate+'%</b> ('+days+'/'+heldDays+')</span>'+
+    '<span>최장 연속 참가 <b style="color:var(--text2)">'+best+'회</b></span>'+
+    '<span style="margin-left:auto;display:flex;gap:8px;align-items:center">'+
+      '<span style="display:inline-flex;gap:3px;align-items:center"><i style="width:10px;height:10px;border-radius:2px;background:rgba(25,148,115,.8);display:inline-block"></i>승 많음</span>'+
+      '<span style="display:inline-flex;gap:3px;align-items:center"><i style="width:10px;height:10px;border-radius:2px;background:rgba(207,68,68,.8);display:inline-block"></i>패 많음</span>'+
+      '<span style="display:inline-flex;gap:3px;align-items:center"><i style="width:10px;height:10px;border-radius:2px;border:1.5px solid rgba(51,104,160,.45);display:inline-block;box-sizing:border-box"></i>불참</span></span></div>';
+  return h;
+}
+function calendarHtml(name){
+  return '<div class="card fi fi2" style="margin-top:14px"><div class="ct">📅 출석 캘린더 <span style="font-weight:400;color:var(--muted);margin-left:6px">진할수록 그날 많이 뛴 날 · 마우스를 올리면 상세</span></div>'+
+    '<div id="calBox" data-name="'+name+'">'+calendarInner(name)+'</div></div>';
+}
+
+// ── ⑥ 스코어보드 막대그래프 ──
+var _SBUID=0;
+function sbMetric(uid,key){
+  ['dmg','dt','gold'].forEach(function(k){
+    var e=document.getElementById('sbb-'+uid+'-'+k); if(e) e.style.display = k===key?'block':'none';
+    var b=document.getElementById('sbt-'+uid+'-'+k); if(b){ b.style.background = k===key?'var(--blue)':'var(--bg2)'; b.style.color = k===key?'#fff':'var(--muted)'; }
+  });
+}
+function sbBarsHtml(g){
+  var uid=++_SBUID;
+  var defs=[['dmg','딜량','#c07a10'],['dt','받은 딜','#7a5bd6'],['gold','골드','#8f7434']];
+  var h='<div style="margin-top:10px;border-top:1px solid var(--dim);padding-top:8px">'+
+    '<div style="display:flex;gap:6px;margin-bottom:8px">'+defs.map(function(d,i){
+      return '<span id="sbt-'+uid+'-'+d[0]+'" onclick="event.stopPropagation();sbMetric('+uid+',\''+d[0]+'\')" style="cursor:pointer;padding:3px 10px;border-radius:6px;font-size:10px;font-weight:700;border:1px solid var(--dim);'+(i===0?'background:var(--blue);color:#fff':'background:var(--bg2);color:var(--muted)')+'">'+d[1]+'</span>';
+    }).join('')+'</div>';
+  var order=g.players.slice().sort(function(a,b){ return (a.team===b.team?0:(a.team==='win'?-1:1)); });
+  defs.forEach(function(d,i){
+    var max=Math.max.apply(null,g.players.map(function(p){return p[d[0]];}))||1;
+    h+='<div id="sbb-'+uid+'-'+d[0]+'" style="display:'+(i===0?'block':'none')+'">';
+    order.forEach(function(p,ix){
+      if(ix>0 && order[ix-1].team!==p.team) h+='<div style="height:6px"></div>';
+      var pct=Math.round(p[d[0]]/max*100), col=p.team==='win'?'rgba(25,148,115,.75)':'rgba(207,68,68,.7)';
+      h+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;font-size:10px">'+
+        '<span style="width:54px;flex-shrink:0;color:var(--text2);font-weight:700;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">'+p.name+'</span>'+
+        '<div style="flex:1;height:12px;background:var(--bg2);border-radius:3px;overflow:hidden"><div style="width:'+pct+'%;height:100%;background:'+col+';border-radius:3px"></div></div>'+
+        '<span style="width:52px;text-align:right;font-family:Rajdhani,sans-serif;font-weight:700;color:'+d[2]+'">'+p[d[0]].toLocaleString()+'</span></div>';
+    });
+    h+='</div>';
+  });
+  return h+'<div style="font-size:9px;color:var(--muted);margin-top:4px">초록 = 승리팀 · 빨강 = 패배팀 · 막대 길이는 그 판 최댓값 기준</div></div>';
+}
+
+// ── ⑦ 1:1 비교 탭 ──
+var CMP_A=null, CMP_B=null;
+function cmpCandidates(){ return visiblePlayers().sort(function(a,b){return b.games-a.games || b.elo-a.elo;}); }
+function goCompare(name){
+  if(isHidden(name)) return;
+  CMP_A=name;
+  if(!CMP_B || CMP_B===name){
+    var top=visiblePlayers().sort(function(a,b){return b.elo-a.elo;}).filter(function(p){return p.name!==name;})[0];
+    CMP_B=top?top.name:null;
+  }
+  showPage('compare');
+}
+function setCmp(side,v){ if(side==='a') CMP_A=v; else CMP_B=v; renderCompare(); }
+function swapCmp(){ var t=CMP_A; CMP_A=CMP_B; CMP_B=t; renderCompare(); }
+function headToHead(a,b){
+  var same={g:0,w:0}, vs={g:0,aw:0}, lane={g:0,aw:0,list:[]};
+  GAME_DETAILS.forEach(function(g){
+    var pa=null,pb=null; g.players.forEach(function(p){ if(p.name===a) pa=p; if(p.name===b) pb=p; });
+    if(!pa||!pb) return;
+    if(pa.team===pb.team){ same.g++; if(pa.team==='win') same.w++; }
+    else {
+      vs.g++; if(pa.team==='win') vs.aw++;
+      if(pa.pos===pb.pos){ lane.g++; if(pa.team==='win') lane.aw++; lane.list.push({no:g.no,date:g.date,pos:pa.pos,ac:pa.champ,bc:pb.champ,aw:pa.team==='win',ak:pa.k+'/'+pa.d+'/'+pa.a,bk:pb.k+'/'+pb.d+'/'+pb.a}); }
+    }
+  });
+  return {same:same, vs:vs, lane:lane};
+}
+function renderCompare(){
+  var cands=cmpCandidates();
+  if(!CMP_A || isHidden(CMP_A) || !PLAYERS[CMP_A]) CMP_A=(visiblePlayers().sort(function(a,b){return b.elo-a.elo;})[0]||{}).name;
+  if(!CMP_B || isHidden(CMP_B) || !PLAYERS[CMP_B] || CMP_B===CMP_A) CMP_B=(visiblePlayers().sort(function(a,b){return b.elo-a.elo;}).filter(function(p){return p.name!==CMP_A;})[0]||{}).name;
+  var A=PLAYERS[CMP_A], B=PLAYERS[CMP_B];
+  var CA='#3368a0', CB='#c33b6b';
+  function sel(side,cur){
+    return '<select class="nsel" onchange="setCmp(\''+side+'\',this.value)" style="font-size:14px;font-weight:700;padding:6px 10px">'+
+      cands.map(function(p){ return '<option value="'+p.name+'"'+(p.name===cur?' selected':'')+'>'+p.name+' ('+p.games+'판)</option>'; }).join('')+'</select>';
+  }
+  function head(P,c){
+    var r=playerRankInfo(P.name), t=tierOf(P.elo);
+    return '<div style="flex:1;min-width:150px;text-align:center;padding:12px;border-radius:12px;background:var(--bg2);border:2px solid '+c+'">'+
+      '<div style="width:44px;height:44px;margin:0 auto 6px">'+tierIcon(P.elo,44)+'</div>'+
+      '<div class="pn" style="font-size:18px;font-weight:900" onclick="goPlayer(\''+P.name+'\')">'+P.name+'</div>'+
+      '<div style="font-size:11px;color:var(--muted)">'+POS_KR[P.pos]+' · '+P.games+'전 '+P.wins+'승 '+P.losses+'패</div>'+
+      '<div style="font-size:12px;font-weight:700;color:'+t.c+';margin-top:3px">'+t.label+' · ELO '+P.elo+' · '+r.eloRank+'위</div>'+
+      badgesHtml(P.name).replace('margin:2px 0 8px','margin:8px 0 0;justify-content:center')+'</div>';
+  }
+  var h='<div class="card fi"><div class="ct">🆚 1:1 선수 비교</div>'+
+    '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px">'+sel('a',CMP_A)+
+    '<span onclick="swapCmp()" style="cursor:pointer;font-size:16px;padding:4px 10px;border-radius:8px;background:var(--bg2);border:1px solid var(--dim)" title="좌우 바꾸기">⇄</span>'+sel('b',CMP_B)+'</div>'+
+    '<div style="display:flex;gap:12px;align-items:stretch;flex-wrap:wrap">'+head(A,CA)+
+    '<div style="display:flex;align-items:center;font-family:Bebas Neue,Rajdhani,sans-serif;font-size:26px;color:var(--muted)">VS</div>'+head(B,CB)+'</div></div>';
+
+  // 지표 비교
+  var ma=mvpAceAll(), mA=ma[A.name]||{mvp:0,ace:0}, mB=ma[B.name]||{mvp:0,ace:0};
+  function wi(p){ var tw=0,tg=0; Object.values(PLAYERS).forEach(function(q){tw+=q.wins;tg+=q.games;}); return Math.round((p.wins+5*tw/tg)/(p.games+5)*100); }
+  var rows=[
+    ['ELO',A.elo,B.elo,false,''],['승률',A.wr,B.wr,false,'%'],['승률 지수',wi(A),wi(B),false,''],['KDA',A.kda,B.kda,false,''],
+    ['CP 평균',A.cp_avg,B.cp_avg,false,''],['DPM',A.dpm,B.dpm,false,''],['킬관여',A.kp,B.kp,false,'%'],['평균 데스',A.d,B.d,true,''],
+    ['분당 시야',A.vspm,B.vspm,false,''],['분당 CS',A.cs_per_min,B.cs_per_min,false,''],
+    ['팀 내 1위율',Math.round((mA.mvp+mA.ace)/A.games*100),Math.round((mB.mvp+mB.ace)/B.games*100),false,'%'],
+    ['챔프 수',A.champPool,B.champPool,false,'종']
+  ];
+  var winsA=0, winsB=0;
+  h+='<div class="two-col" style="margin-top:14px"><div><div class="card fi fi1"><div class="ct">지표 비교 <span style="font-weight:400;color:var(--muted);margin-left:6px">더 나은 쪽이 색칠됩니다</span></div>';
+  rows.forEach(function(r){
+    var a=r[1], b=r[2], better = a===b ? 0 : (r[3] ? (a<b?1:-1) : (a>b?1:-1));
+    if(better>0) winsA++; else if(better<0) winsB++;
+    var tot=(Math.abs(a)+Math.abs(b))||1, pa=Math.round(Math.abs(a)/tot*100);
+    h+='<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">'+
+      '<b style="font-family:Rajdhani,sans-serif;font-size:15px;color:'+(better>0?CA:'var(--muted)')+'">'+a+r[4]+'</b>'+
+      '<span style="font-size:10px;color:var(--muted)">'+r[0]+(r[3]?' (낮을수록 좋음)':'')+'</span>'+
+      '<b style="font-family:Rajdhani,sans-serif;font-size:15px;color:'+(better<0?CB:'var(--muted)')+'">'+b+r[4]+'</b></div>'+
+      '<div style="display:flex;height:7px;border-radius:4px;overflow:hidden;background:var(--bg2)"><div style="width:'+pa+'%;background:'+(better>0?CA:'rgba(51,104,160,.3)')+'"></div><div style="flex:1;background:'+(better<0?CB:'rgba(195,59,107,.3)')+'"></div></div></div>';
+  });
+  h+='<div style="text-align:center;font-size:12px;color:var(--muted);margin-top:6px">우세 항목 <b style="color:'+CA+'">'+A.name+' '+winsA+'</b> : <b style="color:'+CB+'">'+winsB+' '+B.name+'</b></div></div></div>';
+
+  // 레이더 + 맞대결
+  var hh=headToHead(A.name,B.name);
+  function rec(lbl,txt,sub){ return '<div style="flex:1;min-width:120px;text-align:center;padding:10px;border-radius:9px;background:var(--bg2);border:1px solid var(--dim)"><div style="font-size:10px;color:var(--muted);margin-bottom:4px">'+lbl+'</div><div style="font-family:Rajdhani,sans-serif;font-weight:700;font-size:18px;color:var(--text2)">'+txt+'</div><div style="font-size:10px;color:var(--muted)">'+sub+'</div></div>'; }
+  h+='<div><div class="radar-card fi"><div class="ct">능력치 레이더 겹쳐보기</div><div style="display:flex;flex-direction:column;align-items:center">'+
+    '<canvas id="cmpRadar" width="560" height="500" style="width:280px;height:250px"></canvas>'+
+    '<div style="display:flex;gap:14px;font-size:11px;font-weight:700"><span style="color:'+CA+'">■ '+A.name+'</span><span style="color:'+CB+'">■ '+B.name+'</span></div></div></div>';
+  h+='<div class="card fi fi2"><div class="ct">둘이 얽힌 기록</div><div style="display:flex;gap:8px;flex-wrap:wrap">'+
+    rec('같은 팀일 때', hh.same.g? hh.same.w+'승 '+(hh.same.g-hh.same.w)+'패':'-', hh.same.g? hh.same.g+'판 · '+Math.round(hh.same.w/hh.same.g*100)+'%':'함께 뛴 적 없음')+
+    rec('상대 팀일 때', hh.vs.g? hh.vs.aw+' : '+(hh.vs.g-hh.vs.aw):'-', hh.vs.g? A.name+' 기준 '+hh.vs.g+'판':'맞붙은 적 없음')+
+    rec('같은 라인 맞대결', hh.lane.g? hh.lane.aw+' : '+(hh.lane.g-hh.lane.aw):'-', hh.lane.g? A.name+' 기준 '+hh.lane.g+'판':'라인전 기록 없음')+'</div>';
+  if(hh.lane.list.length){
+    h+='<div style="margin-top:10px">'+hh.lane.list.slice(-5).reverse().map(function(x){
+      return '<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:7px;background:var(--bg2);border:1px solid var(--dim);margin-bottom:4px;font-size:11px">'+
+        '<span style="color:var(--muted);width:56px">#'+x.no+' '+POS_KR[x.pos]+'</span>'+
+        '<div style="width:22px;height:22px;border-radius:4px;overflow:hidden">'+cImg(x.ac,22,4)+'</div><b style="color:'+(x.aw?CA:'var(--muted)')+'">'+x.ak+'</b>'+
+        '<span style="color:var(--muted);margin:0 auto">vs</span>'+
+        '<b style="color:'+(!x.aw?CB:'var(--muted)')+'">'+x.bk+'</b><div style="width:22px;height:22px;border-radius:4px;overflow:hidden">'+cImg(x.bc,22,4)+'</div></div>';
+    }).join('')+'</div>';
+  }
+  h+='</div>';
+  // 둘 다 쓴 챔프
+  var ca={}; A.mostChamps.forEach(function(m){ca[m[0]]=m[1];});
+  var common=B.mostChamps.filter(function(m){return ca[m[0]];}).map(function(m){return {c:m[0],a:ca[m[0]],b:m[1]};});
+  if(common.length){
+    h+='<div class="card fi fi3"><div class="ct">둘 다 쓴 챔피언</div>'+common.map(function(x){
+      return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--dim);font-size:11px">'+
+        '<div style="width:24px;height:24px;border-radius:5px;overflow:hidden">'+cImg(x.c,24,5)+'</div><span style="flex:1;font-weight:700;color:var(--text2)">'+x.c+'</span>'+
+        '<span style="color:'+CA+';font-weight:700">'+x.a.games+'전 '+x.a.wins+'승</span><span style="color:var(--muted)">·</span>'+
+        '<span style="color:'+CB+';font-weight:700">'+x.b.games+'전 '+x.b.wins+'승</span></div>';
+    }).join('')+'</div>';
+  }
+  h+='</div></div>';
+  document.getElementById('page-compare').innerHTML=h;
+  setTimeout(function(){ drawCmpRadar(calcCats(A,A.pos), calcCats(B,B.pos), CA, CB); }, 30);
+}
+function drawCmpRadar(ca,cb,c1,c2){
+  var cv=document.getElementById('cmpRadar'); if(!cv) return;
+  var ctx=cv.getContext('2d'), W=280,H=250,cx=140,cy=128,R=88,n=5, keys=['전투','시야','생존','성장','챔프폭'];
+  ctx.setTransform(2,0,0,2,0,0); ctx.clearRect(0,0,W,H);
+  for(var ring=1;ring<=5;ring++){ ctx.beginPath(); for(var i=0;i<n;i++){ var a=(i/n)*Math.PI*2-Math.PI/2, r=R*ring/5; i===0?ctx.moveTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r):ctx.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);} ctx.closePath(); ctx.strokeStyle='rgba(0,0,0,.08)'; ctx.stroke(); }
+  function poly(cats,col,fill){
+    ctx.beginPath(); keys.forEach(function(k,i){ var a=(i/n)*Math.PI*2-Math.PI/2, v=Math.max(0,Math.min(1,cats[k]/100)); var x=cx+Math.cos(a)*R*v, y=cy+Math.sin(a)*R*v; i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+    ctx.closePath(); ctx.fillStyle=fill; ctx.fill(); ctx.strokeStyle=col; ctx.lineWidth=2; ctx.stroke();
+  }
+  poly(ca,c1,'rgba(51,104,160,.18)'); poly(cb,c2,'rgba(195,59,107,.16)');
+  ctx.fillStyle='#41536a'; ctx.font='bold 11px "IBM Plex Sans KR",sans-serif'; ctx.textAlign='center';
+  keys.forEach(function(k,i){ var a=(i/n)*Math.PI*2-Math.PI/2; ctx.fillText(k, cx+Math.cos(a)*(R+18), cy+Math.sin(a)*(R+18)+4); });
+}
+
+// ── ⑧ 내 카드 이미지로 저장 (PNG) ──
+function savePlayerCard(name){
+  var p=PLAYERS[name]; if(!p) return;
+  var draw=function(){
+    var W=1200,H=630, cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+    var x=cv.getContext('2d'), t=tierOf(p.elo), F='"IBM Plex Sans KR","Noto Sans KR",sans-serif';
+    var grd=x.createLinearGradient(0,0,W,H); grd.addColorStop(0,'#f2efe7'); grd.addColorStop(1,'#dfeeea');
+    x.fillStyle=grd; x.fillRect(0,0,W,H);
+    x.fillStyle='#3368a0'; x.fillRect(0,0,W,10);
+    // 로고·날짜
+    x.fillStyle='#1c2b42'; x.font='900 30px '+F; x.textAlign='left'; x.fillText('HUSH',60,70);
+    x.fillStyle='rgba(28,43,66,.4)'; x.fillText('.GG',60+x.measureText('HUSH').width,70);
+    x.textAlign='right'; x.fillStyle='#84929e'; x.font='500 20px '+F;
+    x.fillText(GAMES[GAMES.length-1].date+' 기준 · 내전 '+GAMES.length+'경기', W-60, 68);
+    // 티어 원
+    x.beginPath(); x.arc(150,215,72,0,Math.PI*2); x.fillStyle=t.c+'22'; x.fill(); x.lineWidth=6; x.strokeStyle=t.c; x.stroke();
+    x.textAlign='center'; x.fillStyle=t.c; x.font='900 34px '+F; x.fillText(t.n.slice(0,2),150,213); x.font='700 22px '+F; x.fillText(t.div?String(t.div):'',150,243);
+    // 이름
+    x.textAlign='left'; x.fillStyle='#1c2b42'; x.font='900 64px '+F; x.fillText(name,260,200);
+    x.fillStyle='#84929e'; x.font='600 24px '+F; x.fillText(POS_KR[p.pos]+' · '+p.games+'전 '+p.wins+'승 '+p.losses+'패 · '+t.label,262,245);
+    // 칭호
+    var bx=262, bs=playerBadges(name);
+    x.font='800 22px '+F;
+    bs.forEach(function(b){ var s=b.icon+' '+b.name, w=x.measureText(s).width+32;
+      x.fillStyle='rgba(51,104,160,.12)'; roundRect(x,bx,268,w,40,20); x.fill(); x.strokeStyle='rgba(51,104,160,.35)'; x.lineWidth=2; x.stroke();
+      x.fillStyle='#1c2b42'; x.fillText(s,bx+16,296); bx+=w+10; });
+    // 지표 박스
+    var r=playerRankInfo(name), ma=mvpAceAll()[name]||{mvp:0,ace:0};
+    var boxes=[
+      ['ELO', String(p.elo), isHidden(name)?'순위 집계 제외':r.eloRank+'위 / '+r.total+'명', '#a8781c'],
+      ['승률', p.wr+'%', r.wiRank?'승률 지수 '+r.wiRank+'위':'승률 지수 집계 전', '#199473'],
+      ['KDA', String(p.kda), '평균 '+p.k+' / '+p.d+' / '+p.a, '#1c2b42'],
+      ['CP 평균', String(p.cp_avg), '최고 '+p.cp_best, '#7a5bd6'],
+      ['팀 내 1위율', (p.games?Math.round((ma.mvp+ma.ace)/p.games*100):0)+'%', 'MVP '+ma.mvp+' · ACE '+ma.ace, '#b8860f']
+    ];
+    var bw=206, gap=16, sx=60;
+    boxes.forEach(function(b,i){ var bx2=sx+i*(bw+gap);
+      x.fillStyle='#ffffff'; roundRect(x,bx2,350,bw,130,16); x.fill(); x.strokeStyle='#d5e3df'; x.lineWidth=2; x.stroke();
+      x.textAlign='left'; x.fillStyle='#84929e'; x.font='700 18px '+F; x.fillText(b[0],bx2+18,382);
+      x.fillStyle=b[3]; x.font='800 42px '+F; x.fillText(b[1],bx2+18,432);
+      x.fillStyle='#84929e'; x.font='500 16px '+F; x.fillText(b[2],bx2+18,462); });
+    // 모스트 챔피언
+    x.fillStyle='#41536a'; x.font='800 20px '+F; x.fillText('모스트',60,530);
+    x.font='600 20px '+F; x.fillStyle='#1c2b42';
+    x.fillText(p.mostChamps.slice(0,3).map(function(m){return m[0]+' '+m[1].games+'판 '+Math.round(m[1].wins/m[1].games*100)+'%';}).join('   ·   '),140,530);
+    // ELO 미니 그래프
+    var hist=(ELO_HISTORY[name]||[1000]).slice(-21), gx=880, gy=505, gw=260, gh=70;
+    var mn=Math.min.apply(null,hist), mx=Math.max.apply(null,hist), rng=(mx-mn)||1;
+    x.strokeStyle='#199473'; x.lineWidth=4; x.beginPath();
+    hist.forEach(function(v,i){ var px=gx+(hist.length>1?i/(hist.length-1):0)*gw, py=gy+gh-(v-mn)/rng*gh; i?x.lineTo(px,py):x.moveTo(px,py); }); x.stroke();
+    x.fillStyle='#84929e'; x.font='500 15px '+F; x.textAlign='right'; x.fillText('ELO 최근 '+(hist.length-1)+'경기',gx+gw,gy+gh+28);
+    x.textAlign='left'; x.fillStyle='#84929e'; x.font='500 16px '+F; x.fillText('itto-94.github.io',60,600);
+    var a=document.createElement('a'); a.download='HUSH_'+name+'.png'; a.href=cv.toDataURL('image/png'); document.body.appendChild(a); a.click(); a.remove();
+  };
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(draw); else draw();
+}
+function roundRect(x,X,Y,W,H,R){ x.beginPath(); x.moveTo(X+R,Y); x.arcTo(X+W,Y,X+W,Y+H,R); x.arcTo(X+W,Y+H,X,Y+H,R); x.arcTo(X,Y+H,X,Y,R); x.arcTo(X,Y,X+W,Y,R); x.closePath(); }
 
 
 // ── 조합 통계 ────────────────────────────────────────
@@ -1647,13 +2134,13 @@ function scoreboardHtml(no){
         '<td style="padding:4px;text-align:center;color:#7a5bd6">'+p.dt.toLocaleString()+'</td>'+
         '<td style="padding:4px;text-align:center;color:#8f7434">'+p.gold.toLocaleString()+'</td>'+
         '<td style="padding:4px;text-align:center;color:#3368a0">'+p.vs+'</td>'+
-        '<td style="padding:4px;text-align:center;font-weight:700;color:var(--purp)">'+p.cp+'</td></tr>';
+        '<td style="padding:4px;text-align:center;font-weight:700;color:var(--purp)"><span style="display:inline-flex;align-items:center;gap:4px">'+gradeBadge(gameGrade(p.cp,p.pos),16)+p.cp+'</span></td></tr>';
     });
     return h + '</tbody></table>';
   }
   return '<div style="background:var(--bg1);border:1px solid var(--border);border-radius:8px;padding:10px 12px" onclick="event.stopPropagation()">'+
     '<div style="font-size:10px;color:var(--muted)">게임 시간 '+Math.floor(g.durMin)+'분 '+Math.round((g.durMin%1)*60)+'초</div>'+
-    teamTable('win','🏆 승리팀','var(--green)')+teamTable('lose','💀 패배팀','var(--red)')+'</div>';
+    teamTable('win','🏆 승리팀','var(--green)')+teamTable('lose','💀 패배팀','var(--red)')+sbBarsHtml(g)+'</div>';
 }
 
 
@@ -2356,11 +2843,12 @@ function showPage(id){
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('on');});
   document.querySelectorAll('.nav-tab').forEach(function(t){t.classList.remove('on');});
   document.getElementById('page-'+id).classList.add('on');
-  var tabs=['scout','news','summary','player','champion','combo','detail','award','balance'];
+  var tabs=['scout','news','summary','player','compare','champion','combo','detail','award','balance'];
   document.querySelectorAll('.nav-tab')[tabs.indexOf(id)].classList.add('on');
   // 선수/포지션 드롭다운은 선수 탭에서만 표시
   document.getElementById('navRight').style.display = (id==='player') ? 'flex' : 'none';
   if(id==='player') renderPlayer();
+  if(id==='compare') renderCompare();
   if(id==='news') renderNews();
   if(id==='scout') renderScout();
   if(id==='champion') renderChampion();
