@@ -815,8 +815,42 @@ function playerRankInfo(name){
   return {eloRank:eloRank, total:Object.keys(PLAYERS).length, prevRank:prevRank,
           wiRank:wiRank, wiTotal:qualAll, wiNeed: me.games>=MIN_G ? 0 : MIN_G-me.games, wiMin:MIN_G};
 }
+// ── 선수 통산 MVP/ACE (전체 기간) ──
+var _MAA=null;
+function mvpAceAll(){
+  if(_MAA) return _MAA;
+  var per={};
+  GAME_DETAILS.forEach(function(g){
+    var w=g.players.filter(function(p){return p.team==='win';}).sort(function(a,b){return b.cp-a.cp;})[0];
+    var l=g.players.filter(function(p){return p.team==='lose';}).sort(function(a,b){return b.cp-a.cp;})[0];
+    if(w){ per[w.name]=per[w.name]||{mvp:0,ace:0}; per[w.name].mvp++; }
+    if(l){ per[l.name]=per[l.name]||{mvp:0,ace:0}; per[l.name].ace++; }
+  });
+  _MAA=per; return per;
+}
+function mvpAceBadgeHtml(name){
+  var p=PLAYERS[name], m=mvpAceAll()[name]||{mvp:0,ace:0};
+  var W=p.wins, L=p.losses, G=p.games;
+  var showRate = G>=3;
+  var top = G ? (m.mvp+m.ace)/G : 0;
+  var topPct = Math.round(top*100);
+  var tc = !showRate ? 'var(--muted)' : top>=0.30 ? 'var(--gold)' : top>=0.20 ? 'var(--green)' : 'var(--text2)';
+  function pct(a,b){ return (showRate && b) ? ' <span style="color:var(--muted);font-weight:600">('+Math.round(a/b*100)+'%)</span>' : ''; }
+  return '<div title="팀 내 1위율 = (MVP+ACE) ÷ 전체 판수 · 5명 중 1명이라 평균 20%" style="display:inline-flex;flex-direction:column;justify-content:center;line-height:1.05;padding:8px 14px;border-radius:12px;background:var(--bg2);border:1px solid var(--dim)">'+
+    '<span style="font-size:9px;font-weight:700;letter-spacing:.5px;color:var(--muted)">팀 내 1위율 · 평균 20%</span>'+
+    (showRate
+      ? '<span style="font-family:Rajdhani,sans-serif;font-weight:700;font-size:24px;color:'+tc+'">'+topPct+'<span style="font-size:13px">%</span></span>'
+      : '<span style="font-size:12px;font-weight:700;color:var(--muted);margin:3px 0">3판부터 집계</span>')+
+    '<span style="font-size:11px;font-weight:700;color:var(--text2);margin-top:3px;white-space:nowrap">'+
+      '<span style="color:#b8860f">👑 MVP '+m.mvp+'</span>'+pct(m.mvp,W)+
+      ' <span style="color:var(--dim)">·</span> '+
+      '<span style="color:#75879b">🛡️ ACE '+m.ace+'</span>'+pct(m.ace,L)+
+    '</span>'+
+    (showRate?'<span style="font-size:9px;color:var(--muted);margin-top:2px">MVP는 이긴 판 · ACE는 진 판 대비</span>':'')+
+  '</div>';
+}
 function rankBadgeHtml(name){
-  if(isHidden(name)) return '<div class="ph-rank" style="margin:6px 0 8px"><span style="display:inline-block;padding:6px 12px;border-radius:10px;background:var(--bg2);border:1px dashed var(--dim);font-size:11px;font-weight:700;color:var(--muted)">순위 집계 제외</span></div>';
+  if(isHidden(name)) return '<div class="ph-rank" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0 8px"><span style="display:inline-block;padding:6px 12px;border-radius:10px;background:var(--bg2);border:1px dashed var(--dim);font-size:11px;font-weight:700;color:var(--muted)">순위 집계 제외</span>'+mvpAceBadgeHtml(name)+'</div>';
   var r = playerRankInfo(name);
   var medal = r.eloRank===1 ? {c:'#b8860f',bg:'linear-gradient(135deg,#fff6d8,#f5e3a6)',bd:'#d9b44a',ic:'🥇'}
             : r.eloRank===2 ? {c:'#6b7785',bg:'linear-gradient(135deg,#f4f6f8,#dfe4ea)',bd:'#aeb8c4',ic:'🥈'}
@@ -848,7 +882,7 @@ function rankBadgeHtml(name){
       '<span style="font-size:9px;font-weight:700;letter-spacing:.5px;color:var(--muted)">승률 지수 순위 · '+r.wiMin+'판+</span>'+
       '<span style="font-size:12px;font-weight:700;color:var(--muted)">'+r.wiNeed+'판 더 뛰면 집계</span></div>';
   }
-  return '<div class="ph-rank" style="display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 8px">'+main+sub+'</div>';
+  return '<div class="ph-rank" style="display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 8px">'+main+sub+mvpAceBadgeHtml(name)+'</div>';
 }
 function renderPlayer() {
   var name = document.getElementById('pSel').value;
