@@ -1519,7 +1519,7 @@ function sbBarsHtml(g){
 }
 
 // ── ⑦ 1:1 비교 탭 ──
-var CMP_A=null, CMP_B=null;
+var CMP_A=null, CMP_B=null, CMP_PA='전체', CMP_PB='전체';
 function cmpCandidates(){ return visiblePlayers().sort(function(a,b){return b.games-a.games || b.elo-a.elo;}); }
 function goCompare(name){
   if(isHidden(name)) return;
@@ -1531,7 +1531,21 @@ function goCompare(name){
   showPage('compare');
 }
 function setCmp(side,v){ if(side==='a') CMP_A=v; else CMP_B=v; renderCompare(); }
-function swapCmp(){ var t=CMP_A; CMP_A=CMP_B; CMP_B=t; renderCompare(); }
+function setCmpPos(side,v){
+  if(side==='a') CMP_PA=v; else CMP_PB=v;
+  var list=cmpList(v), cur=side==='a'?CMP_A:CMP_B, other=side==='a'?CMP_B:CMP_A;
+  if(v!=='전체' && !list.some(function(x){return x.name===cur;})){
+    var pick=list.filter(function(x){return x.name!==other;})[0];
+    if(pick){ if(side==='a') CMP_A=pick.name; else CMP_B=pick.name; }
+  }
+  renderCompare();
+}
+function cmpList(pos){
+  if(pos==='전체') return cmpCandidates().map(function(p){return {name:p.name,g:p.games};});
+  return visiblePlayers().map(function(p){ return {name:p.name,g:posRecord(p.name)[pos].g}; })
+    .filter(function(x){return x.g>0;}).sort(function(a,b){return b.g-a.g;});
+}
+function swapCmp(){ var t=CMP_A; CMP_A=CMP_B; CMP_B=t; t=CMP_PA; CMP_PA=CMP_PB; CMP_PB=t; renderCompare(); }
 function headToHead(a,b){
   var same={g:0,w:0}, vs={g:0,aw:0}, lane={g:0,aw:0,list:[]};
   GAME_DETAILS.forEach(function(g){
@@ -1552,8 +1566,13 @@ function renderCompare(){
   var A=PLAYERS[CMP_A], B=PLAYERS[CMP_B];
   var CA='#3368a0', CB='#c33b6b';
   function sel(side,cur){
-    return '<select class="nsel" onchange="setCmp(\''+side+'\',this.value)" style="font-size:14px;font-weight:700;padding:6px 10px">'+
-      cands.map(function(p){ return '<option value="'+p.name+'"'+(p.name===cur?' selected':'')+'>'+p.name+' ('+p.games+'판)</option>'; }).join('')+'</select>';
+    var pos=side==='a'?CMP_PA:CMP_PB, list=cmpList(pos);
+    if(!list.some(function(x){return x.name===cur;})) list=[{name:cur,g:pos==='전체'?PLAYERS[cur].games:posRecord(cur)[pos].g}].concat(list);
+    var ps='<select class="nsel" onchange="setCmpPos(\''+side+'\',this.value)" style="font-size:13px;font-weight:700;padding:6px 8px">'+
+      ['전체','TOP','JUG','MID','ADC','SUP'].map(function(k){ return '<option value="'+k+'"'+(k===pos?' selected':'')+'>'+(k==='전체'?'전체 포지션':POS_KR[k])+'</option>'; }).join('')+'</select>';
+    return '<div style="display:flex;gap:6px;align-items:center">'+ps+
+      '<select class="nsel" onchange="setCmp(\''+side+'\',this.value)" style="font-size:14px;font-weight:700;padding:6px 30px 6px 10px">'+
+      list.map(function(x){ return '<option value="'+x.name+'"'+(x.name===cur?' selected':'')+'>'+x.name+' ('+(pos==='전체'?'':POS_KR[pos]+' ')+x.g+'판)</option>'; }).join('')+'</select></div>';
   }
   function head(P,c){
     var r=playerRankInfo(P.name), t=tierOf(P.elo);
