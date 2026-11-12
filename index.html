@@ -356,12 +356,16 @@ function piwaAvg(pos){
   var v=_PIWA[pos];
   return (v && v>0.05) ? v : ((POS_AVG[pos]&&POS_AVG[pos].PIWA)||1);
 }
+// ── 순위·표시 제외 선수 (기록은 유지, 순위/어워드/듀오 목록에서만 제외) ──
+var RANK_HIDDEN = ['다미'];
+function isHidden(n){ return RANK_HIDDEN.indexOf(n) >= 0; }
+function visiblePlayers(){ return Object.values(PLAYERS).filter(function(p){ return !isHidden(p.name); }); }
 var _CPREF=null;
 function champPoolRef(){
   if(_CPREF) return _CPREF;
   var minG = Math.max(10, statMinGames());
-  var q = Object.values(PLAYERS).filter(function(p){ return p.games>=minG; });
-  if(!q.length) q = Object.values(PLAYERS);
+  var q = visiblePlayers().filter(function(p){ return p.games>=minG; });
+  if(!q.length) q = visiblePlayers();
   var maxPool = Math.max.apply(null, q.map(function(p){ return p.champPool||0; })) || 1;
   var avgRatio = q.reduce(function(s,p){ return s+(p.champPool||0)/p.games; },0)/q.length;
   var maxDiv = Math.max.apply(null, q.map(function(p){ return ((p.champPool||0)+5*avgRatio)/(p.games+5); })) || 1;
@@ -411,7 +415,7 @@ function _pcuts(scores){var s=scores.slice().sort(function(a,b){return a-b;});re
 var _PCUTS=null;
 function pgradeCuts(){
   if(_PCUTS) return _PCUTS;
-  var arr=Object.keys(PLAYERS).map(function(k){return PLAYERS[k];});
+  var arr=visiblePlayers();
   var c={ total:_pcuts(arr.map(function(p){return adjTotal(p);})) };
   ['전투','시야','생존','성장','챔프폭'].forEach(function(cat){
     c[cat]=_pcuts(arr.map(function(p){return calcCats(p,p.pos)[cat];}));
@@ -431,12 +435,12 @@ var _GMEAN = null;
 function _rawTotal(p){ return calcTotal(calcCats(p,p.pos),p.pos); }
 function gradeGames(p){
   if(GAMES.length <= AWARD_WINDOW) return p.games;
-  var w = awardPlayers().filter(function(x){ return x.name === p.name; })[0];
+  var w = awardPlayersAll().filter(function(x){ return x.name === p.name; })[0];
   return w ? w.games : 0;
 }
 function adjTotal(p){
   if(_GMEAN === null){
-    var arr = Object.keys(PLAYERS).map(function(k){ return _rawTotal(PLAYERS[k]); });
+    var arr = visiblePlayers().map(function(p){ return _rawTotal(p); });
     _GMEAN = arr.reduce(function(a,b){ return a+b; }, 0) / arr.length;
   }
   var g = gradeGames(p);
@@ -526,7 +530,7 @@ rebuildPlayerSelect();
 
 // ── 랭킹 계산 (퍼센타일) ────────────────────────────
 function getRank(name, metric) {
-  var vals = Object.values(PLAYERS).map(function(p){ return p[metric]; }).filter(function(v){ return v!==undefined && v!==null; });
+  var vals = visiblePlayers().map(function(p){ return p[metric]; }).filter(function(v){ return v!==undefined && v!==null; });
   var myVal = PLAYERS[name][metric];
   // DTPM은 낮을수록 좋음
   var lowerBetter = (metric === 'dtpm');
@@ -579,15 +583,15 @@ function renderSummary() {
   function wrIndex(p){ return Math.round((p.wins + C*avgWR) / (p.games + C) * 100); }
 
   // ELO 순위 (메인)
-  var eloSorted = Object.values(PLAYERS).sort(function(a,b){ return b.elo-a.elo; });
+  var eloSorted = visiblePlayers().sort(function(a,b){ return b.elo-a.elo; });
   // 승률 지수 순위 (기준 판수 이상 우선, 그 안에서 지수순)
-  var sorted = Object.values(PLAYERS).map(function(p){ return Object.assign({_wi:wrIndex(p)}, p); }).sort(function(a,b){
+  var sorted = visiblePlayers().map(function(p){ return Object.assign({_wi:wrIndex(p)}, p); }).sort(function(a,b){
     var qa = a.games >= MIN_G ? 1 : 0, qb = b.games >= MIN_G ? 1 : 0;
     if(qa !== qb) return qb - qa;
     return b._wi - a._wi || b.games - a.games || b.elo - a.elo;
   });
   var cpMin = statMinGames();
-  var cpSorted = Object.values(PLAYERS).sort(function(a,b){
+  var cpSorted = visiblePlayers().sort(function(a,b){
     var qa = a.games >= cpMin ? 1 : 0, qb = b.games >= cpMin ? 1 : 0;
     if(qa !== qb) return qb - qa;
     return b.cp_avg - a.cp_avg;
@@ -789,12 +793,12 @@ function playerChampStatPos(name,champ,pos){
 }
 // ── 선수 랭킹 (선수탭 헤더 표시용) ──
 function playerRankInfo(name){
-  var all = Object.values(PLAYERS).slice().sort(function(a,b){ return b.elo-a.elo || b.games-a.games; });
+  var all = visiblePlayers().sort(function(a,b){ return b.elo-a.elo || b.games-a.games; });
   var eloRank = all.findIndex(function(p){ return p.name===name; }) + 1;
   // 지난 업데이트 대비 순위 변동 (ELO_PREV 기준)
   var prevRank = null;
   if(typeof ELO_PREV!=='undefined' && ELO_PREV[name]!==undefined){
-    var pv = Object.keys(ELO_PREV).map(function(n){ return {n:n,e:ELO_PREV[n]}; })
+    var pv = Object.keys(ELO_PREV).filter(function(n){ return !isHidden(n); }).map(function(n){ return {n:n,e:ELO_PREV[n]}; })
       .sort(function(a,b){ return b.e-a.e; });
     prevRank = pv.findIndex(function(x){ return x.n===name; }) + 1;
   }
@@ -807,10 +811,12 @@ function playerRankInfo(name){
     .sort(function(a,b){ return wi(b)-wi(a) || b.games-a.games || b.elo-a.elo; });
   var me = PLAYERS[name];
   var wiRank = me.games>=MIN_G ? qual.findIndex(function(p){ return p.name===name; })+1 : null;
-  return {eloRank:eloRank, total:all.length, prevRank:prevRank,
-          wiRank:wiRank, wiTotal:qual.length, wiNeed: me.games>=MIN_G ? 0 : MIN_G-me.games, wiMin:MIN_G};
+  var qualAll = Object.values(PLAYERS).filter(function(p){ return p.games>=MIN_G; }).length;
+  return {eloRank:eloRank, total:Object.keys(PLAYERS).length, prevRank:prevRank,
+          wiRank:wiRank, wiTotal:qualAll, wiNeed: me.games>=MIN_G ? 0 : MIN_G-me.games, wiMin:MIN_G};
 }
 function rankBadgeHtml(name){
+  if(isHidden(name)) return '<div class="ph-rank" style="margin:6px 0 8px"><span style="display:inline-block;padding:6px 12px;border-radius:10px;background:var(--bg2);border:1px dashed var(--dim);font-size:11px;font-weight:700;color:var(--muted)">순위 집계 제외</span></div>';
   var r = playerRankInfo(name);
   var medal = r.eloRank===1 ? {c:'#b8860f',bg:'linear-gradient(135deg,#fff6d8,#f5e3a6)',bd:'#d9b44a',ic:'🥇'}
             : r.eloRank===2 ? {c:'#6b7785',bg:'linear-gradient(135deg,#f4f6f8,#dfe4ea)',bd:'#aeb8c4',ic:'🥈'}
@@ -1431,7 +1437,7 @@ function renderChampDetail(){
 
   // 이 챔피언으로 맞라인 잘 친 / 못 친 멤버 (소통 유도)
   (function(){
-    var cp = champCounterPlayers(champ);
+    var cp = champCounterPlayers(champ).filter(function(x){ return !isHidden(x.name); });  // 순위 제외 선수 숨김
     if(!cp.length) return;
     var good = cp.slice().sort(function(a,b){return b.wr-a.wr||b.games-a.games;}).slice(0,5);
     var goodNames = good.map(function(x){return x.name;});
@@ -1505,6 +1511,7 @@ function rivalStats(name){
     else if(l.indexOf(name) >= 0){ opps = w; won = false; }
     if(!opps) return;
     opps.forEach(function(n){
+      if(isHidden(n)) return;   // 순위 제외 선수는 천적/먹잇감에서 제외
       if(!rec[n]) rec[n] = {games:0, wins:0};
       rec[n].games++;
       if(won) rec[n].wins++;
@@ -1781,7 +1788,7 @@ function posOnlyStats(name, pos){
 
 // ── 챔피언별 플레이어 전적 ───────────────────────────
 function champPlayers(champ){
-  return Object.values(PLAYERS).map(function(p){
+  return visiblePlayers().map(function(p){
     var mc = null;
     p.mostChamps.forEach(function(m){ if(m[0]===champ) mc = m[1]; });
     if(!mc) return null;
@@ -1803,7 +1810,7 @@ function duoStats(name){
     else if(l.indexOf(name) >= 0){ team = l; won = false; }
     if(!team) return;
     team.forEach(function(n){
-      if(n === name) return;
+      if(n === name || isHidden(n)) return;   // 순위 제외 선수는 듀오 목록에서 제외
       if(!rec[n]) rec[n] = {games:0, wins:0};
       rec[n].games++;
       if(won) rec[n].wins++;
@@ -1863,6 +1870,9 @@ function statMinGames(){ var t = GAMES.length; return t >= 60 ? 10 : t >= 30 ? 7
 var AWARD_WINDOW = 30;
 var _AW = null;
 function awardPlayers(){
+  return awardPlayersAll().filter(function(p){ return !isHidden(p.name); });
+}
+function awardPlayersAll(){
   if(_AW) return _AW;
   if(GAMES.length <= AWARD_WINDOW){ _AW = Object.values(PLAYERS); return _AW; }
   var win = GAME_DETAILS.slice(-AWARD_WINDOW);
@@ -1989,8 +1999,8 @@ function renderAward(){
 
   // MVP / ACE 최다 획득
   var ma = mvpAceData();
-  var mvpRank = Object.keys(ma).map(function(n){return {name:n, cnt:ma[n].mvp};}).filter(function(x){return x.cnt>0;}).sort(function(a,b){return b.cnt-a.cnt;}).slice(0,5);
-  var aceRank = Object.keys(ma).map(function(n){return {name:n, cnt:ma[n].ace};}).filter(function(x){return x.cnt>0;}).sort(function(a,b){return b.cnt-a.cnt;}).slice(0,5);
+  var mvpRank = Object.keys(ma).filter(function(n){return !isHidden(n);}).map(function(n){return {name:n, cnt:ma[n].mvp};}).filter(function(x){return x.cnt>0;}).sort(function(a,b){return b.cnt-a.cnt;}).slice(0,5);
+  var aceRank = Object.keys(ma).filter(function(n){return !isHidden(n);}).map(function(n){return {name:n, cnt:ma[n].ace};}).filter(function(x){return x.cnt>0;}).sort(function(a,b){return b.cnt-a.cnt;}).slice(0,5);
   function maRow(x, i, color, unit){
     return '<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;background:var(--bg2);border:1px solid var(--dim);margin-bottom:6px">'+
       '<span style="font-size:11px;color:var(--muted);width:16px">'+(i+1)+'</span>'+
@@ -2009,7 +2019,7 @@ function renderAward(){
   // Rookie of the Season (최근 15경기 구간 ELO 최대 급등)
   (function(){
     var ROOKIE_WIN = 15;  // 전체 최근 15경기 구간 기준
-    var rookies = Object.keys(ELO_HISTORY).map(function(n){
+    var rookies = Object.keys(ELO_HISTORY).filter(function(n){ return !isHidden(n); }).map(function(n){
       var r = eloChangeInWindow(n, ROOKIE_WIN);
       return r ? {name:n, chg:r.chg, games:r.games, hist:r.hist} : null;
     }).filter(Boolean).sort(function(a,b){ return b.chg-a.chg; });
@@ -2042,7 +2052,7 @@ function renderAward(){
     });
     // 전환 '횟수'가 아니라 '전환율'(flips / (판수-1)) 기준 — 많이 뛴 선수가
     // 자동으로 유리해지던 문제 수정. 구간 내 4판 이상만 대상.
-    var dice = Object.keys(seq).map(function(n){
+    var dice = Object.keys(seq).filter(function(n){ return !isHidden(n); }).map(function(n){
       var s = seq[n], flips = 0;
       for(var i=1;i<s.length;i++) if(s[i]!==s[i-1]) flips++;
       return {name:n, flips:flips, games:s.length, rate: s.length>1 ? flips/(s.length-1) : 0};
@@ -2084,6 +2094,7 @@ function renderAward(){
       var best = null;
       GAME_DETAILS.forEach(function(g){
         g.players.forEach(function(p){
+          if(isHidden(p.name)) return;  // 순위 제외 선수
           var v = rc.pick(p, g);
           if(v === null || v === undefined || !isFinite(v)) return;  // 제외 대상
           if(best === null || v > best.v) best = {v:v, name:p.name, champ:p.champ, no:g.no};
@@ -2097,8 +2108,8 @@ function renderAward(){
         '<div class="sc-rank" style="color:var(--muted)">'+best.name+' · '+best.champ+' · #'+best.no+'</div></div>';
     }).join('');
     // MVP/ACE 최다 달성자 (다른 역대기록과 동일 포맷)
-    var mvpBest = Object.keys(ma).map(function(n){return {name:n,cnt:ma[n].mvp};}).sort(function(a,b){return b.cnt-a.cnt;})[0];
-    var aceBest = Object.keys(ma).map(function(n){return {name:n,cnt:ma[n].ace};}).sort(function(a,b){return b.cnt-a.cnt;})[0];
+    var mvpBest = Object.keys(ma).filter(function(n){return !isHidden(n);}).map(function(n){return {name:n,cnt:ma[n].mvp};}).sort(function(a,b){return b.cnt-a.cnt;})[0];
+    var aceBest = Object.keys(ma).filter(function(n){return !isHidden(n);}).map(function(n){return {name:n,cnt:ma[n].ace};}).sort(function(a,b){return b.cnt-a.cnt;})[0];
     if(mvpBest && mvpBest.cnt > 0){
       cards += '<div class="stat-card" style="cursor:pointer" onclick="goPlayer(\''+mvpBest.name+'\')"><div style="font-size:10px;color:#b8860f;margin-bottom:4px">MVP 최다 달성</div><div class="sc-val" style="color:#b8860f;font-size:17px">'+mvpBest.cnt+'회</div><div class="sc-rank" style="color:var(--muted)">'+mvpBest.name+' · 승리팀 CP 1위</div></div>';
     }
@@ -2340,7 +2351,7 @@ function renderNews(){
   var NEWS_KEYS = ['전투','시야','생존','성장','챔프폭'];
 
   // ── 현재 OP 선수 산출 (종합등급 백분위 OP 컷 이상) ──
-  var opList = Object.keys(PLAYERS).map(function(n){
+  var opList = Object.keys(PLAYERS).filter(function(n){ return !isHidden(n); }).map(function(n){
     var p = PLAYERS[n];
     return {p:p, cats:calcCats(p,p.pos), tg:totalGrade(p)};
   }).filter(function(x){ return x.tg.g === 'OP'; })
@@ -2392,13 +2403,13 @@ function renderNews(){
   var potw = {};
   GAME_DETAILS.slice(-POTW_WIN).forEach(function(g){
     var w = g.players.filter(function(p){return p.team==='win';}).sort(function(a,b){return b.cp-a.cp;})[0];
-    if(!w) return;
+    if(!w || isHidden(w.name)) return;
     potw[w.name] = potw[w.name] || {mvp:0, cp:0};
     potw[w.name].mvp++; potw[w.name].cp += w.cp;
   });
   var mvpTop = Object.keys(potw).map(function(n){return {name:n,cnt:potw[n].mvp,cp:potw[n].cp};})
     .sort(function(a,b){return b.cnt-a.cnt || b.cp-a.cp;})[0];
-  var risers = Object.keys(ELO_HISTORY).map(function(n){
+  var risers = Object.keys(ELO_HISTORY).filter(function(n){ return !isHidden(n); }).map(function(n){
     var r = eloChangeInWindow(n, POTW_WIN);   // 최근 10경기 구간 안의 ELO 변동 (구간 내 2판+)
     return r ? {name:n, chg:r.chg, games:r.games, elo: PLAYERS[n]?PLAYERS[n].elo:1000} : null;
   }).filter(Boolean).sort(function(a,b){return b.chg-a.chg || a.games-b.games;});
@@ -2428,7 +2439,7 @@ function renderNews(){
   // ── 📊 티어 변동 (Just Joke 하단 · 우) ──
   (function(){
     var changes = [];
-    Object.keys(PLAYERS).forEach(function(n){
+    Object.keys(PLAYERS).filter(function(n){ return !isHidden(n); }).forEach(function(n){
       var cur = PLAYERS[n].elo;
       var prev = (typeof ELO_PREV!=='undefined' && ELO_PREV[n]!=null) ? ELO_PREV[n] : cur;
       var ct = tierOf(cur), pt = tierOf(prev);
