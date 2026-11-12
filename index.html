@@ -2387,15 +2387,24 @@ function renderNews(){
   // ── 이번 주의 선수 / 티어 변동 (반반 그리드) ──
   html += '<div class="half-grid"><div>';
   // ── 🔥 이번 주의 선수 (Just Joke 하단 · 좌) ──
-  var ma = mvpAceData();
-  var mvpTop = Object.keys(ma).map(function(n){return {name:n,cnt:ma[n].mvp};}).filter(function(x){return x.cnt>0;}).sort(function(a,b){return b.cnt-a.cnt;})[0];
+  // 이번 주의 선수 = 전체 최근 10경기 구간 기준 (이명우 확정 · 45게임 시점)
+  var POTW_WIN = 10;
+  var potw = {};
+  GAME_DETAILS.slice(-POTW_WIN).forEach(function(g){
+    var w = g.players.filter(function(p){return p.team==='win';}).sort(function(a,b){return b.cp-a.cp;})[0];
+    if(!w) return;
+    potw[w.name] = potw[w.name] || {mvp:0, cp:0};
+    potw[w.name].mvp++; potw[w.name].cp += w.cp;
+  });
+  var mvpTop = Object.keys(potw).map(function(n){return {name:n,cnt:potw[n].mvp,cp:potw[n].cp};})
+    .sort(function(a,b){return b.cnt-a.cnt || b.cp-a.cp;})[0];
   var risers = Object.keys(ELO_HISTORY).map(function(n){
-    var h = ELO_HISTORY[n]; var recent = h.slice(-4);
-    return {name:n, chg: recent.length>1 ? recent[recent.length-1]-recent[0] : 0, elo: PLAYERS[n]?PLAYERS[n].elo:1000};
-  }).sort(function(a,b){return b.chg-a.chg;});
+    var r = eloChangeInWindow(n, POTW_WIN);   // 최근 10경기 구간 안의 ELO 변동 (구간 내 2판+)
+    return r ? {name:n, chg:r.chg, games:r.games, elo: PLAYERS[n]?PLAYERS[n].elo:1000} : null;
+  }).filter(Boolean).sort(function(a,b){return b.chg-a.chg || a.games-b.games;});
   var topRiser = risers[0];
 
-  html += '<div class="card fi"><div class="ct">🔥 이번 주의 선수</div>';
+  html += '<div class="card fi"><div class="ct">🔥 이번 주의 선수 <span style="font-weight:400;font-size:11px;color:var(--muted);margin-left:6px">최근 '+POTW_WIN+'경기 기준 (#'+Math.max(1,GAMES.length-POTW_WIN+1)+'~#'+GAMES.length+')</span></div>';
   if(mvpTop){
     var mp = PLAYERS[mvpTop.name];
     html += '<div style="display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--dim);border-radius:9px;padding:9px 11px;margin-bottom:8px">'+
@@ -2411,7 +2420,7 @@ function renderNews(){
       '<div style="flex:1;min-width:0"><div style="font-size:9px;color:#199473;font-weight:700">📈 ELO 급상승</div>'+
       '<div class="pn" style="font-size:14px;font-weight:800" onclick="goPlayer(\''+topRiser.name+'\')">'+topRiser.name+'</div></div>'+
       '<div style="text-align:right;flex-shrink:0"><div style="font-size:14px;font-weight:900;font-family:Rajdhani,sans-serif;color:#199473">▲+'+topRiser.chg+'</div>'+
-      '<div style="font-size:8px;color:var(--muted)">최근 3경기</div></div></div>';
+      '<div style="font-size:8px;color:var(--muted)">'+topRiser.games+'경기 출전</div></div></div>';
   }
   html += '</div>';
 
