@@ -1568,7 +1568,7 @@ function renderCompare(){
   function sel(side,cur){
     var pos=side==='a'?CMP_PA:CMP_PB, list=cmpList(pos);
     if(!list.some(function(x){return x.name===cur;})) list=[{name:cur,g:pos==='전체'?PLAYERS[cur].games:posRecord(cur)[pos].g}].concat(list);
-    var ps='<select class="nsel" onchange="setCmpPos(\''+side+'\',this.value)" style="font-size:13px;font-weight:700;padding:6px 8px">'+
+    var ps='<select class="nsel" onchange="setCmpPos(\''+side+'\',this.value)" style="font-size:13px;font-weight:700;padding:6px 28px 6px 10px">'+
       ['전체','TOP','JUG','MID','ADC','SUP'].map(function(k){ return '<option value="'+k+'"'+(k===pos?' selected':'')+'>'+(k==='전체'?'전체 포지션':POS_KR[k])+'</option>'; }).join('')+'</select>';
     return '<div style="display:flex;gap:6px;align-items:center">'+ps+
       '<select class="nsel" onchange="setCmp(\''+side+'\',this.value)" style="font-size:14px;font-weight:700;padding:6px 30px 6px 10px">'+
@@ -2290,7 +2290,7 @@ function renderBalance(){
         var cur = BAL_PREF[n] || 'AUTO';
         html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg1);border:1px solid var(--dim);border-radius:8px">'+
           '<span style="flex:1;font-size:12px;font-weight:600;color:var(--text2)">'+n+' <span style="font-size:9px;color:var(--muted)">주 '+PLAYERS[n].pos+'</span></span>'+
-          '<select class="nsel" style="padding:4px 22px 4px 8px;font-size:11px" onchange="balSetPref(\''+n+'\', this.value)">'+
+          '<select class="nsel" style="padding:4px 24px 4px 8px;background-position:right 7px center;font-size:11px" onchange="balSetPref(\''+n+'\', this.value)">'+
           POS_OPT.map(function(o){return '<option value="'+o+'"'+(cur===o?' selected':'')+'>'+(o==='AUTO'?'자동':o)+'</option>';}).join('')+
           '</select></div>';
       });
