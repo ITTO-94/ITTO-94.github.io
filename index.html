@@ -937,6 +937,7 @@ function renderPlayer() {
     '<div class="ph-sub">'+p.games+'게임 플레이 · '+p.pos+' 포지션</div>'+
     rankBadgeHtml(name)+
     badgesHtml(name)+
+    ownedChampsHtml(name)+
     '<div style="display:flex;gap:6px;flex-wrap:wrap;margin:0 0 8px">'+
       (isHidden(name)?'':'<span onclick="goCompare(\''+name+'\')" style="cursor:pointer;padding:4px 11px;border-radius:7px;font-size:11px;font-weight:800;color:var(--blue);background:rgba(51,104,160,.08);border:1px solid rgba(51,104,160,.35)">🆚 이 선수와 비교</span>')+
       '<span onclick="savePlayerCard(\''+name+'\')" style="cursor:pointer;padding:4px 11px;border-radius:7px;font-size:11px;font-weight:800;color:var(--green);background:rgba(25,148,115,.08);border:1px solid rgba(25,148,115,.35)">📸 내 카드 이미지로 저장</span>'+
@@ -1062,6 +1063,7 @@ function renderPlayer() {
 
 
   html += formCompareHtml(name, posMode?PPOS:null);
+  html += scoutingHtml(name, posMode?PPOS:null);
 
   // 모스트 챔피언 (ALL 행 + 최대 10개 + 클릭 시 맞라인 펼침)
   (function(){
@@ -1131,6 +1133,7 @@ function renderPlayer() {
     catKeys.map(function(cat,i){var sc=cats[cat];var gr=pgrd(sc, pgradeCuts()[cat]);return '<div class="gr-row"><div class="gr-dot" style="background:'+CAT_COLORS[i]+'"></div><div class="gr-cat">'+cat+'</div><div class="gr-bw"><div class="gr-bf" style="width:'+sc+'%;background:'+CAT_COLORS[i]+';opacity:.7"></div></div><div class="gr-sc">'+Math.round(sc)+'</div><div class="gr-gd" style="color:'+gr.c+'">'+gr.g+'</div></div>';}).join('')+
     '</div></div></div>';
 
+  html += similarHtml(name);
   // 듀오 전적 (최근 30경기, 같은 팀 기준)
   var duos = duoStats(name);
   if(duos.length){
@@ -1193,6 +1196,7 @@ function renderPlayer() {
     '</div></div>';
 
   html += '</div></div>';
+  html += personalBestsHtml(name);
   html += calendarHtml(name);
   document.getElementById('page-player').innerHTML = html;
   setTimeout(function(){ drawRadar(cats,catKeys,CAT_COLORS); }, 30);
@@ -1344,6 +1348,14 @@ function playerBadges(name){
   // 만능 열쇠
   var pr2=posRecord(name), multi=Object.keys(pr2).filter(function(ps){return pr2[ps].g>=3;});
   if(multi.length>=3) out.push({icon:'🔑', name:'만능 열쇠', why:multi.map(function(ps){return POS_KR[ps];}).join('·')+' 각 3판 이상', score:0.8+multi.length*0.03});
+  // 꾸준함 (10판+)
+  var cs=consistencyAll(), csPool=Object.keys(cs).filter(function(n){return !isHidden(n);});
+  if(cs[name] && csPool.length>=5){
+    var sds=csPool.map(function(n){return cs[n].sd;});
+    var rkLo=pctRank(cs[name].sd, sds, true), rkHi=pctRank(cs[name].sd, sds);
+    if(rkLo<=0.10) out.push({icon:'🧭', name:'기복 제로', why:'판마다 성적 편차가 가장 작은 편 ('+CONS_MIN+'판+ '+csPool.length+'명 중)', score:1-rkLo});
+    if(rkHi<=0.10) out.push({icon:'🎢', name:'롤러코스터', why:'터지는 날은 확실히 터지는 타입 — 판별 성적 편차 상위 ('+CONS_MIN+'판+ '+csPool.length+'명 중)', score:1-rkHi});
+  }
   // 연승 열차
   var st=currentStreak(name);
   if(st.type==='W' && st.n>=5) out.push({icon:'🚂', name:'연승 열차', why:'현재 '+st.n+'연승', score:0.95+st.n*0.005});
@@ -1721,6 +1733,254 @@ function savePlayerCard(name){
 function roundRect(x,X,Y,W,H,R){ x.beginPath(); x.moveTo(X+R,Y); x.arcTo(X+W,Y,X+W,Y+H,R); x.arcTo(X+W,Y+H,X,Y+H,R); x.arcTo(X,Y+H,X,Y,R); x.arcTo(X,Y,X+W,Y,R); x.closePath(); }
 
 
+// ═══════════════════════════════════════════════════════════════
+// 2026-11-19 확장 기능 2: 개인 최고 기록 · 비슷한 선수 · 꾸준함 · 챔피언의 주인
+//                       · 오늘의 경기 폼 · 포지션 스카우팅 리포트
+// ═══════════════════════════════════════════════════════════════
+var PREV_GAMES = 43;   // 지난 업데이트 시점의 총 경기 수 (매 업데이트 시 갱신)
+
+// ── 공용: 경기별 포지션 백분위 (0=최하 ~ 1=최상) ──
+var _GPCT=null;
+function gamePctMap(){
+  if(_GPCT) return _GPCT;
+  var by={};
+  GAME_DETAILS.forEach(function(g){ g.players.forEach(function(p){ if(!isHidden(p.name)) (by[p.pos]=by[p.pos]||[]).push(p.cp); }); });
+  Object.keys(by).forEach(function(k){ by[k].sort(function(a,b){return a-b;}); });
+  var m={};
+  GAME_DETAILS.forEach(function(g){ g.players.forEach(function(p){
+    var arr=by[p.pos]||[p.cp], lo=0, hi=0;
+    arr.forEach(function(v){ if(v<p.cp) lo++; else if(v===p.cp) hi++; });
+    m[g.no+'|'+p.name]=(lo+hi/2)/arr.length;
+  }); });
+  _GPCT=m; return m;
+}
+function gamePct(no,name){ return gamePctMap()[no+'|'+name]; }
+
+// ── ⑥ 꾸준함 (판별 성적 편차) ──
+var CONS_MIN=10;
+var _CONS=null;
+function consistencyAll(){
+  if(_CONS) return _CONS;
+  var o={};
+  Object.keys(PLAYERS).forEach(function(n){
+    var rows=playerRows(n); if(rows.length<CONS_MIN) return;
+    var v=rows.map(function(r){return gamePct(r.no,n);});
+    var m=v.reduce(function(s,x){return s+x;},0)/v.length;
+    var sd=Math.sqrt(v.reduce(function(s,x){return s+(x-m)*(x-m);},0)/v.length);
+    o[n]={sd:sd, mean:m, games:rows.length};
+  });
+  _CONS=o; return o;
+}
+function consistencyRank(name){
+  var all=consistencyAll(), me=all[name]; if(!me || isHidden(name)) return null;
+  var pool=Object.keys(all).filter(function(n){return !isHidden(n);});
+  var better=pool.filter(function(n){return all[n].sd<me.sd;}).length;
+  return {rank:better+1, total:pool.length, sd:me.sd, top:(better)/(pool.length-1||1)};
+}
+
+// ── ③ 개인 최고 기록 ──
+function personalBests(name){
+  var rows=playerRows(name); if(!rows.length) return [];
+  function best(fn, label, fmt){
+    var b=null; rows.forEach(function(r){ var v=fn(r); if(v==null) return; if(!b || v>b.v) b={v:v,r:r}; });
+    return b ? {label:label, val:fmt(b.v,b.r), r:b.r, isNew:b.r.no>PREV_GAMES} : null;
+  }
+  var out=[
+    best(function(r){return r.p.k;}, '최다 킬', function(v,r){return v+'킬';}),
+    best(function(r){return r.p.d===0?null:(r.p.k+r.p.a)/r.p.d;}, '최고 KDA', function(v,r){return (Math.round(v*100)/100)+' ('+r.p.k+'/'+r.p.d+'/'+r.p.a+')';}),
+    best(function(r){return r.p.cp;}, '최고 CP', function(v){return String(v);}),
+    best(function(r){return r.p.dmg;}, '최고 딜량', function(v){return v.toLocaleString();}),
+    best(function(r){return r.p.vs;}, '최고 시야 점수', function(v){return String(v);}),
+    best(function(r){return r.p.champ==='녹턴'?r.p.cc/5:r.p.cc;}, '최다 CC', function(v){return Math.round(v)+'초';})
+  ].filter(Boolean);
+  var perfect=rows.filter(function(r){return r.p.d===0;});
+  // 최장 연승
+  var cur=0,bestS=0,endNo=null;
+  rows.forEach(function(r){ if(r.p.team==='win'){cur++; if(cur>bestS){bestS=cur; endNo=r.no;}} else cur=0; });
+  if(bestS>=2){ var er=rows.filter(function(r){return r.no===endNo;})[0]; out.push({label:'최장 연승', val:bestS+'연승', r:er, isNew:false, streak:true}); }
+  if(perfect.length) out.push({label:'노데스 경기', val:perfect.length+'회', r:perfect[perfect.length-1], isNew:perfect[perfect.length-1].no>PREV_GAMES, perfect:true});
+  return out;
+}
+function togglePbs(no){ var e=document.getElementById('pbs-'+no); if(e) e.style.display=e.style.display==='none'?'block':'none'; }
+function personalBestsHtml(name){
+  var b=personalBests(name); if(!b.length) return '';
+  var h='<div class="card fi fi2"><div class="ct">🏅 개인 최고 기록 <span style="font-weight:400;color:var(--muted);margin-left:6px">누르면 그 경기 스코어보드 · NEW = 이번 업데이트 경신</span></div>'+
+    '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px">';
+  var seen={};
+  b.forEach(function(x){
+    h+='<div onclick="togglePbs('+x.r.no+')" style="cursor:pointer;background:var(--bg2);border:1px solid '+(x.isNew?'rgba(240,192,48,.6)':'var(--dim)')+';border-radius:9px;padding:9px 10px;display:flex;gap:8px;align-items:center">'+
+      '<div style="width:30px;height:30px;border-radius:6px;overflow:hidden;flex-shrink:0">'+cImg(x.r.p.champ,30,6)+'</div>'+
+      '<div style="min-width:0"><div style="font-size:9px;color:var(--muted)">'+x.label+(x.isNew?' <b style="color:#b8860f">NEW</b>':'')+'</div>'+
+      '<div style="font-family:Rajdhani,sans-serif;font-weight:700;font-size:15px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+x.val+'</div>'+
+      '<div style="font-size:9px;color:var(--muted)">'+(x.streak?'#'+x.r.no+'에서 달성':x.perfect?'최근 #'+x.r.no:'#'+x.r.no+' · '+x.r.p.champ)+'</div></div></div>';
+  });
+  h+='</div>';
+  b.forEach(function(x){ if(seen[x.r.no]) return; seen[x.r.no]=1; h+='<div id="pbs-'+x.r.no+'" style="display:none;margin-top:8px">'+scoreboardHtml(x.r.no)+'</div>'; });
+  return h+'</div>';
+}
+
+// ── ④ 나와 비슷한 선수 ──
+function similarPlayers(name, n){
+  var me=PLAYERS[name]; if(!me || me.games<5) return [];
+  var K=['전투','시야','생존','성장','챔프폭'], mc=calcCats(me,me.pos);
+  function prof(p){ var r=posRecord(p.name), o={}; POSN.forEach(function(ps){ o[ps]=(r[ps]?r[ps].g:0)/p.games; }); return o; }
+  var mp=prof(me);
+  return visiblePlayers().filter(function(p){ return p.name!==name && p.games>=5; }).map(function(p){
+    var c=calcCats(p,p.pos), d=0;
+    K.forEach(function(k){ d+=Math.abs((mc[k]||0)-(c[k]||0)); });
+    d/=K.length;                                   // 0~100
+    var pp=prof(p), pd=0; POSN.forEach(function(ps){ pd+=Math.abs(mp[ps]-pp[ps]); }); pd/=2;   // 0~1 (포지션 분포 차이)
+    var sim=Math.max(0, Math.round(100 - d*1.6 - pd*25));
+    return {name:p.name, sim:sim, pos:p.pos};
+  }).sort(function(a,b){return b.sim-a.sim;}).slice(0,n||3);
+}
+function goCompare2(a,b){ CMP_A=a; CMP_B=b; CMP_PA='전체'; CMP_PB='전체'; showPage('compare'); }
+function similarHtml(name){
+  if(isHidden(name)) return '';
+  var p=PLAYERS[name];
+  if(p.games<5) return '<div class="card fi fi3"><div class="ct">🪞 나와 비슷한 선수</div><div style="padding:12px;text-align:center;font-size:11px;color:var(--muted)">5판부터 플레이 스타일이 비슷한 선수를 찾아드려요</div></div>';
+  var s=similarPlayers(name,3);
+  return '<div class="card fi fi3"><div class="ct">🪞 나와 비슷한 선수 <span style="font-weight:400;color:var(--muted);margin-left:6px">능력치 레이더 + 주로 서는 포지션 기준</span></div>'+
+    s.map(function(x){
+      var q=PLAYERS[x.name];
+      return '<div style="display:flex;align-items:center;gap:9px;padding:7px 10px;background:var(--bg2);border:1px solid var(--dim);border-radius:8px;margin-bottom:5px">'+
+        '<div style="width:24px;height:24px">'+tierIcon(q.elo,24)+'</div>'+
+        '<div style="flex:1;min-width:0"><span class="pn" style="font-weight:700;font-size:13px" onclick="goPlayer(\''+x.name+'\')">'+x.name+'</span> <span style="font-size:10px;color:var(--muted)">'+POS_KR[q.pos]+' · '+q.games+'판</span></div>'+
+        '<div style="font-family:Rajdhani,sans-serif;font-weight:700;font-size:16px;color:var(--blue)">'+x.sim+'%</div>'+
+        '<span onclick="goCompare2(\''+name+'\',\''+x.name+'\')" style="cursor:pointer;padding:3px 8px;border-radius:6px;font-size:10px;font-weight:800;color:var(--blue);border:1px solid rgba(51,104,160,.35);background:rgba(51,104,160,.06)">비교</span></div>';
+    }).join('')+'</div>';
+}
+
+// ── ⑨ 포지션 스카우팅 리포트 (같은 포지션 선수 대비 백분위) ──
+var _POSAGG=null;
+function posAgg(){
+  if(_POSAGG) return _POSAGG;
+  var A={};
+  GAME_DETAILS.forEach(function(g){
+    var td={}, tk={};
+    g.players.forEach(function(p){ td[p.team]=(td[p.team]||0)+p.dmg; tk[p.team]=(tk[p.team]||0)+p.k; });
+    g.players.forEach(function(p){
+      var key=p.name+'|'+p.pos, o=A[key]=A[key]||{name:p.name,pos:p.pos,g:0,w:0,k:0,d:0,a:0,cp:0,dpm:0,sh:0,kp:0,vs:0,cs:0,gold:0,cc:0,dt:0};
+      var m=g.durMin;
+      o.g++; if(p.team==='win') o.w++;
+      o.k+=p.k; o.d+=p.d; o.a+=p.a; o.cp+=p.cp; o.dpm+=p.dpm;
+      o.sh+= td[p.team]? p.dmg/td[p.team] : 0;
+      o.kp+= tk[p.team]? (p.k+p.a)/tk[p.team] : 0;
+      o.vs+=p.vs/m; o.cs+=p.cs/m; o.gold+=p.gold/m; o.cc+=(p.champ==='녹턴'?p.cc/5:p.cc)/m; o.dt+=p.dt/m;
+    });
+  });
+  Object.keys(A).forEach(function(k){ var o=A[k], n=o.g;
+    o.m={wr:o.w/n*100, kda:o.d?(o.k+o.a)/o.d:(o.k+o.a), cp:o.cp/n, dpm:o.dpm/n, sh:o.sh/n*100, kp:o.kp/n*100, d:o.d/n,
+         vs:o.vs/n, cs:o.cs/n, gold:o.gold/n, cc:o.cc/n, dt:o.dt/n};
+  });
+  _POSAGG=A; return A;
+}
+function scoutMinG(pos){
+  var A=posAgg(), c5=Object.keys(A).filter(function(k){ var o=A[k]; return o.pos===pos && o.g>=5 && !isHidden(o.name); }).length;
+  return c5>=8 ? 5 : 3;
+}
+var SCOUT_ITEMS=[['wr','승률','%',0],['cp','CP 평균','',2],['kda','KDA','',2],['dpm','DPM','',0],['sh','팀 내 딜 비중','%',1],['kp','킬관여','%',0],
+  ['d','평균 데스','',1,true],['vs','분당 시야','',2],['cs','분당 CS','',1],['gold','분당 골드','',0],['cc','분당 CC','',2],['dt','분당 받은 딜','',0]];
+function scoutingHtml(name, posFilter){
+  var p=PLAYERS[name], pos=posFilter||p.pos, A=posAgg(), me=A[name+'|'+pos];
+  var head='<div class="card fi fi2"><div class="ct">🔎 '+POS_KR[pos]+' 스카우팅 리포트 <span style="font-weight:400;color:var(--muted);margin-left:6px">같은 포지션 선수들 사이에서의 위치</span></div>';
+  if(isHidden(name)) return head+'<div style="padding:12px;text-align:center;font-size:11px;color:var(--muted)">순위 집계 제외 선수예요</div></div>';
+  var minG=scoutMinG(pos);
+  if(!me || me.g<minG) return head+'<div style="padding:12px;text-align:center;font-size:11px;color:var(--muted)">'+POS_KR[pos]+' '+minG+'판부터 리포트가 생겨요 (현재 '+(me?me.g:0)+'판)</div></div>';
+  var pool=Object.keys(A).map(function(k){return A[k];}).filter(function(o){ return o.pos===pos && o.g>=minG && !isHidden(o.name); });
+  var h=head+'<div style="font-size:10px;color:var(--muted);margin-bottom:10px">비교 대상: '+POS_KR[pos]+' '+minG+'판 이상 '+pool.length+'명 · 막대가 길수록 상위권 · 표본이 쌓이면 기준 판수가 자동으로 올라갑니다</div>';
+  SCOUT_ITEMS.forEach(function(it){
+    var key=it[0], lower=it[4], v=me.m[key];
+    var vals=pool.map(function(o){return o.m[key];});
+    var below=vals.filter(function(x){ return lower? x>v : x<v; }).length, eq=vals.filter(function(x){return x===v;}).length-1;
+    var pct=pool.length>1 ? (below+eq/2)/(pool.length-1) : 0.5;
+    var P=Math.round(pct*100), rk=vals.filter(function(x){ return lower? x<v : x>v; }).length+1;
+    var col=P>=80?'#199473':P>=60?'#3368a0':P>=40?'#8a96a3':P>=20?'#c0882a':'#cf4444';
+    var shown = it[3]===0?Math.round(v):(Math.round(v*Math.pow(10,it[3]))/Math.pow(10,it[3]));
+    h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:11px">'+
+      '<span style="width:78px;flex-shrink:0;color:var(--muted)">'+it[1]+'</span>'+
+      '<span style="width:52px;flex-shrink:0;text-align:right;font-family:Rajdhani,sans-serif;font-weight:700;font-size:13px;color:var(--text2)">'+shown+it[2]+'</span>'+
+      '<div style="flex:1;height:9px;background:var(--bg2);border-radius:5px;overflow:hidden;border:1px solid var(--dim)"><div style="width:'+Math.max(3,P)+'%;height:100%;background:'+col+';border-radius:5px"></div></div>'+
+      '<span style="width:64px;flex-shrink:0;text-align:right;font-size:10px;font-weight:700;color:'+col+'">'+rk+'위 / '+pool.length+'명</span></div>';
+  });
+  var cr=consistencyRank(name);
+  if(cr) h+='<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--dim);font-size:11px;color:var(--muted)">꾸준함 (전 포지션 · 판별 성적 편차): <b style="color:var(--text2)">'+cr.rank+'위 / '+cr.total+'명</b> '+(cr.top<=0.34?'— 경기마다 비슷한 성적을 내는 편':cr.top>=0.66?'— 잘 풀리는 날과 아닌 날의 차이가 큰 편':'— 보통')+'</div>';
+  else h+='<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--dim);font-size:10px;color:var(--muted)">꾸준함은 '+CONS_MIN+'판부터 집계돼요</div>';
+  return h+'</div>';
+}
+
+// ── ⑦ 챔피언의 주인 (최근 30경기, 가장 많이·잘 쓴 사람) ──
+var OWNER_WIN=30;
+function champOwners(uptoN){
+  var games=GAME_DETAILS.filter(function(g){return g.no<=uptoN;}).slice(-OWNER_WIN);
+  var by={};
+  games.forEach(function(g){ g.players.forEach(function(p){
+    if(isHidden(p.name)) return;
+    var c=by[p.champ]=by[p.champ]||{}, o=c[p.name]=c[p.name]||{g:0,w:0,cp:0};
+    o.g++; if(p.team==='win') o.w++; o.cp+=p.cp;
+  }); });
+  var out={};
+  Object.keys(by).forEach(function(ch){
+    var best=null;
+    Object.keys(by[ch]).forEach(function(n){ var o=by[ch][n]; if(o.g<2 || o.w<1) return;
+      var s={name:n,g:o.g,w:o.w,cp:o.cp/o.g,sc:o.g+o.w};   // 판수 + 승수 (승리는 두 배 가치)
+      if(!best || s.sc>best.sc || (s.sc===best.sc && (s.g>best.g || (s.g===best.g && s.cp>best.cp)))) best=s; });
+    if(best) out[ch]=best;
+  });
+  return out;
+}
+var _OWN=null;
+function ownersNow(){ if(!_OWN) _OWN=champOwners(GAMES.length); return _OWN; }
+function ownerTag(champ){
+  var o=ownersNow()[champ]; if(!o) return '';
+  return '<span title="최근 '+OWNER_WIN+'경기에서 '+champ+'를 가장 많이·잘 쓴 선수 (판수+승수, 2판 1승 이상) ('+o.g+'전 '+o.w+'승)" style="font-size:10px;font-weight:700;color:#b8860f;white-space:nowrap">👑 '+o.name+'</span>';
+}
+function ownerChangesHtml(){
+  var now=ownersNow(), prev=champOwners(PREV_GAMES), ch=[];
+  Object.keys(now).forEach(function(c){
+    var a=prev[c], b=now[c];
+    if(!a) ch.push({c:c, to:b.name, from:null, o:b});
+    else if(a.name!==b.name) ch.push({c:c, to:b.name, from:a.name, o:b});
+  });
+  var lost=Object.keys(prev).filter(function(c){return !now[c];});
+  var h='<div class="card fi"><div class="ct">👑 챔피언의 주인 <span style="font-weight:400;color:var(--muted);margin-left:6px;font-size:10px">최근 '+OWNER_WIN+'경기 판수+승수 1위 · 지난 업데이트 대비</span></div>';
+  if(!ch.length && !lost.length) h+='<div style="padding:12px;text-align:center;font-size:11px;color:var(--muted)">이번 업데이트에서 바뀐 주인이 없어요</div>';
+  ch.sort(function(a,b){return (a.from?0:1)-(b.from?0:1) || b.o.g-a.o.g;}).slice(0,6).forEach(function(x){
+    h+='<div style="display:flex;align-items:center;gap:8px;padding:7px 9px;background:var(--bg2);border:1px solid var(--dim);border-radius:8px;margin-bottom:5px;font-size:11px">'+
+      '<div style="width:26px;height:26px;border-radius:5px;overflow:hidden;flex-shrink:0">'+cImg(x.c,26,5)+'</div>'+
+      '<span style="flex:1;color:var(--text)"><b style="color:var(--text2)">'+x.c+'</b> '+(x.from?'<span class="pn" onclick="goPlayer(\''+x.from+'\')">'+x.from+'</span> → ':'새 주인 ')+
+      '<b class="pn" style="color:#b8860f" onclick="goPlayer(\''+x.to+'\')">'+x.to+'</b></span>'+
+      '<span style="color:var(--muted);font-size:10px">'+x.o.g+'전 '+x.o.w+'승</span></div>';
+  });
+  if(lost.length) h+='<div style="font-size:10px;color:var(--muted);margin-top:4px">주인 공석: '+lost.slice(0,6).join(', ')+(lost.length>6?' 외 '+(lost.length-6)+'개':'')+' (최근 '+OWNER_WIN+'경기 2판 1승 이상 사용자 없음)</div>';
+  return h+'</div>';
+}
+function ownedChampsHtml(name){
+  var own=ownersNow(), mine=Object.keys(own).filter(function(c){return own[c].name===name;});
+  if(!mine.length) return '';
+  return '<div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin:0 0 8px;font-size:11px;color:var(--muted)">👑 챔피언의 주인 '+
+    mine.map(function(c){ return '<span title="'+own[c].g+'전 '+own[c].w+'승 (최근 '+OWNER_WIN+'경기)" style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px 2px 2px;border-radius:12px;background:rgba(240,192,48,.1);border:1px solid rgba(240,192,48,.4);color:var(--text2);font-weight:700"><span style="width:18px;height:18px;border-radius:50%;overflow:hidden;display:inline-block">'+cImg(c,18,9)+'</span>'+c+'</span>'; }).join('')+'</div>';
+}
+
+// ── ⑧ 오늘의 경기: 출전 전 폼 ──
+function preMatchForm(name){
+  var cut=(typeof MATCHDAY!=='undefined'&&MATCHDAY.date)?MATCHDAY.date:'9999';
+  var rows=playerRows(name).filter(function(r){return r.date<cut;});
+  if(rows.length<8) return null;
+  var all=rows.map(function(r){return gamePct(r.no,name);}), last=rows.slice(-5);
+  var mAll=all.reduce(function(s,x){return s+x;},0)/all.length;
+  var m5=last.reduce(function(s,r){return s+gamePct(r.no,name);},0)/last.length;
+  return {idx:Math.round(100+(m5-mAll)*100), dots:last.map(function(r){return r.p.team==='win';})};
+}
+function formLineHtml(name){
+  var f=preMatchForm(name);
+  if(!f) return '<div class="pc-line muted" title="통산 8판부터 계산">최근 폼 · 집계 전</div>';
+  var hot=f.idx>=115, cold=f.idx<=85;
+  var col=hot?'var(--green)':cold?'var(--blue)':'var(--text2)';
+  return '<div class="pc-line" title="최근 5판 성적(같은 포지션 대비)을 본인 평소와 비교 · 100 = 평소대로 · 시딩·승률 계산에는 반영하지 않음">최근 폼 <b style="color:'+col+'">'+f.idx+(hot?' 🔥':cold?' 🧊':'')+'</b> '+
+    '<span style="display:inline-flex;gap:2px;vertical-align:middle;margin-left:3px">'+f.dots.map(function(w){return '<i style="display:inline-block;width:7px;height:7px;border-radius:50%;background:'+(w?'var(--green)':'var(--red)')+'"></i>';}).join('')+'</span></div>';
+}
+
 // ── 조합 통계 ────────────────────────────────────────
 // 포지션 조합 정의 (고정 4종). 각 게임의 같은 팀에서 해당 포지션의 챔피언들을 묶어 집계.
 var COMBO_DEFS = [
@@ -1887,6 +2147,7 @@ function renderChampDetail(){
     '<div style="width:64px;height:64px;border-radius:12px;overflow:hidden;border:2px solid '+g.c+';flex-shrink:0">'+cImg(champ,60,10)+'</div>'+
     '<div class="ph-info">'+
     '<div class="ph-name">'+champ+' <span style="font-size:12px;font-weight:500;color:var(--muted)">'+cs.pos+'</span></div>'+
+    (ownersNow()[champ]?'<div style="margin-top:4px;font-size:12px">'+ownerTag(champ)+' <span style="font-size:10px;color:var(--muted)">'+ownersNow()[champ].g+'전 '+ownersNow()[champ].w+'승 · 최근 '+OWNER_WIN+'경기</span></div>':'')+
     '<div class="badges" style="margin-top:6px">'+
     '<span class="badge" style="background:'+g.bg+';border-color:'+g.bd+';color:'+g.c+'">등급 '+g.g+'</span>'+
     '<span class="badge b-elo">픽률 '+pickRate+'%</span>'+
@@ -2844,7 +3105,7 @@ function renderChampion(){
     } else mv='<span style="font-size:10px;color:var(--muted)">·</span>';
     html+='<tr><td><span class="rn'+(rank<=3?' top':'')+'">'+rank+'</span></td>'+
       '<td>'+mv+'</td>'+
-      '<td><div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="goChampDetail(\''+r.champ+'\')"><div style="width:36px;height:36px;border-radius:7px;overflow:hidden;flex-shrink:0">'+cImg(r.champ,36,7)+'</div><span class="pn">'+r.champ+'</span>'+(champPosFilter==='전체'?' <span class="pb pb-'+r.pos+'" style="margin-left:2px">'+r.pos+'</span>':'')+'</div></td>'+
+      '<td><div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="goChampDetail(\''+r.champ+'\')"><div style="width:36px;height:36px;border-radius:7px;overflow:hidden;flex-shrink:0">'+cImg(r.champ,36,7)+'</div><span style="display:flex;flex-direction:column;gap:1px"><span class="pn">'+r.champ+'</span>'+ownerTag(r.champ)+'</span>'+(champPosFilter==='전체'?' <span class="pb pb-'+r.pos+'" style="margin-left:2px">'+r.pos+'</span>':'')+'</div></td>'+
       '<td><span style="display:inline-block;min-width:38px;text-align:center;padding:2px 8px;border-radius:5px;font-size:11px;font-weight:900;background:'+ts.bg+';border:1px solid '+ts.bd+';color:'+ts.c+'">'+tier+'티어</span></td>'+
       '<td style="font-family:Rajdhani,sans-serif;font-weight:700;font-size:13px;color:var(--text2)">'+r.score.toFixed(1)+'</td>'+
       '<td style="font-size:11px;color:var(--muted)">'+r.games+'전 '+r.wins+'승 '+r.losses+'패</td>'+
@@ -3026,6 +3287,7 @@ function renderNews(){
 
   html += '</div><div>';
 
+  html += ownerChangesHtml();
   // ── ⚔️ 라인별 라이벌 (우측 컬럼) ──
   html += '<div class="card fi"><div class="ct">⚔️ 라인별 라이벌 <span style="font-weight:400;color:var(--muted);margin-left:6px">최근 10경기 · 2회+ 맞대결</span></div>';
   var POS=['TOP','JUG','MID','ADC','SUP'];
@@ -3208,6 +3470,7 @@ function playerCard(name,pos,side,idx){
     })()+
     '<div class="pc-line">'+p.games+'전 '+p.wins+'승 '+p.losses+'패 ('+p.wr+'%) · '+
       (st.n>=2?'<b class="'+(st.w?'up':'down')+'">'+st.n+'연'+(st.w?'승':'패')+'</b>':'연속 없음')+'</div>'+
+    formLineHtml(name)+
     '<div class="pc-line muted">'+posRec+' '+offPos+'</div>'+
     '<canvas id="rd_'+side+idx+'" width="380" height="336" class="pc-radar"></canvas>'+
     '<div class="pc-line muted" style="margin-top:4px">'+POS_KR[pos]+' 모스트 <span style="font-size:8px">*참가 라인 기록만</span></div>'+
