@@ -40,6 +40,10 @@ body{zoom:1.45;background:var(--bg);color:var(--text);font-family:'IBM Plex Sans
 .card{background:var(--bg1);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:14px;box-shadow:0 1px 3px rgba(30,43,58,.06);}
 .card:last-child{margin-bottom:0;}
 .ct{font-size:11px;font-weight:700;color:var(--gold);letter-spacing:.5px;margin-bottom:14px;display:flex;align-items:center;gap:6px;}
+.ct{flex-wrap:wrap;row-gap:2px;}
+.ct{white-space:nowrap;word-break:keep-all;}
+.ct > span[style*="font-weight:400"]{white-space:normal;flex:1 1 160px;min-width:0;}
+.ct>span{line-height:1.35;}
 .ct::before{content:'';width:3px;height:12px;background:var(--gold);border-radius:2px;}
 
 /* 랭킹 테이블 */
@@ -2370,7 +2374,7 @@ function eloChartSvg(name, w, h, limit){
   var last = hist[hist.length-1], first = hist[0];
   var chg = last - first;
   var col = chg >= 0 ? '#199473' : '#cf4444';
-  var svg = '<svg width="'+w+'" height="'+h+'" style="display:block">';
+  var svg = '<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" style="display:block;max-width:100%;height:auto">';
   svg += '<polyline points="'+line+'" fill="none" stroke="'+col+'" stroke-width="2"/>';
   pts.forEach(function(p,i){
     svg += '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="3" fill="'+col+'"/>';
