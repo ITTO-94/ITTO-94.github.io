@@ -99,7 +99,8 @@ def to_game(no, m, t, accounts, ckr):
         teams[p['teamId']].append(dict(pos=POS.get(p.get('teamPosition'), 'SUP'), name=names[p['participantId']], champ=ch,
             vd='승' if p['win'] else '패', k=p['kills'], d=p['deaths'], a=p['assists'], vs=p['visionScore'],
             dmg=p['totalDamageDealtToChampions'], dt=p['totalDamageTaken'], gold=p['goldEarned'], cc=p['timeCCingOthers'],
-            cs=p['totalMinionsKilled'] + p['neutralMinionsKilled'], piwa=p.get('visionWardsBoughtInGame', 0)))
+            cs=p['totalMinionsKilled'] + p['neutralMinionsKilled'], piwa=p.get('visionWardsBoughtInGame', 0),
+            mit=p.get('damageSelfMitigated', 0)))
     for k in teams: teams[k].sort(key=lambda x: POSO.index(x['pos']))
     st = time.gmtime(info['gameStartTimestamp'] / 1000 + 9 * 3600)   # 한국 시간
     game = dict(no=no, date=time.strftime('%Y.%m.%d', st), mn=dur // 60, sc=dur % 60, bans=[], t1=teams[100], t2=teams[200],
