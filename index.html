@@ -911,6 +911,7 @@ function renderPlayer() {
   var og = totalGrade(p);
   var total = og.adj;
   var catKeys=['전투','시야','생존','성장','챔프폭'];
+  var r6=radar6(name), rKeys=r6?RADAR6_KEYS:catKeys, rVals=r6||cats, rCols=r6?RADAR6_COLORS:CAT_COLORS;
   var wrC=p.wr>=60?'var(--green)':p.wr>=50?'var(--gold)':'var(--red)';
   var wrC2=dsx.wr>=60?'var(--green)':dsx.wr>=50?'var(--gold)':'var(--red)';
   function rk(f){ return posMode ? POS_KR[PPOS]+' 기준 집계' : getRank(name,f); }
@@ -1071,7 +1072,7 @@ function renderPlayer() {
 
   html += formCompareHtml(name, posMode?PPOS:null);
   html += scoutingHtml(name, posMode?PPOS:null);
-  html += apiStatsHtml(name, posMode?PPOS:null);
+  html += durationHtml(name);
 
   // 모스트 챔피언 (ALL 행 + 최대 10개 + 클릭 시 맞라인 펼침)
   (function(){
@@ -1134,15 +1135,15 @@ function renderPlayer() {
   // 우측
   html += '<div>';
   // 레이더
-  html += '<div class="radar-card fi"><div class="ct" style="display:flex;align-items:center">능력치 레이더 · '+pos+' 기준 <span style="margin-left:auto;font-size:13px;font-family:Bebas Neue,sans-serif;letter-spacing:1px;color:'+og.c+'">'+og.g+' '+Math.round(total)+'pt</span></div>'+
+  html += '<div class="radar-card fi"><div class="ct" style="display:flex;align-items:center">능력치 레이더 · '+pos+' 기준'+(r6?'<span style="font-weight:400;font-size:10px;color:var(--muted);margin-left:6px">같은 포지션 대비 백분위</span>':'')+' <span style="margin-left:auto;font-size:13px;font-family:Bebas Neue,sans-serif;letter-spacing:1px;color:'+og.c+'">'+og.g+' '+Math.round(total)+'pt</span></div>'+
     '<div style="display:flex;flex-direction:column;align-items:center;gap:12px">'+
     '<canvas id="rc" width="480" height="460" style="width:240px;height:230px"></canvas>'+
     '<div class="grade-list">'+
-    catKeys.map(function(cat,i){var sc=cats[cat];var gr=pgrd(sc, pgradeCuts()[cat]);return '<div class="gr-row"><div class="gr-dot" style="background:'+CAT_COLORS[i]+'"></div><div class="gr-cat">'+cat+'</div><div class="gr-bw"><div class="gr-bf" style="width:'+sc+'%;background:'+CAT_COLORS[i]+';opacity:.7"></div></div><div class="gr-sc">'+Math.round(sc)+'</div><div class="gr-gd" style="color:'+gr.c+'">'+gr.g+'</div></div>';}).join('')+
+    rKeys.map(function(cat,i){var sc=rVals[cat];var gr=r6?r6grade(sc):pgrd(sc, pgradeCuts()[cat]);return '<div class="gr-row" title="'+(r6?RADAR6_DESC[cat]+' · '+POS_KR[pos]+' 선수 대비 백분위':'')+'"><div class="gr-dot" style="background:'+rCols[i]+'"></div><div class="gr-cat">'+cat+'</div><div class="gr-bw"><div class="gr-bf" style="width:'+sc+'%;background:'+rCols[i]+';opacity:.7"></div></div><div class="gr-sc">'+Math.round(sc)+'</div><div class="gr-gd" style="color:'+gr.c+'">'+gr.g+'</div></div>';}).join('')+
     '</div></div></div>';
 
   html += similarHtml(name);
-  html += apiBuildStyleHtml(name, posMode?PPOS:null);
+  html += botDuoHtml(name);
   // 듀오 전적 (최근 30경기, 같은 팀 기준)
   var duos = duoStats(name);
   if(duos.length){
@@ -1207,14 +1208,15 @@ function renderPlayer() {
   html += '</div></div>';
   html += personalBestsHtml(name);
   html += funRecordsHtml(name);
+  html += myBadgesHtml(name);
   html += calendarHtml(name);
   document.getElementById('page-player').innerHTML = html;
-  setTimeout(function(){ drawRadar(cats,catKeys,CAT_COLORS); }, 30);
+  setTimeout(function(){ drawRadar(rVals,rKeys,rCols); }, 30);
 }
 
 function drawRadar(cats,keys,colors){
   var cv=document.getElementById('rc');if(!cv)return;
-  var ctx=cv.getContext('2d'),W=240,H=230,cx=120,cy=118,R=80,n=5;
+  var n=keys.length, ctx=cv.getContext('2d'),W=240,H=230,cx=120,cy=n>5?110:118,R=n>5?74:80;
   ctx.setTransform(2,0,0,2,0,0);
   ctx.clearRect(0,0,W,H);
   var vals=keys.map(function(k){return cats[k]/100;});
@@ -1222,7 +1224,7 @@ function drawRadar(cats,keys,colors){
   for(var i=0;i<n;i++){var a=(i/n)*Math.PI*2-Math.PI/2;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(a)*R,cy+Math.sin(a)*R);ctx.strokeStyle='rgba(0,0,0,.06)';ctx.lineWidth=1;ctx.stroke();}
   ctx.beginPath();for(var i=0;i<n;i++){var a=(i/n)*Math.PI*2-Math.PI/2,x=cx+Math.cos(a)*R*vals[i],y=cy+Math.sin(a)*R*vals[i];i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}ctx.closePath();ctx.fillStyle='rgba(200,155,60,.12)';ctx.fill();ctx.strokeStyle='rgba(200,155,60,.7)';ctx.lineWidth=2;ctx.stroke();
   ctx.textAlign='center';
-  for(var i=0;i<n;i++){var a=(i/n)*Math.PI*2-Math.PI/2,x=cx+Math.cos(a)*R*vals[i],y=cy+Math.sin(a)*R*vals[i];ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fillStyle=colors[i];ctx.fill();ctx.strokeStyle='rgba(0,0,0,.4)';ctx.lineWidth=1;ctx.stroke();var lr=R+22,lx=cx+Math.cos(a)*lr,ly=cy+Math.sin(a)*lr;var sc=cats[keys[i]],gr=pgrd(sc, pgradeCuts()[keys[i]]);ctx.font='bold 12px Bebas Neue';ctx.fillStyle=gr.c;ctx.fillText(gr.g,lx,ly);ctx.font='500 9px Noto Sans KR';ctx.fillStyle='#4a5a6e';ctx.fillText(keys[i],lx,ly+12);}
+  for(var i=0;i<n;i++){var a=(i/n)*Math.PI*2-Math.PI/2,x=cx+Math.cos(a)*R*vals[i],y=cy+Math.sin(a)*R*vals[i];ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fillStyle=colors[i];ctx.fill();ctx.strokeStyle='rgba(0,0,0,.4)';ctx.lineWidth=1;ctx.stroke();var lr=R+22,lx=cx+Math.cos(a)*lr,ly=cy+Math.sin(a)*lr;var sc=cats[keys[i]],gr=pgradeCuts()[keys[i]]?pgrd(sc, pgradeCuts()[keys[i]]):r6grade(sc);ctx.font='bold 12px Bebas Neue';ctx.fillStyle=gr.c;ctx.fillText(gr.g,lx,ly);ctx.font='500 9px Noto Sans KR';ctx.fillStyle='#4a5a6e';ctx.fillText(keys[i],lx,ly+12);}
 }
 function drawMiniRadar(cvId,cats,keys,colors){
   var cv=document.getElementById(cvId);if(!cv)return;
@@ -1668,11 +1670,12 @@ function renderCompare(){
   }
   h+='</div></div>';
   document.getElementById('page-compare').innerHTML=h;
-  setTimeout(function(){ drawCmpRadar(calcCats(A,A.pos), calcCats(B,B.pos), CA, CB); }, 30);
+  setTimeout(function(){ var ra=radar6(A.name), rb=radar6(B.name); if(ra&&rb) drawCmpRadar(ra,rb,CA,CB,RADAR6_KEYS); else drawCmpRadar(calcCats(A,A.pos), calcCats(B,B.pos), CA, CB); }, 30);
 }
-function drawCmpRadar(ca,cb,c1,c2){
+function drawCmpRadar(ca,cb,c1,c2,KEYS){
   var cv=document.getElementById('cmpRadar'); if(!cv) return;
-  var ctx=cv.getContext('2d'), W=280,H=250,cx=140,cy=128,R=88,n=5, keys=['전투','시야','생존','성장','챔프폭'];
+  var keys=KEYS||['전투','시야','생존','성장','챔프폭'];
+  var ctx=cv.getContext('2d'), W=280,H=250,cx=140,cy=128,R=88,n=keys.length;
   ctx.setTransform(2,0,0,2,0,0); ctx.clearRect(0,0,W,H);
   for(var ring=1;ring<=5;ring++){ ctx.beginPath(); for(var i=0;i<n;i++){ var a=(i/n)*Math.PI*2-Math.PI/2, r=R*ring/5; i===0?ctx.moveTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r):ctx.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);} ctx.closePath(); ctx.strokeStyle='rgba(0,0,0,.08)'; ctx.stroke(); }
   function poly(cats,col,fill){
@@ -1891,33 +1894,6 @@ function scoutMinG(pos){
 }
 var SCOUT_ITEMS=[['wr','승률','%',0],['cp','CP 평균','',2],['kda','KDA','',2],['dpm','DPM','',0],['sh','팀 내 딜 비중','%',1],['kp','킬관여','%',0],
   ['d','평균 데스','',1,true],['vs','분당 시야','',2],['cs','분당 CS','',1],['gold','분당 골드','',0],['cc','분당 CC','',2],['dt','분당 받은 딜','',0]];
-function scoutingHtml(name, posFilter){
-  var p=PLAYERS[name], pos=posFilter||p.pos, A=posAgg(), me=A[name+'|'+pos];
-  var head='<div class="card fi fi2"><div class="ct">🔎 '+POS_KR[pos]+' 스카우팅 리포트 <span style="font-weight:400;color:var(--muted);margin-left:6px">같은 포지션 선수들 사이에서의 위치</span></div>';
-  if(isHidden(name)) return head+'<div style="padding:12px;text-align:center;font-size:11px;color:var(--muted)">순위 집계 제외 선수예요</div></div>';
-  var minG=scoutMinG(pos);
-  if(!me || me.g<minG) return head+'<div style="padding:12px;text-align:center;font-size:11px;color:var(--muted)">'+POS_KR[pos]+' '+minG+'판부터 리포트가 생겨요 (현재 '+(me?me.g:0)+'판)</div></div>';
-  var pool=Object.keys(A).map(function(k){return A[k];}).filter(function(o){ return o.pos===pos && o.g>=minG && !isHidden(o.name); });
-  var h=head+'<div style="font-size:10px;color:var(--muted);margin-bottom:10px">비교 대상: '+POS_KR[pos]+' '+minG+'판 이상 '+pool.length+'명 · 막대가 길수록 상위권 · 표본이 쌓이면 기준 판수가 자동으로 올라갑니다</div>';
-  SCOUT_ITEMS.forEach(function(it){
-    var key=it[0], lower=it[4], v=me.m[key];
-    var vals=pool.map(function(o){return o.m[key];});
-    var below=vals.filter(function(x){ return lower? x>v : x<v; }).length, eq=vals.filter(function(x){return x===v;}).length-1;
-    var pct=pool.length>1 ? (below+eq/2)/(pool.length-1) : 0.5;
-    var P=Math.round(pct*100), rk=vals.filter(function(x){ return lower? x<v : x>v; }).length+1;
-    var col=P>=80?'#199473':P>=60?'#3368a0':P>=40?'#8a96a3':P>=20?'#c0882a':'#cf4444';
-    var shown = it[3]===0?Math.round(v):(Math.round(v*Math.pow(10,it[3]))/Math.pow(10,it[3]));
-    h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:11px">'+
-      '<span style="width:78px;flex-shrink:0;color:var(--muted)">'+it[1]+'</span>'+
-      '<span style="width:52px;flex-shrink:0;text-align:right;font-family:Rajdhani,sans-serif;font-weight:700;font-size:13px;color:var(--text2)">'+shown+it[2]+'</span>'+
-      '<div style="flex:1;height:9px;background:var(--bg2);border-radius:5px;overflow:hidden;border:1px solid var(--dim)"><div style="width:'+Math.max(3,P)+'%;height:100%;background:'+col+';border-radius:5px"></div></div>'+
-      '<span style="width:64px;flex-shrink:0;text-align:right;font-size:10px;font-weight:700;color:'+col+'">'+rk+'위 / '+pool.length+'명</span></div>';
-  });
-  var cr=consistencyRank(name);
-  if(cr) h+='<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--dim);font-size:11px;color:var(--muted)">꾸준함 (전 포지션 · 판별 성적 편차): <b style="color:var(--text2)">'+cr.rank+'위 / '+cr.total+'명</b> '+(cr.top<=0.34?'— 경기마다 비슷한 성적을 내는 편':cr.top>=0.66?'— 잘 풀리는 날과 아닌 날의 차이가 큰 편':'— 보통')+'</div>';
-  else h+='<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--dim);font-size:10px;color:var(--muted)">꾸준함은 '+CONS_MIN+'판부터 집계돼요</div>';
-  return h+'</div>';
-}
 
 // ── ⑦ 챔피언의 주인 (최근 30경기, 가장 많이·잘 쓴 사람) ──
 var OWNER_WIN=30;
@@ -2023,7 +1999,7 @@ function ddLoad(){
       t.slots.forEach(function(s){ s.runes.forEach(function(r){ DDX.runes[r.id]={name:r.name,icon:r.icon,tree:t.id}; }); }); });
     DDX.ready=true; ddFill(document);
     var on=document.querySelector('.page.on');
-    if(on && (on.id==='page-detail' || on.id==='page-player')){ var y=window.scrollY; showPage(on.id.replace('page-','')); window.scrollTo(0,y); }
+    if(on && (on.id==='page-detail' || on.id==='page-player' || on.id==='page-champion')){ var y=window.scrollY; showPage(on.id.replace('page-','')); window.scrollTo(0,y); }
   }).catch(function(){ /* 오프라인이면 아이콘만 표시 */ });
 }
 function ddFill(root){
@@ -2070,35 +2046,6 @@ function isDoneItem(id){
 function isBoots(id){ var it=DDX.ready&&DDX.items[id]; return !!(it && (it.tags||[]).indexOf('Boots')>=0); }
 
 // ── 경기별 배지 ──
-function gameBadges(no){
-  var g=apiG(no), d=null; if(!g) return {};
-  GAME_DETAILS.forEach(function(x){ if(x.no===no) d=x; });
-  var out={}; function add(n,b){ (out[n]=out[n]||[]).push(b); }
-  function top(key,min){ var best=null; g.p.forEach(function(p){ if((p[key]||0)>=min && (!best || p[key]>best[key])) best=p; }); return best; }
-  g.p.forEach(function(p){
-    if(p.mk[3]) add(p.n,{i:'🖐️',t:'펜타킬',d:'펜타킬 '+p.mk[3]+'회'});
-    else if(p.mk[2]) add(p.n,{i:'💫',t:'쿼드라킬',d:'쿼드라킬 '+p.mk[2]+'회'});
-    else if(p.mk[1]) add(p.n,{i:'✨',t:'트리플킬',d:'트리플킬 '+p.mk[1]+'회'});
-    if(p.fb===2) add(p.n,{i:'🩸',t:'퍼스트 블러드',d:'이 경기 첫 킬'});
-    if(p.stl>0) add(p.n,{i:'🦹',t:'오브젝트 스틸',d:'에픽 몬스터 스틸 '+p.stl+'회'});
-    if(typeof p.gd15==='number' && p.gd15>=1500) add(p.n,{i:'🛣️',t:'라인전 압승',d:'15분 맞라인 대비 골드 +'+p.gd15.toLocaleString()});
-  });
-  if(d) d.players.forEach(function(p){ if(p.d===0) add(p.name,{i:'🕊️',t:'노데스',d:'한 번도 죽지 않음'}); });
-  var t;
-  if((t=top('sk',2))) add(t.n,{i:'⚔️',t:'솔킬왕',d:'솔로킬 '+t.sk+'회 (경기 최다)'});
-  if((t=top('tur',5000))) add(t.n,{i:'🏰',t:'포탑 철거반',d:'포탑 딜 '+t.tur.toLocaleString()+' (경기 최다)'});
-  if((t=top('ssh',30))) add(t.n,{i:'🎯',t:'스킬샷 저격수',d:'스킬샷 적중 '+t.ssh+'회 (경기 최다)'});
-  if((t=top('ssd',20))) add(t.n,{i:'💨',t:'회피의 달인',d:'스킬샷 회피 '+t.ssd+'회 (경기 최다)'});
-  if((t=top('imm',25))) add(t.n,{i:'🪢',t:'CC 폭격기',d:'적 챔피언 묶기 '+t.imm+'회 (경기 최다)'});
-  var sups=g.p.filter(function(p){return p.pos==='UTILITY' && p.hs>=5000;}).sort(function(a,b){return b.hs-a.hs;});
-  if(sups.length) add(sups[0].n,{i:'💚',t:'수호천사',d:'아군 회복·보호막 '+sups[0].hs.toLocaleString()+' (서포터 중 최다)'});
-  if((t=top('cw',3))) add(t.n,{i:'👁️',t:'제어 와드 장인',d:'제어 와드 '+t.cw+'개 (경기 최다)'});
-  return out;
-}
-function badgeChips(list,max){
-  if(!list || !list.length) return '';
-  return list.slice(0,max||9).map(function(b){ return '<span title="'+b.t+' — '+b.d+'" style="display:inline-flex;align-items:center;gap:2px;font-size:9px;font-weight:800;color:var(--text2);background:rgba(51,104,160,.08);border:1px solid rgba(51,104,160,.25);border-radius:9px;padding:0 5px;margin-left:3px;white-space:nowrap">'+b.i+' '+b.t+'</span>'; }).join('');
-}
 
 // ── A. 스코어보드 확장 ──
 function sbApiBuild(no,name){
@@ -2341,7 +2288,9 @@ function funRecordsHtml(name){
   h+=box('최장 생존', mmss(live), '한 번도 안 죽고 버틴 최장 시간');
   h+=box('핑', Math.round(tot/rows.length)+'회 / 판', top.length?'최애 핑 '+(PK[top[0]]||top[0]):'핑을 거의 안 씀');
   h+='</div>';
-  if(top.length) h+='<div style="font-size:10px;color:var(--muted);margin-top:8px">핑 TOP 3 — '+top.map(function(k){return (PK[k]||k)+' '+png[k]+'회';}).join(' · ')+'</div>';
+  var mk=[0,0,0,0], ls=0; rows.forEach(function(r){ for(var i=0;i<4;i++) mk[i]+=r.a.mk[i]; ls=Math.max(ls,r.a.ls); });
+  h+='<div style="font-size:10px;color:var(--muted);margin-top:8px">멀티킬 누계 — 더블 <b style="color:var(--text2)">'+mk[0]+'</b> · 트리플 <b style="color:var(--text2)">'+mk[1]+'</b> · 쿼드라 <b style="color:var(--text2)">'+mk[2]+'</b> · 펜타 <b style="color:#b8860f">'+mk[3]+'</b> · 최대 연속 킬 <b style="color:var(--text2)">'+ls+'</b></div>';
+  if(top.length) h+='<div style="font-size:10px;color:var(--muted);margin-top:4px">핑 TOP 3 — '+top.map(function(k){return (PK[k]||k)+' '+png[k]+'회';}).join(' · ')+'</div>';
   return h+'</div>';
 }
 
@@ -2354,7 +2303,7 @@ function champApiRows(champKr){
 }
 function champBuildHtml(champKr){
   var rows=champApiRows(champKr);
-  var h='<div class="card fi"><div class="ct">🛠️ 내전 빌드 <span style="font-weight:400;color:var(--muted);margin-left:6px">라이엇 API 기록 '+rows.length+'판 기준 · 승률은 그 빌드를 쓴 판의 승률</span></div>';
+  var h='<div class="card fi fi3"><div class="ct">🛠️ 내전 빌드 <span style="font-weight:400;color:var(--muted);margin-left:6px">라이엇 API 기록 '+rows.length+'판 기준 · 승률은 그 빌드를 쓴 판의 승률</span></div>';
   if(!rows.length) return h+'<div style="padding:12px;text-align:center;font-size:11px;color:var(--muted)">API 기록이 있는 경기가 아직 없어요</div></div>';
   function tally(fn){ var o={}; rows.forEach(function(r){ var k=fn(r); if(k==null||k==='') return; var e=o[k]=o[k]||{g:0,w:0}; e.g++; if(r.win) e.w++; }); return Object.keys(o).map(function(k){return {k:k,g:o[k].g,w:o[k].w};}).sort(function(a,b){return b.g-a.g||b.w-a.w;}); }
   function line(icon,lab,e){ return '<div style="display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid var(--dim);font-size:11px">'+icon+'<span style="flex:1;color:var(--text);min-width:0">'+lab+'</span><span style="font-size:10px;color:var(--muted);white-space:nowrap">'+e.g+'판 · <b style="color:'+(e.w/e.g>=0.5?'var(--green)':'var(--red)')+'">'+Math.round(e.w/e.g*100)+'%</b></span></div>'; }
@@ -2363,19 +2312,19 @@ function champBuildHtml(champKr){
   var mx=tally(function(r){ var c={Q:0,W:0,E:0}, ord=[]; r.a.so.split('').forEach(function(s){ if(c[s]!==undefined){ c[s]++; if(c[s]===5) ord.push(s); } }); ['Q','W','E'].forEach(function(s){ if(ord.indexOf(s)<0) ord.push(s); }); return r.a.so.length>=9?ord.join(' > '):null; }).slice(0,3);
   var core=null, boots=null, start=null;
   if(DDX.ready){
-    core=tally(function(r){ var seq=[], seen={}; r.a.bo.forEach(function(b){ if(isDoneItem(b[0]) && !isBoots(b[0]) && !seen[b[0]] && r.a.it.indexOf(b[0])>=0){ seen[b[0]]=1; seq.push(b[0]); } }); return seq.length>=2?seq.slice(0,3).join('-'):null; }).slice(0,4);
+    core=tally(function(r){ var seq=[], seen={}; r.a.bo.forEach(function(b){ if(isDoneItem(b[0]) && !isBoots(b[0]) && !seen[b[0]] && r.a.it.indexOf(b[0])>=0){ seen[b[0]]=1; seq.push(b[0]); } }); return seq.length?seq.slice(0,3).join('-'):null; }).slice(0,4);
     boots=tally(function(r){ var b=r.a.it.filter(function(i){return i && isBoots(i) && isDoneItem(i);})[0]; return b||null; }).slice(0,3);
     start=tally(function(r){ var s=r.a.bo.filter(function(b){return b[1]<=70;}).map(function(b){return b[0];}); return s.length?s.join('-'):null; }).slice(0,2);
   }
   var v=rows[rows.length-1].ver;
-  h+='<div class="two-col" style="gap:16px"><div>';
+  h+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px"><div>';
   h+='<div style="font-size:10px;font-weight:800;color:var(--text2);margin-bottom:2px">룬 (핵심 + 보조 계열)</div>'+ks.map(function(e){ var p=e.k.split('|'); var r=DDX.ready&&DDX.runes[p[0]]; return line('<span style="display:flex;gap:2px;align-items:center">'+runeIcon(p[0],22,true)+runeIcon(p[1],16)+'</span>', (r?r.name:'룬')+' + '+(RUNE_TREE_KR[p[1]]||''), e); }).join('');
   h+='<div style="font-size:10px;font-weight:800;color:var(--text2);margin:10px 0 2px">소환사 주문</div>'+sp.map(function(e){ var ids=e.k.split('-'); return line('<span style="display:flex;gap:2px">'+spellIcon(+ids[0],20,v)+spellIcon(+ids[1],20,v)+'</span>', ids.map(function(i){return (SPELL_KEY[i]||['',i])[1];}).join(' + '), e); }).join('');
   h+='<div style="font-size:10px;font-weight:800;color:var(--text2);margin:10px 0 2px">스킬 마스터 순서</div>'+mx.map(function(e){ return line('<span style="font-family:Rajdhani,sans-serif;font-weight:800;color:#c07a10;width:64px">'+e.k+'</span>', '', e); }).join('');
   h+='</div><div>';
   if(!DDX.ready) h+='<div style="font-size:10px;color:var(--muted);padding:8px 0">아이템 정보를 불러오는 중… (인터넷 연결 필요)</div>';
   else {
-    h+='<div style="font-size:10px;font-weight:800;color:var(--text2);margin-bottom:2px">코어 아이템 (완성 순서)</div>'+(core.length?core.map(function(e){ return line('<span style="display:flex;gap:2px;align-items:center">'+e.k.split('-').map(function(i){return itemIcon(+i,22,v);}).join('<span style="font-size:9px;color:var(--muted)">›</span>')+'</span>','',e); }).join(''):'<div style="font-size:10px;color:var(--muted)">완성템 2개 이상 기록이 없어요</div>');
+    h+='<div style="font-size:10px;font-weight:800;color:var(--text2);margin-bottom:2px">코어 아이템 (완성 순서)</div>'+(core.length?core.map(function(e){ return line('<span style="display:flex;gap:2px;align-items:center">'+e.k.split('-').map(function(i){return itemIcon(+i,22,v);}).join('<span style="font-size:9px;color:var(--muted)">›</span>')+'</span>','',e); }).join(''):'<div style="font-size:10px;color:var(--muted)">완성템 기록이 없어요</div>');
     h+='<div style="font-size:10px;font-weight:800;color:var(--text2);margin:10px 0 2px">신발</div>'+boots.map(function(e){ return line(itemIcon(+e.k,22,v), DDX.items[e.k]?DDX.items[e.k].name:e.k, e); }).join('');
     h+='<div style="font-size:10px;font-weight:800;color:var(--text2);margin:10px 0 2px">시작 아이템</div>'+start.map(function(e){ return line('<span style="display:flex;gap:2px">'+e.k.split('-').map(function(i){return itemIcon(+i,20,v);}).join('')+'</span>','',e); }).join('');
   }
@@ -2391,7 +2340,6 @@ function funAwardsHtml(){
       o.g++; o.sk+=p.sk; o.png+=p.pngT; o.stl+=p.stl; o.fb+=(p.fb===2?1:0); o.tur+=p.tur; o.wp+=p.wp/(g.dur/60); o.ssh+=p.ssh; o.hs+=(p.pos==='UTILITY'?p.hs:0); o.sg=(o.sg||0)+(p.pos==='UTILITY'?1:0); o.mk3+=p.mk[1]+p.mk[2]+p.mk[3]; o.ll=Math.max(o.ll,p.ll); o.imm+=p.imm; }); });
   var pool=Object.keys(agg).filter(function(n){return agg[n].g>=FUN_MIN;});
   var defs=[
-    ['⚔️','솔킬왕','판당 솔로킬',function(o){return o.sk/o.g;},2,''],
     ['🎯','스킬샷 저격수','판당 스킬샷 적중',function(o){return o.ssh/o.g;},1,'회'],
     ['🪢','CC 폭격기','판당 적 묶기',function(o){return o.imm/o.g;},1,'회'],
     ['🏰','포탑 철거반','판당 포탑 딜',function(o){return o.tur/o.g;},0,''],
@@ -2415,6 +2363,461 @@ function funAwardsHtml(){
       '<div style="font-size:10px;color:var(--muted)">'+d[2]+' <b style="color:var(--text2)">'+shown+'</b> · '+o.g+'판</div></div>';
   });
   return h+'</div></div>';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 2026-11-26 스카우팅 리포트 v2 (라인별 핵심 지표 + 강점/보완 요약) · 경기 배지 v2 · 배지 도감
+// ═══════════════════════════════════════════════════════════════
+// 지표 정의: key → [라벨, 단위, 소수, 낮을수록좋음, 출처('x'=전체 경기, 'a'=API 경기), 계산]
+var SC2_DEF={
+  wr:['승률','%',0,false,'x'], cp:['CP 평균','',2,false,'x'], kda:['KDA','',2,false,'x'], dpm:['분당 딜','',0,false,'x'],
+  sh:['팀 내 딜 비중','%',1,false,'x'], kp:['킬관여','%',0,false,'x'], d:['평균 데스','',1,true,'x'], vs:['분당 시야','',2,false,'x'],
+  cs:['분당 CS','',1,false,'x'], gold:['분당 골드','',0,false,'x'], cc:['분당 CC','',2,false,'x'], dt:['분당 받은 딜','',0,false,'x'],
+  gd15:['15분 골드 차이','',0,false,'a'], csd15:['15분 CS 차이','',1,false,'a'], xpd15:['15분 경험치 차이','',0,false,'a'],
+  ahead15:['15분 앞선 비율','%',0,false,'a'], obj:['용·바론·전령 관여','회',1,false,'a'], tur:['포탑 딜','',0,false,'a'],
+  fbp:['퍼스트 블러드 관여','%',0,false,'a'], sk:['솔로킬','회',2,false,'a'], imm:['적 묶기','회',1,false,'a'],
+  ssh:['스킬샷 적중','회',1,false,'a'], wpm:['분당 와드 설치','',2,false,'a'], wkm:['분당 와드 제거','',2,false,'a'],
+  cw:['제어 와드','개',1,false,'a'], hs:['아군 회복·보호막','',0,false,'a'], tdd:['사망 대기 시간','초',0,true,'a']
+};
+// 라인별 핵심 지표 (프로 분석에서 라인 성과를 볼 때 쓰는 지표 기준 — 라인전·역할 기여 중심)
+var SC2_KEY={
+  TOP:[['gd15','라인전에서 상대를 얼마나 앞섰나'],['sk','1:1 교전 능력'],['tur','스플릿·포탑 압박'],['dt','앞에서 받아낸 피해 (탱킹)'],['sh','팀 딜 기여']],
+  JUG:[['obj','용·바론·전령 등 오브젝트 주도'],['kp','라인 개입·교전 합류'],['vs','시야 장악'],['xpd15','초반 동선 효율 (경험치)'],['fbp','초반 갱킹 성과']],
+  MID:[['csd15','라인전 CS 관리'],['sh','팀 딜 기여'],['kp','로밍·교전 합류'],['sk','1:1 교전 능력'],['dpm','교전 화력']],
+  ADC:[['dpm','교전에서 넣는 딜의 양'],['sh','팀 딜 기여'],['cs','성장 (분당 CS)'],['csd15','라인전 CS 관리'],['d','생존 (적게 죽기)']],
+  SUP:[['vs','시야 장악'],['cw','시야 싸움 투자'],['kp','교전 합류'],['imm','이니시·CC 적중'],['d','생존 (적게 죽기)']]
+};
+var _SC2=null;
+function sc2Agg(){
+  if(_SC2) return _SC2;
+  var A={};
+  GAME_DETAILS.forEach(function(g){
+    var td={}, tk={}; g.players.forEach(function(p){ td[p.team]=(td[p.team]||0)+p.dmg; tk[p.team]=(tk[p.team]||0)+p.k; });
+    var ag=apiG(g.no);
+    g.players.forEach(function(p){
+      var key=p.name+'|'+p.pos, o=A[key]=A[key]||{name:p.name,pos:p.pos,g:0,ag:0,s:{},n:{}};
+      var m=g.durMin;
+      function add(k,v){ if(typeof v!=='number'||isNaN(v)) return; o.s[k]=(o.s[k]||0)+v; o.n[k]=(o.n[k]||0)+1; }
+      o.g++;
+      add('wr',p.team==='win'?100:0); add('cp',p.cp); add('dpm',p.dpm); add('sh',td[p.team]?p.dmg/td[p.team]*100:0);
+      add('kp',tk[p.team]?(p.k+p.a)/tk[p.team]*100:0); add('d',p.d); add('vs',p.vs/m); add('cs',p.cs/m); add('gold',p.gold/m);
+      add('cc',(p.champ==='녹턴'?p.cc/5:p.cc)/m); add('dt',p.dt/m);
+      o.k=(o.k||0)+p.k; o.dd=(o.dd||0)+p.d; o.a=(o.a||0)+p.a;
+      var a=ag?apiP(g.no,p.name):null;
+      if(a){ o.ag++; var am=ag.dur/60;
+        add('gd15',a.gd15); add('csd15',a.csd15); add('xpd15',a.xpd15); if(typeof a.gd15==='number') add('ahead15',a.gd15>0?100:0);
+        add('obj',a.drg+a.bar+a.her); add('tur',a.tur); add('fbp',a.fb?100:0); add('sk',a.sk); add('imm',a.imm); add('ssh',a.ssh);
+        add('wpm',a.wp/am); add('wkm',a.wk/am); add('cw',a.cw); add('hs',a.hs); add('tdd',a.tdd); }
+    });
+  });
+  Object.keys(A).forEach(function(k){ var o=A[k]; o.m={}; Object.keys(o.s).forEach(function(x){ o.m[x]=o.s[x]/o.n[x]; }); o.m.kda=o.dd?(o.k+o.a)/o.dd:(o.k+o.a); });
+  _SC2=A; return A;
+}
+function sc2Rank(name,pos,key){
+  var A=sc2Agg(), me=A[name+'|'+pos], def=SC2_DEF[key]; if(!me) return null;
+  var src=def[4], minG=scoutMinG(pos), minA=3;
+  if(src==='x' && me.g<minG) return null;
+  if(src==='a' && (me.n[key]||0)<minA) return null;
+  var v=me.m[key]; if(typeof v!=='number') return null;
+  var pool=Object.keys(A).map(function(k){return A[k];}).filter(function(o){ return o.pos===pos && !isHidden(o.name) && (src==='x'?o.g>=minG:(o.n[key]||0)>=minA) && typeof o.m[key]==='number'; });
+  var better=pool.filter(function(o){ return def[3]? o.m[key]<v : o.m[key]>v; }).length;
+  var vals=pool.map(function(o){return o.m[key];}).sort(function(a,b){return a-b;});
+  var avg=vals.reduce(function(s,x){return s+x;},0)/(vals.length||1);
+  return {v:v, rank:better+1, total:pool.length, pct:pool.length>1?1-better/(pool.length-1):1, avg:avg, n:src==='x'?me.g:me.n[key]};
+}
+function sc2Fmt(key,v){ var d=SC2_DEF[key]; var s=(d[2]===0?Math.round(v).toLocaleString():(Math.round(v*Math.pow(10,d[2]))/Math.pow(10,d[2])).toLocaleString()); return ((['gd15','csd15','xpd15'].indexOf(key)>=0&&v>0)?'+':'')+s+d[1]; }
+function sc2Col(p){ return p>=0.8?'#199473':p>=0.6?'#3368a0':p>=0.4?'#8a96a3':p>=0.2?'#c0882a':'#cf4444'; }
+function sc2Bar(key,r,why){
+  var d=SC2_DEF[key], col=sc2Col(r.pct), P=Math.round(r.pct*100);
+  return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:11px" title="'+d[0]+' · 같은 포지션 평균 '+sc2Fmt(key,r.avg)+' · 표본 '+r.n+'판">'+
+    '<div style="width:118px;flex-shrink:0"><div style="color:var(--text2);font-weight:700">'+d[0]+'</div>'+(why?'<div style="font-size:9px;color:var(--muted);line-height:1.25">'+why+'</div>':'')+'</div>'+
+    '<span style="width:58px;flex-shrink:0;text-align:right;font-family:Rajdhani,sans-serif;font-weight:700;font-size:14px;color:var(--text2)">'+sc2Fmt(key,r.v)+'</span>'+
+    '<div style="flex:1;height:9px;background:var(--bg2);border-radius:5px;overflow:hidden;border:1px solid var(--dim);position:relative"><div style="width:'+Math.max(3,P)+'%;height:100%;background:'+col+';border-radius:5px"></div></div>'+
+    '<span style="width:62px;flex-shrink:0;text-align:right;font-size:10px;font-weight:800;color:'+col+'">'+r.rank+'위 / '+r.total+'명</span></div>';
+}
+function scoutingHtml(name, posFilter){
+  var p=PLAYERS[name], pos=posFilter||p.pos;
+  var head='<div class="card fi fi2"><div class="ct">🔎 '+POS_KR[pos]+' 스카우팅 리포트 <span style="font-weight:400;color:var(--muted);margin-left:6px">같은 포지션 선수들 사이에서의 위치</span></div>';
+  if(isHidden(name)) return head+'<div style="padding:12px;text-align:center;font-size:11px;color:var(--muted)">순위 집계 제외 선수예요</div></div>';
+  var A=sc2Agg(), me=A[name+'|'+pos], minG=scoutMinG(pos);
+  if(!me || me.g<minG) return head+'<div style="padding:12px;text-align:center;font-size:11px;color:var(--muted)">'+POS_KR[pos]+' '+minG+'판부터 리포트가 생겨요 (현재 '+(me?me.g:0)+'판)</div></div>';
+  var all={}; Object.keys(SC2_DEF).forEach(function(k){ var r=sc2Rank(name,pos,k); if(r) all[k]=r; });
+  // 강점·보완 요약 (전체 지표 중 상위 25% / 하위 25%, 4명 이상 비교일 때)
+  var ks=Object.keys(all).filter(function(k){return all[k].total>=4;});
+  var strong=ks.filter(function(k){return all[k].pct>=0.75;}).sort(function(a,b){return all[b].pct-all[a].pct||all[a].rank-all[b].rank;}).slice(0,3);
+  var weak=ks.filter(function(k){return all[k].pct<=0.25;}).sort(function(a,b){return all[a].pct-all[b].pct;}).slice(0,2);
+  var h=head;
+  h+='<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;font-size:11px">'+
+    (strong.length?'<span style="padding:4px 9px;border-radius:7px;background:rgba(25,148,115,.08);border:1px solid rgba(25,148,115,.3);color:var(--green);font-weight:800">강점 — '+strong.map(function(k){return SC2_DEF[k][0]+' '+all[k].rank+'위';}).join(' · ')+'</span>':'')+
+    (weak.length?'<span style="padding:4px 9px;border-radius:7px;background:rgba(207,68,68,.06);border:1px solid rgba(207,68,68,.25);color:var(--red);font-weight:800">보완 — '+weak.map(function(k){return SC2_DEF[k][0]+' '+all[k].rank+'위';}).join(' · ')+'</span>':'')+
+    (!strong.length&&!weak.length?'<span style="color:var(--muted)">대부분의 지표가 포지션 평균 근처예요</span>':'')+'</div>';
+  h+='<div style="font-size:10px;font-weight:800;color:var(--text2);margin-bottom:6px">'+POS_KR[pos]+' 핵심 지표 <span style="font-weight:400;color:var(--muted)">— 이 라인 성과를 볼 때 가장 먼저 보는 5가지</span></div>';
+  var shown={};
+  SC2_KEY[pos].forEach(function(kw){ var r=all[kw[0]]; shown[kw[0]]=1;
+    h+= r ? sc2Bar(kw[0],r,kw[1]) : '<div style="display:flex;gap:8px;margin-bottom:7px;font-size:11px;color:var(--muted)"><div style="width:118px"><b style="color:var(--text2)">'+SC2_DEF[kw[0]][0]+'</b><div style="font-size:9px">'+kw[1]+'</div></div><span style="align-self:center">라이엇 API 기록 3판부터 표시</span></div>'; });
+  var rest=Object.keys(SC2_DEF).filter(function(k){return !shown[k] && all[k];});
+  if(rest.length){
+    h+='<details style="margin-top:6px"><summary style="cursor:pointer;font-size:11px;font-weight:800;color:var(--blue)">전체 지표 '+rest.length+'개 더 보기</summary><div style="margin-top:8px">'+
+      rest.map(function(k){return sc2Bar(k,all[k],'');}).join('')+'</div></details>';
+  }
+  var cr=consistencyRank(name);
+  h+='<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--dim);font-size:10px;color:var(--muted);line-height:1.6">'+
+    '비교 대상: '+POS_KR[pos]+' '+minG+'판 이상 (API 지표는 API 기록 3판 이상) · 막대가 길수록 상위권 · 마우스를 올리면 포지션 평균'+
+    (cr?'<br>꾸준함 (전 포지션 · 판별 성적 편차): <b style="color:var(--text2)">'+cr.rank+'위 / '+cr.total+'명</b>':'')+'</div>';
+  return h+'</div>';
+}
+
+// ── 경기 배지 v2 (등급: 전설 > 영웅 > 희귀 > 일반) ──
+var BADGE_DEF=[
+  // id, 아이콘, 이름, 등급, 기준 설명
+  ['penta','🖐️','펜타킬',4,'펜타킬 달성'],
+  ['comeback','🔄','역전의 주역',4,'2,000골드 이상 뒤지던 경기를 뒤집은 팀의 CP 1위'],
+  ['quadra','💫','쿼드라킬',3,'쿼드라킬 달성'],
+  ['steal','🦹','오브젝트 스틸',3,'용·바론·전령을 스틸'],
+  ['carry','⚡','하드 캐리',3,'팀 딜의 35% 이상을 넣고 승리'],
+  ['lane','🛣️','라인전 압승',2,'15분에 맞라인보다 골드 +1,500 이상'],
+  ['triple','✨','트리플킬',2,'트리플킬 달성'],
+  ['nodeath','🕊️','노데스',2,'한 번도 죽지 않고 킬관여 50% 이상'],
+  ['solo','⚔️','솔킬왕',2,'경기 최다 솔로킬 (2회 이상)'],
+  ['objk','🐉','오브젝트 사냥꾼',2,'경기 최다 용·바론·전령 관여 (3회 이상)'],
+  ['fb','🩸','퍼스트 블러드',1,'경기 첫 킬'],
+  ['tower','🏰','포탑 철거반',1,'경기 최다 포탑 딜 (5,000 이상)'],
+  ['snipe','🎯','스킬샷 저격수',1,'경기 최다 스킬샷 적중 (30회 이상)'],
+  ['dodge','💨','회피의 달인',1,'경기 최다 스킬샷 회피 (20회 이상)'],
+  ['cc','🪢','CC 폭격기',1,'경기 최다 적 묶기 (25회 이상)'],
+  ['tank','🧱','최전방',1,'경기 최다 받은 피해 + 경감 피해'],
+  ['angel','💚','수호천사',1,'서포터 중 최다 아군 회복·보호막 (5,000 이상)'],
+  ['vision','👁️','시야 지배자',1,'경기 최고 분당 시야 (2.5 이상)'],
+  ['sweep','🧹','와드 청소부',1,'경기 최다 와드 제거 (10개 이상)']
+];
+var BADGE_BY={}; BADGE_DEF.forEach(function(b){ BADGE_BY[b[0]]=b; });
+var BADGE_TIER=['','일반','희귀','영웅','전설'], BADGE_TCOL=['','#6b7d90','#3368a0','#7a5bd6','#b8860f'];
+var _GB={};
+function gameBadges(no){
+  if(_GB[no]) return _GB[no];
+  var g=apiG(no), d=null; GAME_DETAILS.forEach(function(x){ if(x.no===no) d=x; });
+  var out={}; if(!d){ _GB[no]=out; return out; }
+  function add(n,id,detail){ var b=BADGE_BY[id]; (out[n]=out[n]||[]).push({id:id,i:b[1],t:b[2],tier:b[3],d:detail||b[4]}); }
+  var td={}, tk={}; d.players.forEach(function(p){ td[p.team]=(td[p.team]||0)+p.dmg; tk[p.team]=(tk[p.team]||0)+p.k; });
+  d.players.forEach(function(p){
+    var kp=tk[p.team]?(p.k+p.a)/tk[p.team]:0;
+    if(p.d===0 && kp>=0.5) add(p.name,'nodeath','노데스 · 킬관여 '+Math.round(kp*100)+'%');
+    if(p.team==='win' && td.win && p.dmg/td.win>=0.35) add(p.name,'carry','팀 딜의 '+Math.round(p.dmg/td.win*100)+'%');
+  });
+  if(g){
+    function top(f,min){ var best=null,bv=-1; g.p.forEach(function(p){ var v=f(p); if(v>=min && v>bv){ best=p; bv=v; } }); return best?{p:best,v:bv}:null; }
+    g.p.forEach(function(p){
+      if(p.mk[3]) add(p.n,'penta','펜타킬 '+p.mk[3]+'회'); else if(p.mk[2]) add(p.n,'quadra','쿼드라킬 '+p.mk[2]+'회'); else if(p.mk[1]) add(p.n,'triple','트리플킬 '+p.mk[1]+'회');
+      if(p.fb===2) add(p.n,'fb');
+      if(p.stl>0) add(p.n,'steal','에픽 몬스터 스틸 '+p.stl+'회');
+      if(typeof p.gd15==='number' && p.gd15>=1500) add(p.n,'lane','15분 골드 +'+p.gd15.toLocaleString());
+    });
+    if(g.gd.length && Math.min.apply(null,g.gd)<=-2000){
+      var w=d.players.filter(function(p){return p.team==='win';}).sort(function(a,b){return b.cp-a.cp;})[0];
+      if(w) add(w.name,'comeback','최대 '+(-Math.min.apply(null,g.gd)).toLocaleString()+'골드 열세 역전 · CP '+w.cp);
+    }
+    var am=g.dur/60, t;
+    if((t=top(function(p){return p.sk;},2))) add(t.p.n,'solo','솔로킬 '+t.v+'회');
+    if((t=top(function(p){return p.drg+p.bar+p.her;},3))) add(t.p.n,'objk','용·바론·전령 관여 '+t.v+'회');
+    if((t=top(function(p){return p.tur;},5000))) add(t.p.n,'tower','포탑 딜 '+t.v.toLocaleString());
+    if((t=top(function(p){return p.ssh;},30))) add(t.p.n,'snipe','스킬샷 적중 '+t.v+'회');
+    if((t=top(function(p){return p.ssd;},20))) add(t.p.n,'dodge','스킬샷 회피 '+t.v+'회');
+    if((t=top(function(p){return p.imm;},25))) add(t.p.n,'cc','적 묶기 '+t.v+'회');
+    if((t=top(function(p){return p.wk;},10))) add(t.p.n,'sweep','와드 제거 '+t.v+'개');
+    var tank=null,tv=0; d.players.forEach(function(x){ var a=apiP(no,x.name); var v=x.dt+(a?a.mit:0); if(v>tv){tv=v;tank=x.name;} });
+    if(tank) add(tank,'tank','받은 피해 + 경감 '+tv.toLocaleString());
+    var sup=g.p.filter(function(p){return p.pos==='UTILITY' && p.hs>=5000;}).sort(function(a,b){return b.hs-a.hs;})[0];
+    if(sup) add(sup.n,'angel','아군 회복·보호막 '+sup.hs.toLocaleString());
+    var vb=null,vv=0; d.players.forEach(function(x){ var v=x.vs/d.durMin; if(v>vv){vv=v;vb=x.name;} });
+    if(vb && vv>=2.5) add(vb,'vision','분당 시야 '+(Math.round(vv*100)/100));
+  }
+  Object.keys(out).forEach(function(n){ out[n].sort(function(a,b){return b.tier-a.tier;}); });
+  _GB[no]=out; return out;
+}
+function badgeChips(list,max){
+  if(!list || !list.length) return '';
+  var more=list.length-(max||9);
+  return list.slice(0,max||9).map(function(b){ var c=BADGE_TCOL[b.tier]; return '<span title="['+BADGE_TIER[b.tier]+'] '+b.t+' — '+b.d+'" style="display:inline-flex;align-items:center;gap:2px;font-size:9px;font-weight:800;color:'+c+';background:'+c+'14;border:1px solid '+c+'55;border-radius:9px;padding:0 5px;margin-left:3px;white-space:nowrap">'+b.i+' '+b.t+'</span>'; }).join('')+
+    (more>0?'<span title="'+list.slice(max).map(function(b){return b.t;}).join(', ')+'" style="font-size:9px;color:var(--muted);margin-left:3px">+'+more+'</span>':'');
+}
+function badgeCounts(){
+  var c={};
+  GAME_DETAILS.forEach(function(g){ var b=gameBadges(g.no); Object.keys(b).forEach(function(n){ if(isHidden(n)) return; b[n].forEach(function(x){ var o=c[x.id]=c[x.id]||{total:0,by:{}}; o.total++; o.by[n]=(o.by[n]||0)+1; }); }); });
+  return c;
+}
+function badgeDexHtml(){
+  var c=badgeCounts();
+  var h='<div class="card fi fi3" style="margin-top:14px"><div class="ct">🏷️ 경기 배지 도감 <span style="font-weight:400;font-size:11px;color:var(--muted);margin-left:6px">판마다 활약에 따라 붙는 배지 · 전체 기간 · 등급: 전설 > 영웅 > 희귀 > 일반</span></div>'+
+    '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px">';
+  BADGE_DEF.slice().sort(function(a,b){return b[3]-a[3];}).forEach(function(b){
+    var o=c[b[0]]||{total:0,by:{}}, top=Object.keys(o.by).sort(function(x,y){return o.by[y]-o.by[x];}).slice(0,3), col=BADGE_TCOL[b[3]];
+    h+='<div style="background:var(--bg2);border:1px solid var(--dim);border-left:3px solid '+col+';border-radius:8px;padding:8px 10px">'+
+      '<div style="display:flex;align-items:center;gap:6px"><span style="font-size:16px">'+b[1]+'</span><b style="font-size:12px;color:var(--text2)">'+b[2]+'</b>'+
+      '<span style="font-size:9px;font-weight:800;color:'+col+'">'+BADGE_TIER[b[3]]+'</span><span style="margin-left:auto;font-size:10px;color:var(--muted)">'+o.total+'회</span></div>'+
+      '<div style="font-size:10px;color:var(--muted);margin:2px 0 3px">'+b[4]+'</div>'+
+      '<div style="font-size:10px;color:var(--text)">'+(top.length?'최다: '+top.map(function(n){return '<span class="pn" onclick="goPlayer(\''+n+'\')">'+n+'</span> '+o.by[n];}).join(' · '):'<span style="color:var(--muted)">아직 없음</span>')+'</div></div>';
+  });
+  return h+'</div></div>';
+}
+function myBadgesHtml(name){
+  var c={}, tot=0;
+  GAME_DETAILS.forEach(function(g){ var b=gameBadges(g.no)[name]; if(b) b.forEach(function(x){ c[x.id]=(c[x.id]||0)+1; tot++; }); });
+  if(!tot) return '';
+  var ids=Object.keys(c).sort(function(a,b){ return BADGE_BY[b][3]-BADGE_BY[a][3] || c[b]-c[a]; });
+  return '<div class="card fi fi3"><div class="ct">🏷️ 배지 컬렉션 <span style="font-weight:400;color:var(--muted);margin-left:6px">경기별 배지 '+tot+'개 · '+ids.length+'/'+BADGE_DEF.length+'종</span></div><div style="display:flex;flex-wrap:wrap;gap:6px">'+
+    ids.map(function(id){ var b=BADGE_BY[id], col=BADGE_TCOL[b[3]]; return '<span title="['+BADGE_TIER[b[3]]+'] '+b[4]+'" style="display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:14px;font-size:11px;font-weight:800;color:'+col+';background:'+col+'12;border:1px solid '+col+'50">'+b[1]+' '+b[2]+' <b style="font-family:Rajdhani,sans-serif">×'+c[id]+'</b></span>'; }).join('')+'</div></div>';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 2026-11-26 확장 3: 티어리스트(T1~T4) · 어워드(W1~W3) · 역대기록(R1~R3) · 6각 레이더(D1) · E1~E4
+// ═══════════════════════════════════════════════════════════════
+
+// ── T3. 챔피언 성과 점수 (그 챔피언으로 낸 CP가 포지션 평균보다 얼마나 높은지, 판수 적으면 50으로 수렴) ──
+var _CPERF=null;
+function champPerf(champ,pos){
+  if(!_CPERF){
+    _CPERF={c:{},p:{}};
+    GAME_DETAILS.forEach(function(g){ g.players.forEach(function(r){
+      var k=r.champ+'|'+r.pos, a=_CPERF.c[k]=_CPERF.c[k]||{s:0,n:0}, b=_CPERF.p[r.pos]=_CPERF.p[r.pos]||{s:0,n:0};
+      a.s+=r.cp; a.n++; b.s+=r.cp; b.n++; }); });
+  }
+  var a=_CPERF.c[champ+'|'+pos], b=_CPERF.p[pos]; if(!a||!b||!b.n) return 50;
+  var pa=b.s/b.n, raw=Math.max(0,Math.min(100,50+(a.s/a.n-pa)/pa*100));
+  return 50+(raw-50)*a.n/(a.n+3);
+}
+// ── T1·T2·T4. 티어리스트 행 부가 정보 ──
+var _CBLD=null;
+function champLaneApi(champ,pos){
+  if(!_CBLD){ _CBLD={};
+    GAME_DETAILS.forEach(function(g){ g.players.forEach(function(x){ var a=apiP(g.no,x.name); if(!a) return;
+      var k=x.champ+'|'+x.pos; (_CBLD[k]=_CBLD[k]||[]).push({a:a,win:x.team==='win'}); }); }); }
+  return _CBLD[champ+'|'+pos]||[];
+}
+function champHot(champ,pos){
+  var N=GAME_DETAILS.length, R=15; if(N<=R+10) return false;
+  var rec=0, old=0;
+  GAME_DETAILS.forEach(function(g,i){ g.players.forEach(function(x){ if(x.champ===champ && x.pos===pos){ if(i>=N-R) rec++; else old++; } }); });
+  return rec>=3 && (rec/R - old/(N-R))>=0.15;
+}
+function tierRowExtras(champ,pos){
+  var rows=champLaneApi(champ,pos), h='';
+  if(rows.length){
+    var ks={}; rows.forEach(function(r){ ks[r.a.ru.ks]=(ks[r.a.ru.ks]||0)+1; });
+    var kTop=Object.keys(ks).sort(function(a,b){return ks[b]-ks[a];})[0];
+    var core='';
+    if(DDX.ready){
+      var c={}; rows.forEach(function(r){ var seen={}; r.a.bo.forEach(function(b){ if(isDoneItem(b[0]) && !isBoots(b[0]) && !seen[b[0]] && r.a.it.indexOf(b[0])>=0){ seen[b[0]]=1; c[b[0]]=(c[b[0]]||0)+1; } }); });
+      core=Object.keys(c).sort(function(a,b){return c[b]-c[a];}).slice(0,3).map(function(i){return itemIcon(+i,16);}).join('');
+    }
+    h+='<span style="display:inline-flex;align-items:center;gap:2px">'+runeIcon(+kTop,16,true)+core+'</span>';
+    var gs=rows.filter(function(r){return typeof r.a.gd15==='number';});
+    if(gs.length>=2){
+      var avg=gs.reduce(function(s,r){return s+r.a.gd15;},0)/gs.length, wr=rows.filter(function(r){return r.win;}).length/rows.length;
+      var tag = avg>=600?['🗡️ 라인전 강세','#199473']: (avg<=-400 && wr>=0.5)?['🌙 후반 캐리','#7a5bd6'] : avg<=-400?['라인전 열세','#8a96a3'] : null;
+      if(tag) h+='<span title="15분 맞라인 평균 골드 차이 '+(avg>0?'+':'')+Math.round(avg).toLocaleString()+' ('+gs.length+'판)" style="font-size:9px;font-weight:800;color:'+tag[1]+';border:1px solid '+tag[1]+'55;border-radius:8px;padding:0 5px;white-space:nowrap">'+tag[0]+'</span>';
+    }
+  }
+  if(champHot(champ,pos)) h+='<span title="최근 15경기 등장률이 이전보다 크게 오름" style="font-size:9px;font-weight:800;color:#cf4444;border:1px solid rgba(207,68,68,.4);border-radius:8px;padding:0 5px">🔥 상승세</span>';
+  return h?'<span style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-top:2px">'+h+'</span>':'';
+}
+
+// ── W1. 어워드 API 부문 (최근 30경기 · 10판 이상) ──
+function apiAwardCardsHtml(){
+  var win=GAME_DETAILS.slice(-AWARD_WINDOW), agg={};
+  win.forEach(function(g){ var ag=apiG(g.no);
+    g.players.forEach(function(x){ if(isHidden(x.name)) return; var o=agg[x.name]=agg[x.name]||{g:0,ag:0,gd:0,gdn:0,obj:0,sk:0,wv:0};
+      o.g++; var a=ag?apiP(g.no,x.name):null; if(!a) return; o.ag++;
+      if(typeof a.gd15==='number'){ o.gd+=a.gd15; o.gdn++; } o.obj+=a.drg+a.bar+a.her; o.sk+=a.sk; o.wv+=(a.wp+a.wk)/(ag.dur/60); }); });
+  var pool=Object.keys(agg).filter(function(n){ return agg[n].g>=AWARD_FIRST_MIN && agg[n].ag>=AWARD_FIRST_MIN; });
+  var defs=[['🛣️ 라인전 지배자','15분 골드 차이',function(o){return o.gdn?o.gd/o.gdn:-1e9;},function(v){return (v>0?'+':'')+Math.round(v).toLocaleString();}],
+            ['🐉 오브젝트 사령관','판당 용·바론·전령 관여',function(o){return o.obj/o.ag;},function(v){return (Math.round(v*10)/10)+'회';}],
+            ['⚔️ 솔로킬','판당 솔로킬',function(o){return o.sk/o.ag;},function(v){return (Math.round(v*100)/100)+'회';}],
+            ['👁️ 시야 싸움','분당 와드 설치+제거',function(o){return o.wv/o.ag;},function(v){return Math.round(v*100)/100;}]];
+  if(!pool.length) return '';
+  return defs.map(function(d){
+    var best=pool.slice().sort(function(a,b){return d[2](agg[b])-d[2](agg[a]);})[0], o=agg[best];
+    return '<div class="stat-card" style="cursor:pointer" onclick="goPlayer(\''+best+'\')">'+
+      '<div style="font-size:10px;color:var(--gold);margin-bottom:4px">👑 '+d[0]+'</div>'+
+      '<div class="sc-val" style="color:var(--text2);font-size:17px">'+best+'</div>'+
+      '<div class="sc-rank" style="color:var(--muted)">'+d[1]+' '+d[3](d[2](o))+' · '+o.g+'판</div></div>';
+  }).join('');
+}
+// ── W2. 이달의 선수 ──
+var BADGE_PTS=[0,1,2,3,4];
+function monthlyMvpHtml(){
+  var months={};
+  GAME_DETAILS.forEach(function(g){
+    var mk=g.date.slice(0,7), M=months[mk]=months[mk]||{};
+    var w=g.players.filter(function(p){return p.team==='win';}).sort(function(a,b){return b.cp-a.cp;})[0];
+    var bd=gameBadges(g.no);
+    g.players.forEach(function(p){ if(isHidden(p.name)) return; var o=M[p.name]=M[p.name]||{g:0,mvp:0,pts:0,cp:0,w:0};
+      o.g++; o.cp+=p.cp; if(p.team==='win') o.w++; if(w && w.name===p.name) o.mvp++; (bd[p.name]||[]).forEach(function(b){ o.pts+=BADGE_PTS[b.tier]; }); });
+  });
+  var keys=Object.keys(months).sort().reverse().slice(0,4);
+  var h='<div class="card fi fi2" style="margin-top:14px"><div class="ct">📅 이달의 선수 <span style="font-weight:400;font-size:11px;color:var(--muted);margin-left:6px">월별 MVP 최다 (동률이면 배지 점수 → CP) · 그달 3판 이상</span></div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px">';
+  keys.forEach(function(mk){
+    var M=months[mk], c=Object.keys(M).filter(function(n){return M[n].g>=3;}).sort(function(a,b){ var x=M[a],y=M[b]; return y.mvp-x.mvp || y.pts-x.pts || y.cp/y.g-x.cp/x.g; });
+    var n=c[0]; if(!n) return; var o=M[n];
+    h+='<div style="background:var(--bg2);border:1px solid var(--dim);border-radius:9px;padding:10px;text-align:center;cursor:pointer" onclick="goPlayer(\''+n+'\')">'+
+      '<div style="font-size:11px;font-weight:800;color:var(--gold)">'+(+mk.slice(5))+'월</div>'+
+      '<div style="width:34px;height:34px;margin:6px auto">'+tierIcon(PLAYERS[n].elo,34)+'</div>'+
+      '<div style="font-weight:900;font-size:15px;color:var(--text2)">'+n+'</div>'+
+      '<div style="font-size:10px;color:var(--muted)">MVP '+o.mvp+'회 · '+o.g+'전 '+o.w+'승 · 배지 '+o.pts+'점</div></div>';
+  });
+  return h+'</div></div>';
+}
+// ── W3. 배지 랭킹 ──
+function badgeRankHtml(){
+  var t={}, g={};
+  GAME_DETAILS.forEach(function(x){ var b=gameBadges(x.no); x.players.forEach(function(p){ if(isHidden(p.name)) return; g[p.name]=(g[p.name]||0)+1; (b[p.name]||[]).forEach(function(bb){ t[p.name]=(t[p.name]||0)+BADGE_PTS[bb.tier]; }); }); });
+  var tot=Object.keys(t).sort(function(a,b){return t[b]-t[a];}).slice(0,5);
+  var per=Object.keys(t).filter(function(n){return g[n]>=10;}).sort(function(a,b){return t[b]/g[b]-t[a]/g[a];}).slice(0,5);
+  function list(arr,f){ return arr.map(function(n,i){ return '<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:7px;background:var(--bg2);border:1px solid var(--dim);margin-bottom:4px;font-size:12px"><b style="width:16px;color:var(--gold);font-family:Rajdhani,sans-serif">'+(i+1)+'</b><span class="pn" style="flex:1" onclick="goPlayer(\''+n+'\')">'+n+'</span><b style="font-family:Rajdhani,sans-serif;color:var(--text2)">'+f(n)+'</b></div>'; }).join(''); }
+  return '<div class="card fi fi2" style="margin-top:14px"><div class="ct">🏷️ 배지 랭킹 <span style="font-weight:400;font-size:11px;color:var(--muted);margin-left:6px">경기 배지 점수 (전설 4 · 영웅 3 · 희귀 2 · 일반 1) · 전체 기간</span></div>'+
+    '<div class="two-col" style="gap:14px"><div><div style="font-size:10px;font-weight:800;color:var(--text2);margin-bottom:5px">누적 점수</div>'+list(tot,function(n){return t[n]+'점';})+'</div>'+
+    '<div><div style="font-size:10px;font-weight:800;color:var(--text2);margin-bottom:5px">판당 점수 (10판 이상)</div>'+list(per,function(n){return (Math.round(t[n]/g[n]*100)/100)+'점';})+'</div></div></div>';
+}
+
+// ── R1·R2·R3. 역대 기록 (상세·팀 기록) + 경신 알림 ──
+function recordDefs(){
+  return [
+    {l:'단일경기 최다 킬',g:'c',f:function(x){return x.p.k;},s:function(v){return v+'킬';}},
+    {l:'단일경기 최다 딜량',g:'c',f:function(x){return x.p.dmg;},s:function(v){return v.toLocaleString();}},
+    {l:'단일경기 최고 CP',g:'c',f:function(x){return x.p.cp;},s:function(v){return String(v);}},
+    {l:'단일경기 최고 KDA',g:'c',f:function(x){return x.p.d>0?x.p.kda:null;},s:function(v){return String(v);}},
+    {l:'단일경기 최다 시야',g:'c',f:function(x){return x.p.vs;},s:function(v){return v+'점';}},
+    {l:'단일경기 최다 솔로킬',g:'a',f:function(x){return x.a?x.a.sk:null;},s:function(v){return v+'회';}},
+    {l:'최장 생존',g:'a',f:function(x){return x.a?x.a.ll:null;},s:function(v){return mmss(v);},sub:'안 죽고 버틴 시간'},
+    {l:'15분 최대 골드 차이',g:'a',f:function(x){return x.a&&typeof x.a.gd15==='number'?x.a.gd15:null;},s:function(v){return '+'+v.toLocaleString();},sub:'맞라인 대비'},
+    {l:'단일경기 최다 와드 제거',g:'a',f:function(x){return x.a?x.a.wk:null;},s:function(v){return v+'개';}},
+    {l:'팀 딜 최대 비중',g:'c',f:function(x){return x.td?Math.round(x.p.dmg/x.td*1000)/10:null;},s:function(v){return v+'%';}}
+  ];
+}
+function teamRecordDefs(){
+  return [
+    {l:'최대 열세 역전승',f:function(g,a){ return a&&a.gd.length?-Math.min.apply(null,a.gd):null; },s:function(v){return v.toLocaleString()+'골드 열세 극복';},min:1000},
+    {l:'최대 골드 차 승리',f:function(g,a){ return a&&a.gd.length?a.gd[a.gd.length-1]:null; },s:function(v){return '+'+v.toLocaleString()+'골드';}},
+    {l:'가장 빠른 바론',f:function(g,a){ if(!a) return null; var b=a.o.filter(function(o){return o[1]==='B';})[0]; return b?-b[0]:null; },s:function(v){return mmss(-v);}},
+    {l:'가장 빠른 첫 포탑',f:function(g,a){ if(!a) return null; var b=a.o.filter(function(o){return o[1]==='T';})[0]; return b?-b[0]:null; },s:function(v){return mmss(-v);}},
+    {l:'최단 경기',f:function(g){ return -g.durMin; },s:function(v){ return mmss(-v*60); }}
+  ];
+}
+function recordsAll(maxNo){
+  var out=[];
+  recordDefs().forEach(function(d){
+    var best=null;
+    GAME_DETAILS.forEach(function(g){ if(g.no>maxNo) return; var ag=apiG(g.no), td={}; g.players.forEach(function(p){ td[p.team]=(td[p.team]||0)+p.dmg; });
+      g.players.forEach(function(p){ if(isHidden(p.name)) return; var v=d.f({p:p,a:ag?apiP(g.no,p.name):null,td:td[p.team]}); if(v==null||!isFinite(v)) return;
+        if(!best || v>best.v) best={v:v,name:p.name,champ:p.champ,no:g.no}; }); });
+    if(best) out.push({l:d.l,sub:d.sub,disp:d.s(best.v),v:best.v,name:best.name,champ:best.champ,no:best.no,g:d.g});
+  });
+  teamRecordDefs().forEach(function(d){
+    var best=null;
+    GAME_DETAILS.forEach(function(g){ if(g.no>maxNo) return; var v=d.f(g,apiG(g.no)); if(v==null||!isFinite(v)||(d.min&&v<d.min)) return; if(!best||v>best.v) best={v:v,no:g.no,g:g}; });
+    if(best){ var w=best.g.players.filter(function(p){return p.team==='win';}).sort(function(a,b){return b.cp-a.cp;})[0];
+      out.push({l:d.l,disp:d.s(best.v),v:best.v,name:w?w.name:'',team:true,no:best.no,g:'t'}); }
+  });
+  return out;
+}
+function extraRecordCardsHtml(){
+  return recordsAll(1e9).filter(function(r){ return r.g!=='c' || ['팀 딜 최대 비중'].indexOf(r.l)>=0; }).map(function(r){
+    var isNew=r.no>PREV_GAMES;
+    return '<div class="stat-card" style="cursor:pointer'+(isNew?';border-color:rgba(240,192,48,.6)':'')+'" onclick="'+(r.team?'':'goPlayer(\''+r.name+'\')')+'">'+
+      '<div style="font-size:10px;color:var(--gold);margin-bottom:4px">'+r.l+(r.sub?' <span style="color:var(--muted);font-weight:400">('+r.sub+')</span>':'')+(isNew?' <b style="color:#b8860f">NEW</b>':'')+'</div>'+
+      '<div class="sc-val" style="color:var(--text2);font-size:17px">'+r.disp+'</div>'+
+      '<div class="sc-rank" style="color:var(--muted)">'+(r.team?'#'+r.no+' · 승리팀 MVP '+r.name:r.name+' · '+r.champ+' · #'+r.no)+'</div></div>';
+  }).join('');
+}
+function recordBreaksHtml(){
+  var prev={}; recordsAll(PREV_GAMES).forEach(function(r){ prev[r.l]=r; });
+  var now=recordsAll(1e9).filter(function(r){ return r.no>PREV_GAMES && (!prev[r.l] || r.v>prev[r.l].v); });
+  if(!now.length) return '';
+  return '<div class="card fi" style="border-color:rgba(240,192,48,.45)"><div class="ct">🏆 기록 경신 <span style="font-weight:400;color:var(--muted);margin-left:6px;font-size:10px">이번 업데이트에서 바뀐 역대 기록</span></div>'+
+    now.map(function(r){ var p=prev[r.l];
+      return '<div style="display:flex;align-items:center;gap:8px;padding:7px 9px;background:var(--bg2);border:1px solid var(--dim);border-radius:8px;margin-bottom:5px;font-size:11px">'+
+        '<b style="color:#b8860f;white-space:nowrap">'+r.l+'</b><span style="flex:1;color:var(--text)">'+(r.team?'#'+r.no+' 승리팀':'<span class="pn" onclick="goPlayer(\''+r.name+'\')">'+r.name+'</span> · '+r.champ)+'</span>'+
+        '<b style="font-family:Rajdhani,sans-serif;color:var(--text2)">'+r.disp+'</b>'+(p?'<span style="font-size:9px;color:var(--muted)">이전 '+p.disp+'</span>':'')+'</div>'; }).join('')+'</div>';
+}
+
+// ── D1. 6각 능력치 레이더 (주 포지션 같은 선수들 대비 백분위) ──
+var RADAR6_KEYS=['라인전','전투','오브젝트','시야','생존','다양성'];
+var RADAR6_COLORS=['#c07a10','#c33b6b','#7a5bd6','#3368a0','#199473','#2a9db5'];
+var RADAR6_AX={라인전:['gd15','csd15','xpd15'],전투:['kp','sh','dpm','sk'],오브젝트:['obj','tur','fbp'],시야:['vs','wpm','wkm','cw'],생존:['d','tdd']};
+var RADAR6_DESC={라인전:'15분 골드·CS·경험치 차이',전투:'킬관여·팀 딜 비중·분당 딜·솔로킬',오브젝트:'용·바론·전령 관여·포탑 딜·퍼블',시야:'분당 시야·와드 설치/제거·제어 와드',생존:'데스·사망 대기 시간',다양성:'챔프폭 (판수 반영)'};
+var _R6={};
+function radar6(name){
+  if(_R6[name]!==undefined) return _R6[name];
+  var p=PLAYERS[name], pos=p.pos, me=sc2Agg()[name+'|'+pos];
+  if(isHidden(name) || !me || me.g<scoutMinG(pos) || (me.n.gd15||0)<3){ _R6[name]=null; return null; }
+  var o={};
+  Object.keys(RADAR6_AX).forEach(function(ax){
+    var ps=RADAR6_AX[ax].map(function(k){ var r=sc2Rank(name,pos,k); return r?r.pct:null; }).filter(function(v){return v!==null;});
+    o[ax]=ps.length?Math.round(ps.reduce(function(s,v){return s+v;},0)/ps.length*100):50;
+  });
+  o['다양성']=Math.round(calcCats(p,pos)['챔프폭']);
+  _R6[name]=o; return o;
+}
+function r6grade(sc){ var g=sc>=90?'OP':sc>=75?'S':sc>=60?'A':sc>=45?'B':sc>=30?'C':sc>=15?'D':'F'; var st=GSTYLE[g]; return {g:g,c:st.c}; }
+
+// ── E1. MVP·ACE 근거 ──
+function whyHtml(no){
+  var d=null; GAME_DETAILS.forEach(function(x){ if(x.no===no) d=x; }); if(!d) return '';
+  var tk={}; d.players.forEach(function(p){ tk[p.team]=(tk[p.team]||0)+p.k; });
+  function reasons(p){
+    var out=[], ps=d.players;
+    function rank(f){ var v=f(p); return 1+ps.filter(function(q){return f(q)>v;}).length; }
+    var rD=rank(function(q){return q.dmg;}); if(rD<=2) out.push({s:rD,t:'딜 '+rD+'위 '+p.dmg.toLocaleString()});
+    var kp=tk[p.team]?(p.k+p.a)/tk[p.team]:0; if(kp>=0.6) out.push({s:1.5,t:'킬관여 '+Math.round(kp*100)+'%'});
+    if(p.kda>=5) out.push({s:1.6,t:'KDA '+(p.d?p.kda:'퍼펙트')});
+    var a=apiP(no,p.name); if(a && typeof a.gd15==='number' && a.gd15>=800) out.push({s:1.4,t:'15분 +'+a.gd15.toLocaleString()});
+    var rV=rank(function(q){return q.vs;}); if(rV===1) out.push({s:1.8,t:'시야 1위 '+p.vs});
+    var rT=rank(function(q){return q.dt;}); if(rT===1) out.push({s:1.9,t:'받은 딜 1위 '+p.dt.toLocaleString()});
+    if(a && a.drg+a.bar+a.her>=3) out.push({s:2,t:'오브젝트 '+(a.drg+a.bar+a.her)+'회'});
+    return out.sort(function(x,y){return x.s-y.s;}).slice(0,3).map(function(x){return x.t;});
+  }
+  var w=d.players.filter(function(p){return p.team==='win';}).sort(function(a,b){return b.cp-a.cp;})[0];
+  var l=d.players.filter(function(p){return p.team==='lose';}).sort(function(a,b){return b.cp-a.cp;})[0];
+  function line(p,tag,col){ var r=reasons(p); return '<div style="font-size:11px;color:var(--text);margin-top:3px"><b style="color:'+col+'">'+tag+' '+p.name+'</b> <span style="color:var(--muted)">CP '+p.cp+(r.length?' · '+r.join(' · '):'')+'</span></div>'; }
+  return '<div style="margin:8px 0 2px;padding:7px 10px;border-radius:8px;background:var(--bg2);border:1px solid var(--dim)">'+line(w,'👑 MVP','#b8860f')+line(l,'🛡️ ACE','#75879b')+'</div>';
+}
+// ── E2. 맞라인 라인전 (15분 골드 차이) ──
+function matchupLane(champ,opp){
+  var s=0,n=0;
+  GAME_DETAILS.forEach(function(g){ var me=null, op=null;
+    g.players.forEach(function(p){ if(p.champ===champ) me=p; });
+    if(!me) return; g.players.forEach(function(p){ if(p.champ===opp && p.team!==me.team && p.pos===me.pos) op=p; });
+    if(!op) return; var a=apiP(g.no,me.name); if(a && typeof a.gd15==='number'){ s+=a.gd15; n++; } });
+  return n?{avg:s/n,n:n}:null;
+}
+// ── E3. 경기 시간별 성적 ──
+function durationHtml(name){
+  var B=[['25분 이하',0,25],['25~30분',25,30],['30분 이상',30,999]], o=B.map(function(){return {g:0,w:0,cp:0};});
+  playerRows(name).forEach(function(r){ B.forEach(function(b,i){ if(r.dur>b[1]&&r.dur<=b[2]){ o[i].g++; if(r.p.team==='win') o[i].w++; o[i].cp+=r.p.cp; } }); });
+  if(o.filter(function(x){return x.g;}).length<2) return '';
+  var early=o[0], late=o[2], tag='';
+  if(early.g>=3 && late.g>=3){ var d=late.w/late.g-early.w/early.g; tag = d>=0.2?'🌙 후반형 — 길어질수록 승률이 오름':d<=-0.2?'⚡ 초반형 — 빨리 끝날수록 승률이 높음':'⚖️ 경기 길이와 상관없이 고른 편'; }
+  return '<div class="card fi fi2"><div class="ct">⏱️ 경기 시간별 성적 '+(tag?'<span style="font-weight:700;color:var(--blue);margin-left:6px;font-size:11px">'+tag+'</span>':'')+'</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">'+
+    B.map(function(b,i){ var x=o[i]; return '<div style="background:var(--bg2);border:1px solid var(--dim);border-radius:8px;padding:9px;text-align:center"><div style="font-size:10px;color:var(--muted)">'+b[0]+'</div>'+
+      (x.g?'<div style="font-family:Rajdhani,sans-serif;font-weight:700;font-size:18px;color:'+(x.w/x.g>=0.5?'var(--green)':'var(--red)')+'">'+Math.round(x.w/x.g*100)+'%</div><div style="font-size:10px;color:var(--muted)">'+x.g+'전 '+x.w+'승 · CP '+(Math.round(x.cp/x.g*100)/100)+'</div>':'<div style="font-size:12px;color:var(--muted);padding:6px 0">기록 없음</div>')+'</div>'; }).join('')+'</div></div>';
+}
+// ── E4. 바텀 듀오 라인전 ──
+function botDuoHtml(name){
+  var agg={}, mine=0;
+  GAME_DETAILS.forEach(function(g){ var me=null; g.players.forEach(function(p){ if(p.name===name) me=p; });
+    if(!me || (me.pos!=='ADC' && me.pos!=='SUP')) return; mine++;
+    var pt=g.players.filter(function(p){ return p.team===me.team && p.pos===(me.pos==='ADC'?'SUP':'ADC'); })[0]; if(!pt || isHidden(pt.name)) return;
+    var o=agg[pt.name]=agg[pt.name]||{g:0,w:0,gd:0,gdn:0};
+    o.g++; if(me.team==='win') o.w++;
+    var a1=apiP(g.no,name), a2=apiP(g.no,pt.name);
+    if(a1&&a2&&typeof a1.gd15==='number'&&typeof a2.gd15==='number'){ o.gd+=a1.gd15+a2.gd15; o.gdn++; } });
+  var list=Object.keys(agg).sort(function(a,b){return agg[b].g-agg[a].g||agg[b].w-agg[a].w;}).slice(0,6);
+  if(mine<2 || !list.length) return '';
+  return '<div class="card fi fi3"><div class="ct">🤝 바텀 듀오 <span style="font-weight:400;color:var(--muted);margin-left:6px">'+(PLAYERS[name].pos==='SUP'?'함께한 원딜':'함께한 서폿')+' · 15분 바텀 합산 골드 차이</span></div>'+
+    list.map(function(n){ var o=agg[n], gd=o.gdn?o.gd/o.gdn:null;
+      return '<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:7px;background:var(--bg2);border:1px solid var(--dim);margin-bottom:4px;font-size:12px">'+
+        '<span class="pn" style="flex:1" onclick="goPlayer(\''+n+'\')">'+n+'</span><span style="font-size:10px;color:var(--muted)">'+o.g+'전 '+o.w+'승</span>'+
+        '<b style="font-family:Rajdhani,sans-serif;width:44px;text-align:right;color:'+(o.w/o.g>=0.5?'var(--green)':'var(--red)')+'">'+Math.round(o.w/o.g*100)+'%</b>'+
+        '<span title="15분 시점 원딜+서폿 골드 합 − 상대 바텀 합 ('+o.gdn+'판)" style="width:66px;text-align:right;font-family:Rajdhani,sans-serif;font-weight:700;color:'+(gd===null?'var(--muted)':gd>=0?'var(--green)':'var(--red)')+'">'+(gd===null?'-':(gd>0?'+':'')+Math.round(gd).toLocaleString())+'</span></div>'; }).join('')+'</div>';
 }
 
 // ── 조합 통계 ────────────────────────────────────────
@@ -2642,12 +3045,7 @@ function renderChampDetail(){
       }
       return '<div style="flex:1;min-width:160px"><div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.5px;margin-bottom:7px">'+title+'</div>'+inner+'</div>';
     }
-    h += '<div class="card fi fi3"><div class="ct">빌드 통계 <span style="font-weight:400;color:var(--muted);margin-left:6px">픽률 / 승률</span></div>'+
-      '<div style="display:flex;gap:12px;flex-wrap:wrap">'+
-      buildSection('템트리','items','build')+
-      buildSection('룬','runes','rune')+
-      buildSection('스펠','spells','spell')+
-      '</div></div>';
+    h += champBuildHtml(champ);
   })();
 
   h += '</div><div>';
@@ -2662,7 +3060,7 @@ function renderChampDetail(){
     return '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;background:var(--bg2);border:1px solid var(--dim);margin-bottom:6px">'+
       '<div style="width:34px;height:34px;border-radius:6px;overflow:hidden;flex-shrink:0;cursor:pointer" onclick="goChampDetail(\''+m.champ+'\')">'+cImg(m.champ,34,6)+'</div>'+
       '<div style="flex:1"><div class="pn" style="font-size:13px" onclick="goChampDetail(\''+m.champ+'\')">'+m.champ+'</div>'+
-      '<div style="font-size:10px;color:var(--muted)">'+m.pos+' · '+m.games+'전 '+m.wins+'승 '+lo+'패</div></div>'+
+      '<div style="font-size:10px;color:var(--muted)">'+m.pos+' · '+m.games+'전 '+m.wins+'승 '+lo+'패'+(function(){ var L=matchupLane(champ,m.champ); return L?' · <span title="15분 맞라인 골드 차이 평균 ('+L.n+'판)" style="font-weight:700;color:'+(L.avg>=0?'var(--green)':'var(--red)')+'">라인전 '+(L.avg>0?'+':'')+Math.round(L.avg).toLocaleString()+'</span>':''; })()+'</div></div>'+
       '<div style="font-size:15px;font-weight:700;font-family:Rajdhani,sans-serif;color:'+c+'">'+m.wr+'%</div></div>';
   }
   h += '<div class="card fi fi1"><div class="ct" style="color:var(--green)">맞라인 우위 (상대로 강함)</div>'+
@@ -2722,7 +3120,6 @@ function renderChampDetail(){
   })();
 
   h += '</div></div>';
-  h += champBuildHtml(champ);
   el.innerHTML = h;
 }
 
@@ -2860,7 +3257,7 @@ function scoreboardHtml(no){
   }
   return '<div style="background:var(--bg1);border:1px solid var(--border);border-radius:8px;padding:10px 12px" onclick="event.stopPropagation()">'+
     '<div style="font-size:10px;color:var(--muted)">게임 시간 '+Math.floor(g.durMin)+'분 '+Math.round((g.durMin%1)*60)+'초</div>'+
-    sbTabsHtml(no, '<div style="overflow-x:auto">'+teamTable('win','🏆 승리팀','var(--green)')+teamTable('lose','💀 패배팀','var(--red)')+'</div>'+sbBarsHtml(g))+'</div>';
+    sbTabsHtml(no, '<div style="overflow-x:auto">'+teamTable('win','🏆 승리팀','var(--green)')+teamTable('lose','💀 패배팀','var(--red)')+'</div>'+whyHtml(no)+sbBarsHtml(g))+'</div>';
 }
 
 
@@ -3237,6 +3634,7 @@ function renderAward(){
       '<div class="sc-rank" style="color:var(--muted)">'+disp+' · '+w.games+'판</div>'+
     '</div>';
   });
+  html += apiAwardCardsHtml();
   html += '</div></div>';
 
   // MVP / ACE 최다 획득
@@ -3358,10 +3756,14 @@ function renderAward(){
     if(aceBest && aceBest.cnt > 0){
       cards += '<div class="stat-card" style="cursor:pointer" onclick="goPlayer(\''+aceBest.name+'\')"><div style="font-size:10px;color:#75879b;margin-bottom:4px">ACE 최다 달성</div><div class="sc-val" style="color:#75879b;font-size:17px">'+aceBest.cnt+'회</div><div class="sc-rank" style="color:var(--muted)">'+aceBest.name+' · 패배팀 CP 1위</div></div>';
     }
+    cards += extraRecordCardsHtml();
     html += '<div class="card fi fi2" style="margin-top:14px"><div class="ct">📜 역대 기록</div><div class="stat-card-grid">'+cards+'</div></div>';
   })();
 
+  html += monthlyMvpHtml();
+  html += badgeRankHtml();
   html += funAwardsHtml();
+  html += badgeDexHtml();
   document.getElementById('page-award').innerHTML = html;
 }
 
@@ -3449,7 +3851,7 @@ function champTierScore(wr, pickRate, banRate, immunity){
 var champPosFilter = '전체';
 function setChampPos(pos){ champPosFilter = pos; PAGE.champ = 0; renderChampion(); }
 // 지난 업데이트 시점의 라인별 티어 순위 (변동 뱃지용 · 매 데이터 업데이트 시 갱신)
-var CHAMP_PREV = {"올라프|TOP": 1, "아트록스|TOP": 2, "크산테|TOP": 3, "클레드|TOP": 4, "그웬|TOP": 5, "워윅|TOP": 6, "오른|TOP": 7, "마오카이|TOP": 8, "나서스|TOP": 9, "볼리베어|TOP": 10, "우르곳|TOP": 11, "나르|TOP": 12, "제이스|TOP": 13, "말파이트|TOP": 14, "럼블|TOP": 15, "자헨|TOP": 16, "잭스|TOP": 17, "암베사|TOP": 18, "레넥톤|TOP": 19, "세트|TOP": 20, "문도 박사|TOP": 21, "세주아니|TOP": 22, "쉔|TOP": 23, "마오카이|JUG": 1, "사일러스|JUG": 2, "세주아니|JUG": 3, "뽀삐|JUG": 4, "자르반 4세|JUG": 5, "탈리야|JUG": 6, "리 신|JUG": 7, "신 짜오|JUG": 8, "녹턴|JUG": 9, "워윅|JUG": 10, "오공|JUG": 11, "렉사이|JUG": 12, "니달리|JUG": 13, "바이|JUG": 14, "그레이브즈|JUG": 15, "릴리아|JUG": 16, "판테온|JUG": 17, "스카너|JUG": 18, "비에고|JUG": 19, "나피리|JUG": 20, "애니비아|MID": 1, "오로라|MID": 2, "아리|MID": 3, "라이즈|MID": 4, "빅토르|MID": 5, "갈리오|MID": 6, "요네|MID": 7, "흐웨이|MID": 8, "아칼리|MID": 9, "르블랑|MID": 10, "오리아나|MID": 11, "카시오페아|MID": 12, "말자하|MID": 13, "블라디미르|MID": 14, "다이애나|MID": 15, "에코|MID": 16, "트위스티드 페이트|MID": 17, "스웨인|MID": 18, "신드라|MID": 19, "로크|MID": 20, "리산드라|MID": 21, "아지르|MID": 22, "애니|MID": 23, "루시안|ADC": 1, "시비르|ADC": 2, "자야|ADC": 3, "진|ADC": 4, "카이사|ADC": 5, "유나라|ADC": 6, "트리스타나|ADC": 7, "이즈리얼|ADC": 8, "애쉬|ADC": 9, "바루스|ADC": 10, "제리|ADC": 11, "세나|ADC": 12, "케이틀린|ADC": 13, "징크스|ADC": 14, "미스 포츈|ADC": 15, "라칸|SUP": 1, "카르마|SUP": 2, "브라움|SUP": 3, "니코|SUP": 4, "파이크|SUP": 5, "노틸러스|SUP": 6, "룰루|SUP": 7, "레오나|SUP": 8, "렐|SUP": 9, "블리츠크랭크|SUP": 10, "쓰레쉬|SUP": 11, "카밀|SUP": 12, "소라카|SUP": 13, "럭스|SUP": 14, "알리스타|SUP": 15, "세라핀|SUP": 16, "바드|SUP": 17, "판테온|SUP": 18, "브랜드|SUP": 19};
+var CHAMP_PREV = {"아트록스|TOP":1,"올라프|TOP":2,"크산테|TOP":3,"클레드|TOP":4,"그웬|TOP":5,"워윅|TOP":6,"볼리베어|TOP":7,"오른|TOP":8,"마오카이|TOP":9,"나서스|TOP":10,"나르|TOP":11,"우르곳|TOP":12,"제이스|TOP":13,"말파이트|TOP":14,"럼블|TOP":15,"자헨|TOP":16,"암베사|TOP":17,"잭스|TOP":18,"문도 박사|TOP":19,"레넥톤|TOP":20,"세트|TOP":21,"세주아니|TOP":22,"쉔|TOP":23,"마오카이|JUG":1,"사일러스|JUG":2,"리 신|JUG":3,"자르반 4세|JUG":4,"세주아니|JUG":5,"탈리야|JUG":6,"신 짜오|JUG":7,"뽀삐|JUG":8,"녹턴|JUG":9,"바이|JUG":10,"워윅|JUG":11,"니달리|JUG":12,"렉사이|JUG":13,"오공|JUG":14,"그레이브즈|JUG":15,"릴리아|JUG":16,"판테온|JUG":17,"스카너|JUG":18,"비에고|JUG":19,"나피리|JUG":20,"애니비아|MID":1,"오로라|MID":2,"라이즈|MID":3,"아리|MID":4,"빅토르|MID":5,"갈리오|MID":6,"아칼리|MID":7,"흐웨이|MID":8,"르블랑|MID":9,"요네|MID":10,"오리아나|MID":11,"카시오페아|MID":12,"말자하|MID":13,"신드라|MID":14,"블라디미르|MID":15,"다이애나|MID":16,"스웨인|MID":17,"로크|MID":18,"트위스티드 페이트|MID":19,"에코|MID":20,"리산드라|MID":21,"아지르|MID":22,"애니|MID":23,"루시안|ADC":1,"진|ADC":2,"시비르|ADC":3,"자야|ADC":4,"카이사|ADC":5,"유나라|ADC":6,"트리스타나|ADC":7,"이즈리얼|ADC":8,"애쉬|ADC":9,"제리|ADC":10,"바루스|ADC":11,"세나|ADC":12,"케이틀린|ADC":13,"징크스|ADC":14,"미스 포츈|ADC":15,"카르마|SUP":1,"라칸|SUP":2,"니코|SUP":3,"브라움|SUP":4,"노틸러스|SUP":5,"파이크|SUP":6,"룰루|SUP":7,"레오나|SUP":8,"렐|SUP":9,"블리츠크랭크|SUP":10,"쓰레쉬|SUP":11,"럭스|SUP":12,"카밀|SUP":13,"소라카|SUP":14,"알리스타|SUP":15,"세라핀|SUP":16,"바드|SUP":17,"브랜드|SUP":18,"판테온|SUP":19};
 var CHAMP_MIN = 2;  // 티어리스트 최소 표본 (기본 2게임)
 function setChampMin(n){ CHAMP_MIN = n; PAGE.champ = 0; renderChampion(); }
 // [임시] 티어리스트 제외 챔피언 — 부포지션 1회 픽이 라인 티어를 왜곡하는 케이스.
@@ -3469,10 +3871,10 @@ function renderChampion(){
   });
   // 점수: 보정승률(베이지안 C=3, 50% 수렴) 70% + 등장률(픽+밴) 30%
   var CHAMP_C = 3;
-  function rowScore(games, wins, banGames){
+  function rowScore(games, wins, banGames, champ, pos){
     var shrunk = (wins + CHAMP_C*0.5) / (games + CHAMP_C) * 100;
     var presence = Math.min(100, (games + banGames) / totalGames * 100 * 1.5);
-    return shrunk*0.7 + presence*0.3;
+    return shrunk*0.55 + presence*0.3 + champPerf(champ,pos)*0.15;
   }
   var allRows = Object.keys(agg).filter(function(k){ return TIER_LIST_EXCLUDE.indexOf(agg[k].champ) < 0; }).map(function(k){
     var c = agg[k];
@@ -3481,7 +3883,7 @@ function renderChampion(){
     return {champ:c.champ, pos:c.pos, games:c.games, wins:c.wins, losses:c.games-c.wins,
       wr:wr, kda:c.d>0?Math.round((c.k+c.a)/c.d*100)/100:(c.k+c.a),
       pickRate:Math.round(c.games/totalGames*100), banRate:champBanRate(c.champ),
-      score:rowScore(c.games,c.wins,banGames)};
+      score:rowScore(c.games,c.wins,banGames,c.champ,c.pos)};
   });
   // 라인별 순위 (변동 뱃지 기준: 해당 라인 · 2게임+ 자격 챔프 내 순위)
   function laneRanks(pos){
@@ -3520,7 +3922,7 @@ function renderChampion(){
     minHtml+='<div onclick="setChampMin('+mn+')" style="cursor:pointer;padding:5px 12px;border-radius:7px;font-size:11px;font-weight:700;'+
       (on?'background:rgba(200,155,60,.12);border:1px solid var(--gold);color:var(--gold)':'background:var(--bg2);border:1px solid var(--dim);color:var(--muted)')+'">'+mn+'게임+</div>';
   });
-  minHtml+='<span style="font-size:10px;color:var(--muted);margin-left:auto">'+rows.length+'개 항목 · 라인별 분리 집계 · 승률은 표본 적을수록 50%로 보정</span></div>';
+  minHtml+='<span style="font-size:10px;color:var(--muted);margin-left:auto">'+rows.length+'개 항목 · 라인별 분리 집계 · 승률은 표본 적을수록 50%로 보정 · 그 챔피언으로 낸 CP 15% 반영</span></div>';
 
   var chStart = PAGE.champ * PAGE_SIZE;
   var html='<div class="card"><div class="ct">챔피언 티어리스트</div>'+tabHtml+minHtml;
@@ -3547,7 +3949,7 @@ function renderChampion(){
     } else mv='<span style="font-size:10px;color:var(--muted)">·</span>';
     html+='<tr><td><span class="rn'+(rank<=3?' top':'')+'">'+rank+'</span></td>'+
       '<td>'+mv+'</td>'+
-      '<td><div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="goChampDetail(\''+r.champ+'\')"><div style="width:36px;height:36px;border-radius:7px;overflow:hidden;flex-shrink:0">'+cImg(r.champ,36,7)+'</div><span style="display:flex;flex-direction:column;gap:1px"><span class="pn">'+r.champ+'</span>'+ownerTag(r.champ)+'</span>'+(champPosFilter==='전체'?' <span class="pb pb-'+r.pos+'" style="margin-left:2px">'+r.pos+'</span>':'')+'</div></td>'+
+      '<td><div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="goChampDetail(\''+r.champ+'\')"><div style="width:36px;height:36px;border-radius:7px;overflow:hidden;flex-shrink:0">'+cImg(r.champ,36,7)+'</div><span style="display:flex;flex-direction:column;gap:1px"><span class="pn">'+r.champ+'</span>'+ownerTag(r.champ)+tierRowExtras(r.champ,r.pos)+'</span>'+(champPosFilter==='전체'?' <span class="pb pb-'+r.pos+'" style="margin-left:2px">'+r.pos+'</span>':'')+'</div></td>'+
       '<td><span style="display:inline-block;min-width:38px;text-align:center;padding:2px 8px;border-radius:5px;font-size:11px;font-weight:900;background:'+ts.bg+';border:1px solid '+ts.bd+';color:'+ts.c+'">'+tier+'티어</span></td>'+
       '<td style="font-family:Rajdhani,sans-serif;font-weight:700;font-size:13px;color:var(--text2)">'+r.score.toFixed(1)+'</td>'+
       '<td style="font-size:11px;color:var(--muted)">'+r.games+'전 '+r.wins+'승 '+r.losses+'패</td>'+
@@ -3729,6 +4131,7 @@ function renderNews(){
 
   html += '</div><div>';
 
+  html += recordBreaksHtml();
   html += ownerChangesHtml();
   // ── ⚔️ 라인별 라이벌 (우측 컬럼) ──
   html += '<div class="card fi"><div class="ct">⚔️ 라인별 라이벌 <span style="font-weight:400;color:var(--muted);margin-left:6px">최근 10경기 · 2회+ 맞대결</span></div>';
