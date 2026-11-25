@@ -2377,11 +2377,12 @@ var SC2_DEF={
   ahead15:['15분 앞선 비율','%',0,false,'a'], obj:['용·바론·전령 관여','회',1,false,'a'], tur:['포탑 딜','',0,false,'a'],
   fbp:['퍼스트 블러드 관여','%',0,false,'a'], sk:['솔로킬','회',2,false,'a'], imm:['적 묶기','회',1,false,'a'],
   ssh:['스킬샷 적중','회',1,false,'a'], wpm:['분당 와드 설치','',2,false,'a'], wkm:['분당 와드 제거','',2,false,'a'],
-  cw:['제어 와드','개',1,false,'a'], hs:['아군 회복·보호막','',0,false,'a'], tdd:['사망 대기 시간','초',0,true,'a']
+  cw:['제어 와드','개',1,false,'a'], hs:['아군 회복·보호막','',0,false,'a'], tdd:['사망 대기 시간','초',0,true,'a'],
+  mitm:['분당 피해 경감','',0,false,'a'], tank:['분당 탱킹 (받은 딜+경감)','',0,false,'a'], teff:['탱킹 효율','%',1,false,'a']
 };
 // 라인별 핵심 지표 (프로 분석에서 라인 성과를 볼 때 쓰는 지표 기준 — 라인전·역할 기여 중심)
 var SC2_KEY={
-  TOP:[['gd15','라인전에서 상대를 얼마나 앞섰나'],['sk','1:1 교전 능력'],['tur','스플릿·포탑 압박'],['dt','앞에서 받아낸 피해 (탱킹)'],['sh','팀 딜 기여']],
+  TOP:[['gd15','라인전에서 상대를 얼마나 앞섰나'],['sk','1:1 교전 능력'],['tur','스플릿·포탑 압박'],['tank','받은 딜 + 방어력·보호막으로 막아낸 피해'],['sh','팀 딜 기여']],
   JUG:[['obj','용·바론·전령 등 오브젝트 주도'],['kp','라인 개입·교전 합류'],['vs','시야 장악'],['xpd15','초반 동선 효율 (경험치)'],['fbp','초반 갱킹 성과']],
   MID:[['csd15','라인전 CS 관리'],['sh','팀 딜 기여'],['kp','로밍·교전 합류'],['sk','1:1 교전 능력'],['dpm','교전 화력']],
   ADC:[['dpm','교전에서 넣는 딜의 양'],['sh','팀 딜 기여'],['cs','성장 (분당 CS)'],['csd15','라인전 CS 관리'],['d','생존 (적게 죽기)']],
@@ -2407,7 +2408,8 @@ function sc2Agg(){
       if(a){ o.ag++; var am=ag.dur/60;
         add('gd15',a.gd15); add('csd15',a.csd15); add('xpd15',a.xpd15); if(typeof a.gd15==='number') add('ahead15',a.gd15>0?100:0);
         add('obj',a.drg+a.bar+a.her); add('tur',a.tur); add('fbp',a.fb?100:0); add('sk',a.sk); add('imm',a.imm); add('ssh',a.ssh);
-        add('wpm',a.wp/am); add('wkm',a.wk/am); add('cw',a.cw); add('hs',a.hs); add('tdd',a.tdd); }
+        add('wpm',a.wp/am); add('wkm',a.wk/am); add('cw',a.cw); add('hs',a.hs); add('tdd',a.tdd);
+        add('mitm',a.mit/am); add('tank',(p.dt+a.mit)/am); if(p.dt+a.mit>0) add('teff',a.mit/(p.dt+a.mit)*100); }
     });
   });
   Object.keys(A).forEach(function(k){ var o=A[k]; o.m={}; Object.keys(o.s).forEach(function(x){ o.m[x]=o.s[x]/o.n[x]; }); o.m.kda=o.dd?(o.k+o.a)/o.dd:(o.k+o.a); });
@@ -2625,14 +2627,15 @@ function tierRowExtras(champ,pos){
 function apiAwardCardsHtml(){
   var win=GAME_DETAILS.slice(-AWARD_WINDOW), agg={};
   win.forEach(function(g){ var ag=apiG(g.no);
-    g.players.forEach(function(x){ if(isHidden(x.name)) return; var o=agg[x.name]=agg[x.name]||{g:0,ag:0,gd:0,gdn:0,obj:0,sk:0,wv:0};
+    g.players.forEach(function(x){ if(isHidden(x.name)) return; var o=agg[x.name]=agg[x.name]||{g:0,ag:0,gd:0,gdn:0,obj:0,sk:0,wv:0,mit:0};
       o.g++; var a=ag?apiP(g.no,x.name):null; if(!a) return; o.ag++;
-      if(typeof a.gd15==='number'){ o.gd+=a.gd15; o.gdn++; } o.obj+=a.drg+a.bar+a.her; o.sk+=a.sk; o.wv+=(a.wp+a.wk)/(ag.dur/60); }); });
+      if(typeof a.gd15==='number'){ o.gd+=a.gd15; o.gdn++; } o.obj+=a.drg+a.bar+a.her; o.sk+=a.sk; o.wv+=(a.wp+a.wk)/(ag.dur/60); o.mit+=a.mit/(ag.dur/60); }); });
   var pool=Object.keys(agg).filter(function(n){ return agg[n].g>=AWARD_FIRST_MIN && agg[n].ag>=AWARD_FIRST_MIN; });
   var defs=[['🛣️ 라인전 지배자','15분 골드 차이',function(o){return o.gdn?o.gd/o.gdn:-1e9;},function(v){return (v>0?'+':'')+Math.round(v).toLocaleString();}],
             ['🐉 오브젝트 사령관','판당 용·바론·전령 관여',function(o){return o.obj/o.ag;},function(v){return (Math.round(v*10)/10)+'회';}],
             ['⚔️ 솔로킬','판당 솔로킬',function(o){return o.sk/o.ag;},function(v){return (Math.round(v*100)/100)+'회';}],
-            ['👁️ 시야 싸움','분당 와드 설치+제거',function(o){return o.wv/o.ag;},function(v){return Math.round(v*100)/100;}]];
+            ['👁️ 시야 싸움','분당 와드 설치+제거',function(o){return o.wv/o.ag;},function(v){return Math.round(v*100)/100;}],
+            ['🧱 철벽','분당 피해 경감',function(o){return o.mit/o.ag;},function(v){return Math.round(v).toLocaleString();}]];
   if(!pool.length) return '';
   return defs.map(function(d){
     var best=pool.slice().sort(function(a,b){return d[2](agg[b])-d[2](agg[a]);})[0], o=agg[best];
@@ -2689,6 +2692,7 @@ function recordDefs(){
     {l:'단일경기 최다 솔로킬',g:'a',f:function(x){return x.a?x.a.sk:null;},s:function(v){return v+'회';}},
     {l:'최장 생존',g:'a',f:function(x){return x.a?x.a.ll:null;},s:function(v){return mmss(v);},sub:'안 죽고 버틴 시간'},
     {l:'15분 최대 골드 차이',g:'a',f:function(x){return x.a&&typeof x.a.gd15==='number'?x.a.gd15:null;},s:function(v){return '+'+v.toLocaleString();},sub:'맞라인 대비'},
+    {l:'단일경기 최다 피해 경감',g:'a',f:function(x){return x.a?x.a.mit:null;},s:function(v){return v.toLocaleString();},sub:'방어력·보호막으로 막아낸 피해'},
     {l:'단일경기 최다 와드 제거',g:'a',f:function(x){return x.a?x.a.wk:null;},s:function(v){return v+'개';}},
     {l:'팀 딜 최대 비중',g:'c',f:function(x){return x.td?Math.round(x.p.dmg/x.td*1000)/10:null;},s:function(v){return v+'%';}}
   ];
@@ -2743,7 +2747,7 @@ function recordBreaksHtml(){
 var RADAR6_KEYS=['라인전','전투','오브젝트','시야','생존','다양성'];
 var RADAR6_COLORS=['#c07a10','#c33b6b','#7a5bd6','#3368a0','#199473','#2a9db5'];
 var RADAR6_AX={라인전:['gd15','csd15','xpd15'],전투:['kp','sh','dpm','sk'],오브젝트:['obj','tur','fbp'],시야:['vs','wpm','wkm','cw'],생존:['d','tdd']};
-var RADAR6_DESC={라인전:'15분 골드·CS·경험치 차이',전투:'킬관여·팀 딜 비중·분당 딜·솔로킬',오브젝트:'용·바론·전령 관여·포탑 딜·퍼블',시야:'분당 시야·와드 설치/제거·제어 와드',생존:'데스·사망 대기 시간',다양성:'챔프폭 (판수 반영)'};
+var RADAR6_DESC={라인전:'15분 골드·CS·경험치 차이',전투:'킬관여·팀 딜 비중·분당 딜·솔로킬',오브젝트:'용·바론·전령 관여·포탑 딜·퍼블',시야:'분당 시야·와드 설치/제거·제어 와드',생존:'데스·사망 대기 시간 75% + 탱킹 효율 25%',다양성:'챔프폭 (판수 반영)'};
 var _R6={};
 function radar6(name){
   if(_R6[name]!==undefined) return _R6[name];
@@ -2754,6 +2758,8 @@ function radar6(name){
     var ps=RADAR6_AX[ax].map(function(k){ var r=sc2Rank(name,pos,k); return r?r.pct:null; }).filter(function(v){return v!==null;});
     o[ax]=ps.length?Math.round(ps.reduce(function(s,v){return s+v;},0)/ps.length*100):50;
   });
+  // 생존: 덜 죽기(데스·사망 대기) 75% + 탱킹 효율(받은 피해 중 막아낸 비율) 25%
+  var te=sc2Rank(name,pos,'teff'); if(te) o['생존']=Math.round(o['생존']*0.75+te.pct*100*0.25);
   o['다양성']=Math.round(calcCats(p,pos)['챔프폭']);
   _R6[name]=o; return o;
 }
