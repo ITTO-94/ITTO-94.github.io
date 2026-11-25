@@ -34,12 +34,24 @@ def lane_ranks(games, details):
     def ban_rate(c):
         b = sum(1 for g in games if g.get('bans') and c in g['bans'])
         return round(b / total * 10000) / 100 if total else 0
+    # 성과 점수: 그 챔피언으로 낸 평균 CP가 포지션 평균 대비 얼마나 높은지 (판수 적으면 50으로 수렴)
+    cs, ps = {}, {}
+    for g in details:
+        for r in g['players']:
+            k = r['champ'] + '|' + r['pos']
+            c = cs.setdefault(k, [0, 0]); c[0] += r['cp']; c[1] += 1
+            q = ps.setdefault(r['pos'], [0, 0]); q[0] += r['cp']; q[1] += 1
+    def perf(champ, pos):
+        c, q = cs.get(champ + '|' + pos), ps.get(pos)
+        if not c or not q or not q[1]: return 50
+        pa = q[0] / q[1]; raw = max(0, min(100, 50 + (c[0] / c[1] - pa) / pa * 100))
+        return 50 + (raw - 50) * c[1] / (c[1] + 3)
     rows = []
     for a in agg.values():
         bg = round(ban_rate(a['champ']) * total / 100)
         shrunk = (a['wins'] + 3 * 0.5) / (a['games'] + 3) * 100
         presence = min(100, (a['games'] + bg) / total * 100 * 1.5)
-        rows.append(dict(a, score=shrunk * 0.7 + presence * 0.3))
+        rows.append(dict(a, score=shrunk * 0.55 + presence * 0.3 + perf(a['champ'], a['pos']) * 0.15))
     out = {}
     for pos in ['TOP', 'JUG', 'MID', 'ADC', 'SUP']:
         pool = sorted([r for r in rows if r['pos'] == pos and r['games'] >= 2], key=lambda r: -r['score'])
