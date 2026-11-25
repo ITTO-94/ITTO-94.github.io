@@ -1,0 +1,58 @@
+name: HUSH.GG 경기 업데이트
+
+on:
+  workflow_dispatch:
+    inputs:
+      bans:
+        description: '밴 목록 (선택) — 예) 51: 아리, 리 신, 오공; 52: 자야, 렐'
+        required: false
+        default: ''
+      exclude:
+        description: '넣지 않을 경기 ID (선택) — 예) KR_1234567890'
+        required: false
+        default: ''
+  # 자동 실행을 원하면 아래 두 줄 앞의 # 을 지우세요 (매일 새벽 4시 KST)
+  # schedule:
+  #   - cron: '7 19 * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: hush-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: 저장소 가져오기
+        uses: actions/checkout@v4
+
+      - name: 파이썬 준비
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 라이엇 API에서 새 경기 가져오기
+        env:
+          RIOT_API_KEY: ${{ secrets.RIOT_API_KEY }}
+          BANS: ${{ github.event.inputs.bans }}
+          EXCLUDE: ${{ github.event.inputs.exclude }}
+        run: python scripts/fetch_matches.py
+
+      - name: 사이트 데이터 다시 계산
+        run: python scripts/build_site.py
+
+      - name: 바뀐 내용 저장
+        run: |
+          git config user.name "hush-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A data index.html
+          if git diff --cached --quiet; then
+            echo "바뀐 내용 없음"
+          else
+            git commit -m "경기 데이터 자동 업데이트"
+            git push
+          fi
