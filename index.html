@@ -2415,27 +2415,43 @@ function sc2Agg(){
   Object.keys(A).forEach(function(k){ var o=A[k]; o.m={}; Object.keys(o.s).forEach(function(x){ o.m[x]=o.s[x]/o.n[x]; }); o.m.kda=o.dd?(o.k+o.a)/o.dd:(o.k+o.a); });
   _SC2=A; return A;
 }
-function sc2Rank(name,pos,key){
+// 스카우팅 리포트 순위 판수 보정: 판수가 적으면 포지션 평균 쪽으로 당겨서 순위만 매김 (표시 값은 실제 평균)
+var SC2_C=5;
+function sc2Rank(name,pos,key,adj){
   var A=sc2Agg(), me=A[name+'|'+pos], def=SC2_DEF[key]; if(!me) return null;
   var src=def[4], minG=scoutMinG(pos), minA=3;
   if(src==='x' && me.g<minG) return null;
   if(src==='a' && (me.n[key]||0)<minA) return null;
   var v=me.m[key]; if(typeof v!=='number') return null;
   var pool=Object.keys(A).map(function(k){return A[k];}).filter(function(o){ return o.pos===pos && !isHidden(o.name) && (src==='x'?o.g>=minG:(o.n[key]||0)>=minA) && typeof o.m[key]==='number'; });
-  var better=pool.filter(function(o){ return def[3]? o.m[key]<v : o.m[key]>v; }).length;
   var vals=pool.map(function(o){return o.m[key];}).sort(function(a,b){return a-b;});
   var avg=vals.reduce(function(s,x){return s+x;},0)/(vals.length||1);
-  return {v:v, rank:better+1, total:pool.length, pct:pool.length>1?1-better/(pool.length-1):1, avg:avg, n:src==='x'?me.g:me.n[key]};
+  function nOf(o){ return src==='x'?o.g:(o.n[key]||0); }
+  function sv(o){ var n=nOf(o); return adj ? (o.m[key]*n+avg*SC2_C)/(n+SC2_C) : o.m[key]; }
+  var mine=sv(me);
+  var better=pool.filter(function(o){ return def[3]? sv(o)<mine : sv(o)>mine; }).length;
+  return {v:v, rank:better+1, total:pool.length, pct:pool.length>1?1-better/(pool.length-1):1, avg:avg, n:nOf(me), adj:!!adj};
 }
 function sc2Fmt(key,v){ var d=SC2_DEF[key]; var s=(d[2]===0?Math.round(v).toLocaleString():(Math.round(v*Math.pow(10,d[2]))/Math.pow(10,d[2])).toLocaleString()); return ((['gd15','csd15','xpd15'].indexOf(key)>=0&&v>0)?'+':'')+s+d[1]; }
 function sc2Col(p){ return p>=0.8?'#199473':p>=0.6?'#3368a0':p>=0.4?'#8a96a3':p>=0.2?'#c0882a':'#cf4444'; }
-function sc2Bar(key,r,why){
-  var d=SC2_DEF[key], col=sc2Col(r.pct), P=Math.round(r.pct*100);
-  return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:11px" title="'+d[0]+' · 같은 포지션 평균 '+sc2Fmt(key,r.avg)+' · 표본 '+r.n+'판">'+
+// 역할에 따라 '많을수록 좋다'가 아닌 지표 → 순위는 참고용(회색), 강점·보완 요약에서 제외
+//  · 받은 딜·피해 경감: 맞은 양 자체는 좋고 나쁨이 없음 (탱킹은 '탱킹'·'탱킹 효율'로 평가)
+//  · 탱킹·탱킹 효율: 탑·정글·서폿에서만 평가 (미드·원딜은 참고)
+//  · 아군 회복·보호막: 서폿만 평가 (다른 라인은 자기 회복이 섞여 잡힘)
+function sc2Neutral(pos,key){
+  if(key==='dt' || key==='mitm') return true;
+  if(key==='tank' || key==='teff') return !(pos==='TOP'||pos==='JUG'||pos==='SUP');
+  if(key==='hs') return pos!=='SUP';
+  return false;
+}
+function sc2Bar(key,r,why,pos){
+  var nt=sc2Neutral(pos,key);
+  var d=SC2_DEF[key], col=nt?'#9aa7b3':sc2Col(r.pct), P=Math.round(r.pct*100);
+  return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:11px" title="'+d[0]+' · 같은 포지션 평균 '+sc2Fmt(key,r.avg)+' · 표본 '+r.n+'판'+(r.adj?' · 순위는 판수 보정 (판수가 적으면 평균 쪽으로 당겨서 비교)':'')+'">'+
     '<div style="width:118px;flex-shrink:0"><div style="color:var(--text2);font-weight:700">'+d[0]+'</div>'+(why?'<div style="font-size:9px;color:var(--muted);line-height:1.25">'+why+'</div>':'')+'</div>'+
     '<span style="width:58px;flex-shrink:0;text-align:right;font-family:Rajdhani,sans-serif;font-weight:700;font-size:14px;color:var(--text2)">'+sc2Fmt(key,r.v)+'</span>'+
     '<div style="flex:1;height:9px;background:var(--bg2);border-radius:5px;overflow:hidden;border:1px solid var(--dim);position:relative"><div style="width:'+Math.max(3,P)+'%;height:100%;background:'+col+';border-radius:5px"></div></div>'+
-    '<span style="width:62px;flex-shrink:0;text-align:right;font-size:10px;font-weight:800;color:'+col+'">'+r.rank+'위 / '+r.total+'명</span></div>';
+    '<span style="width:62px;flex-shrink:0;text-align:right;font-size:10px;font-weight:800;color:'+col+'">'+(nt?'<span style="font-weight:600">참고 </span>':'')+r.rank+'위 / '+r.total+'명</span></div>';
 }
 function scoutingHtml(name, posFilter){
   var p=PLAYERS[name], pos=posFilter||p.pos;
@@ -2443,9 +2459,9 @@ function scoutingHtml(name, posFilter){
   if(isHidden(name)) return head+'<div style="padding:12px;text-align:center;font-size:11px;color:var(--muted)">순위 집계 제외 선수예요</div></div>';
   var A=sc2Agg(), me=A[name+'|'+pos], minG=scoutMinG(pos);
   if(!me || me.g<minG) return head+'<div style="padding:12px;text-align:center;font-size:11px;color:var(--muted)">'+POS_KR[pos]+' '+minG+'판부터 리포트가 생겨요 (현재 '+(me?me.g:0)+'판)</div></div>';
-  var all={}; Object.keys(SC2_DEF).forEach(function(k){ var r=sc2Rank(name,pos,k); if(r) all[k]=r; });
+  var all={}; Object.keys(SC2_DEF).forEach(function(k){ var r=sc2Rank(name,pos,k,true); if(r) all[k]=r; });
   // 강점·보완 요약 (전체 지표 중 상위 25% / 하위 25%, 4명 이상 비교일 때)
-  var ks=Object.keys(all).filter(function(k){return all[k].total>=4;});
+  var ks=Object.keys(all).filter(function(k){return all[k].total>=4 && !sc2Neutral(pos,k);});
   var strong=ks.filter(function(k){return all[k].pct>=0.75;}).sort(function(a,b){return all[b].pct-all[a].pct||all[a].rank-all[b].rank;}).slice(0,3);
   var weak=ks.filter(function(k){return all[k].pct<=0.25;}).sort(function(a,b){return all[a].pct-all[b].pct;}).slice(0,2);
   var h=head;
@@ -2456,15 +2472,15 @@ function scoutingHtml(name, posFilter){
   h+='<div style="font-size:10px;font-weight:800;color:var(--text2);margin-bottom:6px">'+POS_KR[pos]+' 핵심 지표 <span style="font-weight:400;color:var(--muted)">— 이 라인 성과를 볼 때 가장 먼저 보는 5가지</span></div>';
   var shown={};
   SC2_KEY[pos].forEach(function(kw){ var r=all[kw[0]]; shown[kw[0]]=1;
-    h+= r ? sc2Bar(kw[0],r,kw[1]) : '<div style="display:flex;gap:8px;margin-bottom:7px;font-size:11px;color:var(--muted)"><div style="width:118px"><b style="color:var(--text2)">'+SC2_DEF[kw[0]][0]+'</b><div style="font-size:9px">'+kw[1]+'</div></div><span style="align-self:center">라이엇 API 기록 3판부터 표시</span></div>'; });
+    h+= r ? sc2Bar(kw[0],r,kw[1],pos) : '<div style="display:flex;gap:8px;margin-bottom:7px;font-size:11px;color:var(--muted)"><div style="width:118px"><b style="color:var(--text2)">'+SC2_DEF[kw[0]][0]+'</b><div style="font-size:9px">'+kw[1]+'</div></div><span style="align-self:center">라이엇 API 기록 3판부터 표시</span></div>'; });
   var rest=Object.keys(SC2_DEF).filter(function(k){return !shown[k] && all[k];});
   if(rest.length){
     h+='<details style="margin-top:6px"><summary style="cursor:pointer;font-size:11px;font-weight:800;color:var(--blue)">전체 지표 '+rest.length+'개 더 보기</summary><div style="margin-top:8px">'+
-      rest.map(function(k){return sc2Bar(k,all[k],'');}).join('')+'</div></details>';
+      rest.map(function(k){return sc2Bar(k,all[k],'',pos);}).join('')+'<div style="font-size:9px;color:var(--muted);margin-top:2px">회색 "참고" 지표는 역할에 따라 많을수록 좋다고 보기 어려워 순위만 참고로 보여줘요</div></div></details>';
   }
   var cr=consistencyRank(name);
   h+='<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--dim);font-size:10px;color:var(--muted);line-height:1.6">'+
-    '비교 대상: '+POS_KR[pos]+' '+minG+'판 이상 (API 지표는 API 기록 3판 이상) · 막대가 길수록 상위권 · 마우스를 올리면 포지션 평균'+
+    '비교 대상: '+POS_KR[pos]+' '+minG+'판 이상 (API 지표는 API 기록 3판 이상) · 순위는 판수 보정 (적은 판수의 높은 기록은 평균 쪽으로 당겨 비교, 표시 값은 실제 평균) · 막대가 길수록 상위권 · 마우스를 올리면 포지션 평균'+
     (cr?'<br>꾸준함 (전 포지션 · 판별 성적 편차): <b style="color:var(--text2)">'+cr.rank+'위 / '+cr.total+'명</b>':'')+'</div>';
   return h+'</div>';
 }
