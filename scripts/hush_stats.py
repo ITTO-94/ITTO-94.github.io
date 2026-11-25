@@ -27,7 +27,8 @@ for g in GAMESRC:
             r[34]=p['vs']/m; r[35]=p['dmg']/m; r[36]=p['dmg']/td if td else 0; r[37]=(p['k']+p['a'])/tk if tk else 0
             r[38]=p['dmg']/p['gold'] if p['gold'] else 0; r[39]=p['gold']/m; r[40]=p['dt']/m; r[41]=p['cc']/m; r[42]=p['piwa']/m*10
             r[43]=(p['k']+p['a'])/p['d'] if p['d'] else 99
-            if p.get('dv'): r[34:44]=p['dv']   # 엑셀 시절 경기: 엑셀 계산값 그대로 (골드 이상값 보정 등 재현)
+            if p.get('dv'): r[34:44]=p['dv']
+            r[44]=p['mit']/m if isinstance(p.get('mit'),(int,float)) else None; r[45]=g['no']   # 엑셀 시절 경기: 엑셀 계산값 그대로 (골드 이상값 보정 등 재현)
             rows.append(r)
     PS+=rows
     pr=[]
@@ -69,8 +70,20 @@ _CPAVG={}
 for _p in ['TOP','JUG','MID','ADC','SUP']:
     _rs=[_cpstats(r) for r in _CPROWS if r[8]==_p]
     _CPAVG[_p]={k:(sum(x[k] for x in _rs)/len(_rs) if _rs else 1) for k in ['DPM','VSPM','KP','CCPM','DTPM','DPG','PIWA','D']}
+# ── 피해 경감(MIT) 반영: 51경기부터 (2026-11-26 이명우 확정 — 이전 경기 CP는 그대로) ──
+#  받은 딜(DTPM) 가중치 일부를 '분당 피해 경감'으로 옮김 → 포지션별 가중치 총합은 그대로(점수대 유지)
+CP_MIT_FROM=50
+MIT_SPLIT={'TOP':(0.4,0.35),'JUG':(0.3,0.2),'MID':(0.35,0.15),'ADC':(0.15,0.1),'SUP':(0.3,0.2)}   # (DTPM, MIT)
+_MITAVG={}
+for _p in ['TOP','JUG','MID','ADC','SUP']:
+    _ms=[r[44] for r in _CPROWS if r[8]==_p and isinstance(r[44],(int,float))]
+    _MITAVG[_p]=sum(_ms)/len(_ms) if _ms else 0
 def cp_v2(r):
-    p=r[8]; s=_cpstats(r); w=CPW[p]; a=_CPAVG[p]; sc=7.0/sum(w.values()); v=0
+    p=r[8]; s=_cpstats(r); w=dict(CPW[p]); a=_CPAVG[p]; sc=7.0/sum(w.values()); v=0
+    use_mit = r[45] and r[45]>CP_MIT_FROM and isinstance(r[44],(int,float)) and _MITAVG[p]
+    if use_mit:
+        w['DTPM'],wm=MIT_SPLIT[p]
+        v+=wm*sc*min(r[44]/(2*_MITAVG[p]),1.0)
     for key in ['DPM','VSPM','CCPM','DTPM','DPG','PIWA']:
         v+=w[key]*sc*(min(s[key]/(CPMULT[key]*a[key]),1.0) if a[key] else 0)
     v+=w['KP']*sc*min(s['KP'],1.0)
