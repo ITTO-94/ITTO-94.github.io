@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """HUSH.GG — data/ 로 통계를 다시 계산해 index.html 데이터 부분만 교체 (GitHub Actions용)
- - 선수 리포트 · Just Joke · 디자인 · 기능 코드는 건드리지 않음
+ - 디자인 · 기능 코드는 건드리지 않음 (선수 리포트 · Just Joke 는 data/reports.json · data/just_joke.json 이 있을 때만 교체)
  - 새 경기가 생겼을 때만 '지난 업데이트' 기준값(ELO 변동 · 티어리스트 순위 변동 · NEW 표시)을 갱신
 """
 import json, os, re, subprocess, sys
@@ -89,6 +89,12 @@ def main():
     for k in ['PLAYERS', 'GAMES', 'GAME_DETAILS', 'MATCHUPS', 'CHAMP_STATS', 'ELO_HISTORY']:
         s = put(s, k, b[k])
     s = put(s, 'API_DETAILS', details)
+    # 선수 분석 리포트 · Just Joke: data/ 에 파일이 있으면 그 내용으로 교체 (Claude가 쓴 글을 index.html 수정 없이 반영)
+    for fn, var in [('reports.json', 'PLAYER_REPORTS'), ('just_joke.json', 'JUST_JOKE')]:
+        fp = os.path.join(DATA, fn)
+        if os.path.exists(fp):
+            s = put(s, var, json.load(open(fp, encoding='utf-8')))
+            print(f'{fn} → {var} 반영')
     open(INDEX, 'w', encoding='utf-8').write(s)
     print(f"완료: {len(b['GAMES'])}경기 · {len(b['PLAYERS'])}명 · 상세 {len(details)}경기")
 
