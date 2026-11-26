@@ -441,13 +441,13 @@ function pgrd(score,cuts){
 // 판수 조건 (높은 등급일수록 더 필요):
 //   1차 · 통산 판수     OP 20 · S 15 · A 10 · B 5
 //   2차 · 리그 전체 최근 30경기 중 출전 수 → 구간별 패널티 (등급과 무관하게 적용)
-//         8판+ 0% · 6~7판 10% · 4~5판 20% · 2~3판 35% · 0~1판 50%
+//         8판+ 0% · 6~7판 15% · 4~5판 30% · 2~3판 50% · 0~1판 70%
 //   평균(50)보다 높은 축을 (통산 판수 ÷ 필요 판수) × (1 − 최근 패널티)만큼만 인정하고,
 //   그 점수로도 해당 등급 기준선을 넘어야 그 등급을 받는다. 못 넘으면 한 단계 아래로 다시 계산.
 // 기준선(고정): OP 72 · S 65 · A 58 · B 50 · C 42 · D 34
 var GRADE_REQ = {OP:20, S:15, A:10, B:5};
-var GRADE_RECENT_PEN = [[8,0],[6,0.10],[4,0.20],[2,0.35],[0,0.50]];   // [최근 30경기 출전 수 이상, 패널티]
-function recentPenalty(r){ for(var i=0;i<GRADE_RECENT_PEN.length;i++) if(r>=GRADE_RECENT_PEN[i][0]) return GRADE_RECENT_PEN[i][1]; return 0.5; }
+var GRADE_RECENT_PEN = [[8,0],[6,0.15],[4,0.30],[2,0.50],[0,0.70]];   // [최근 30경기 출전 수 이상, 패널티]
+function recentPenalty(r){ for(var i=0;i<GRADE_RECENT_PEN.length;i++) if(r>=GRADE_RECENT_PEN[i][0]) return GRADE_RECENT_PEN[i][1]; return 0.7; }
 var GRADE_CUT = {OP:72, S:65, A:58, B:50, C:42, D:34};
 var GRADE_RECENT_WINDOW = 30;   // 리그 전체 최근 30경기
 function recentGames(p){
