@@ -3706,8 +3706,9 @@ function renderAward(){
   var byPos = {}; var posThr = {};
   POS.forEach(function(ps){
     posThr[ps] = awardPosThreshold(ps);
-    byPos[ps] = players.filter(function(p){ return p.pos === ps && p.games >= posThr[ps]; })
-      .map(function(p){ return {p:p, score:awardScore(p)}; })
+    // 1·2·3팀 (2026-11-27): 통산 주포지션별로 종합등급(6각, 판수 패널티 포함) 높은 순
+    byPos[ps] = visiblePlayers().filter(function(p){ return p.pos === ps; })
+      .map(function(p){ var t=totalGrade(p); return {p:p, tg:t, score:t.adj}; })
       .sort(function(a,b){ return b.score - a.score; });
   });
 
@@ -3723,7 +3724,8 @@ function renderAward(){
           '<div class="pb pb-'+ps+'" style="margin:0 0 8px">'+ps+'</div>'+
           '<div style="width:36px;height:36px;margin:0 auto 6px;position:relative">'+tierIcon(p.elo,36)+'</div>'+
           '<div style="font-size:14px;font-weight:700;color:var(--text2);margin-bottom:3px">'+p.name+'</div>'+
-          '<div style="font-size:12px;font-family:Rajdhani,sans-serif;font-weight:700;color:'+accent+'">'+entry.score+'pt</div>'+
+          '<div style="display:inline-block;font-size:12px;font-family:Rajdhani,sans-serif;font-weight:800;padding:1px 9px;border-radius:6px;color:'+entry.tg.c+';background:'+entry.tg.bg+';border:1px solid '+entry.tg.bd+'">'+entry.tg.g+'</div>'+
+          '<div style="font-size:10px;color:var(--muted);margin-top:3px">'+p.games+'전 '+p.wins+'승</div>'+
         '</div>';
       } else {
         h += '<div style="background:var(--bg2);border:1px dashed var(--dim);border-radius:10px;padding:12px 8px;text-align:center;opacity:.4">'+
@@ -3736,7 +3738,7 @@ function renderAward(){
     return h;
   }
 
-  var html = '<div style="font-size:11px;color:var(--muted);margin-bottom:14px">🏆 최근 30경기 · 목표 '+AWARD_TARGET_GAMES+'판 이상 출전자 우선, 미달 포지션은 최다 출전자 순으로 충원 (현재 기준 '+POS.map(function(ps){return ps+' '+posThr[ps]+'판';}).join(' · ')+') · 어워드 총점 = 상세지표 15개 백분위 합산 (최대 1500pt)</div>';
+  var html = '<div style="font-size:11px;color:var(--muted);margin-bottom:14px">🏆 1·2·3팀 = 통산 가장 많이 뛴 라인(주포지션)에서 종합등급이 높은 순 · 종합등급은 6각 레이더 점수에 통산 판수·최근 30경기 출전 패널티가 들어가 있어 따로 판수 제한을 두지 않아요</div>';
   html += teamCard('퍼스트 팀', 0, '#b8860f', '🥇');
   html += teamCard('세컨드 팀', 1, '#75879b', '🥈');
   html += teamCard('써드 팀',   2, '#c08850', '🥉');
