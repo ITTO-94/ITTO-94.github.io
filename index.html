@@ -4640,7 +4640,6 @@ function renderScout(){
   h+=laneSection();
   h+='<div class="sec"><div class="sec-t">🚫 밴 우선순위</div><div class="grid2">'+
     banList(TEAMS.b,'A팀이 밴할 것 (B팀 주력)','a')+banList(TEAMS.a,'B팀이 밴할 것 (A팀 주력)','b')+'</div></div>';
-  h+='<div class="sec"><div class="sec-t">🎯 기습 & 관찰</div>'+surpriseSection()+obsSection()+'</div>';
   h+='<div class="note" style="text-align:center;margin:20px 0">※ 표본이 적은 항목은 판수 뱃지를 확인하세요. 5판+ 녹색 / 3~4판 노랑 / 그 미만 회색은 참고만.</div>';
   document.getElementById('page-scout').innerHTML=h;
   setTimeout(function(){

@@ -115,7 +115,8 @@ def to_game(no, m, t, accounts, ckr):
             cs=p['totalMinionsKilled'] + p['neutralMinionsKilled'], piwa=p.get('visionWardsBoughtInGame', 0),
             mit=p.get('damageSelfMitigated', 0)))
     for k in teams: teams[k].sort(key=lambda x: POSO.index(x['pos']))
-    st = time.gmtime(info['gameStartTimestamp'] / 1000 + 9 * 3600)   # 한국 시간
+    # 한국 시간 기준 날짜. 새벽 6시 전에 시작한 판은 전날 내전으로 묶는다 (자정 넘겨 이어진 내전이 다른 날로 갈라지지 않게)
+    st = time.gmtime(info['gameStartTimestamp'] / 1000 + 9 * 3600 - 6 * 3600)
     game = dict(no=no, date=time.strftime('%Y.%m.%d', st), mn=dur // 60, sc=dur % 60, bans=[], t1=teams[100], t2=teams[200],
                 match=m['metadata']['matchId'], start=info['gameStartTimestamp'])
 
