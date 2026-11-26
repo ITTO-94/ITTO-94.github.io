@@ -196,7 +196,7 @@ body{zoom:1.45;background:var(--bg);color:var(--text);font-family:'IBM Plex Sans
   .aw-team .aw-top{padding:14px 10px 0 16px}
   .aw-team .aw-nm{font-size:19px}.aw-team .aw-gd{font-size:15px}.aw-team .aw-rc{font-size:15px}.aw-team .aw-rc span{font-size:21px}
   .aw-team .aw-rt canvas{max-width:210px}
-  .aw-team .aw-bg .aw-lb b{font-size:11.5px}.aw-team .aw-bg .aw-rec{font-size:11px;letter-spacing:0}.aw-team .aw-bg .aw-pct{font-size:17px}
+  .aw-team .aw-bg .aw-lb b{font-size:11.5px}.aw-team .aw-bg .aw-rec{font-size:14px;letter-spacing:0}.aw-team .aw-bg .aw-pct{font-size:17px}
   div[style*="grid-template-columns:repeat(2,1fr)"]{grid-template-columns:1fr !important;}
 
   /* 선수 헤더: ELO 차트가 아래로 자연 줄바꿈 */
@@ -305,11 +305,11 @@ body{zoom:1.45;background:var(--bg);color:var(--text);font-family:'IBM Plex Sans
 .aw-im{position:absolute;inset:0;background-size:cover;background-position:center 42%}
 .aw-lb{position:absolute;left:0;right:0;bottom:0;padding:22px 1px 6px;background:linear-gradient(180deg,transparent,rgba(8,12,18,.82));color:#fff;text-align:center;display:flex;flex-direction:column}
 .aw-lb b{font-size:9.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:1px}
-.aw-rec{font-size:9px;font-family:Rajdhani,sans-serif;font-weight:700;white-space:nowrap;letter-spacing:-.1px}
+.aw-rec{font-size:11px;font-family:Rajdhani,sans-serif;font-weight:700;white-space:nowrap;letter-spacing:-.1px}
 .aw-lb .w{color:#8fb8ff}.aw-lb .l{color:#ff8f8f}
 .aw-pct{font-size:13px;font-family:Rajdhani,sans-serif;font-weight:700;line-height:1.1}
-.aw-n5 .aw-rec,.aw-n4 .aw-rec{font-size:6.6px;letter-spacing:-.2px}.aw-n5 .aw-pct,.aw-n4 .aw-pct{font-size:10px}.aw-n5 .aw-lb b,.aw-n4 .aw-lb b{font-size:7px}
-.aw-n3 .aw-rec{font-size:8px}.aw-n3 .aw-pct{font-size:12px}.aw-n3 .aw-lb b{font-size:8.5px}
+.aw-n5 .aw-rec,.aw-n4 .aw-rec{font-size:8.5px;letter-spacing:-.2px}.aw-n5 .aw-pct,.aw-n4 .aw-pct{font-size:10px}.aw-n5 .aw-lb b,.aw-n4 .aw-lb b{font-size:7px}
+.aw-n3 .aw-rec{font-size:11px}.aw-n3 .aw-pct{font-size:14px}.aw-n3 .aw-lb b{font-size:8.5px}
 </style>
 </head>
 <body>
@@ -857,8 +857,9 @@ function report2Html(name, R, report){
   return h;
 }
 
+var AW_MOST = 5;   // 어워드 카드 모스트 챔피언 수
 // 챔피언 로딩 일러스트(308×560)에서 얼굴 가로 위치(0~1) — 어워드 카드 세로 일러스트를 얼굴 기준으로 맞추는 데 사용 (없으면 0.5)
-var CHAMP_FACE_X = {"Aatrox":0.45,"Ahri":0.42,"Akali":0.55,"Alistar":0.5,"Ambessa":0.42,"Amumu":0.45,"Anivia":0.4,"Annie":0.45,"Aphelios":0.25,"Ashe":0.55,"AurelionSol":0.55,"Aurora":0.5,"Azir":0.6,"Bard":0.42,"Belveth":0.5,"Blitzcrank":0.72,"Brand":0.3,"Braum":0.25,"Briar":0.4,"Caitlyn":0.45,"Camille":0.63,"Cassiopeia":0.5,"Chogath":0.42,"Corki":0.4,"Darius":0.55,"Diana":0.48,"DrMundo":0.45,"Draven":0.45,"Ekko":0.45,"Elise":0.5,"Evelynn":0.55,"Ezreal":0.55,"Fiddlesticks":0.22,"Fiora":0.55,"Fizz":0.6,"Galio":0.5,"Gangplank":0.55,"Garen":0.55,"Gnar":0.62,"Gragas":0.45,"Graves":0.33,"Gwen":0.45,"Hecarim":0.62,"Heimerdinger":0.5,"Hwei":0.6,"Illaoi":0.35,"Irelia":0.5,"Ivern":0.55,"Janna":0.6,"JarvanIV":0.45,"Jax":0.4,"Jayce":0.55,"Jhin":0.28,"Jinx":0.35,"KSante":0.3,"Kaisa":0.42,"Kalista":0.35,"Karma":0.5,"Karthus":0.45,"Kassadin":0.55,"Katarina":0.3,"Kayle":0.6,"Kayn":0.5,"Kennen":0.55,"Khazix":0.5,"Kindred":0.62,"Kled":0.6,"KogMaw":0.5,"Leblanc":0.45,"LeeSin":0.42,"Leona":0.48,"Lillia":0.5,"Lissandra":0.35,"Locke":0.5,"Lucian":0.6,"Lulu":0.45,"Lux":0.6,"Malphite":0.5,"Malzahar":0.45,"Maokai":0.55,"MasterYi":0.45,"Mel":0.5,"Milio":0.4,"MissFortune":0.55,"MonkeyKing":0.45,"Mordekaiser":0.5,"Morgana":0.55,"Naafiri":0.72,"Nami":0.55,"Nasus":0.4,"Nautilus":0.5,"Neeko":0.45,"Nidalee":0.5,"Nilah":0.4,"Nocturne":0.5,"Nunu":0.4,"Olaf":0.3,"Orianna":0.55,"Ornn":0.5,"Pantheon":0.5,"Poppy":0.55,"Pyke":0.5,"Qiyana":0.4,"Quinn":0.65,"Rakan":0.35,"Rammus":0.45,"RekSai":0.5,"Rell":0.55,"Renata":0.45,"Renekton":0.4,"Rengar":0.55,"Riven":0.45,"Rumble":0.45,"Ryze":0.38,"Samira":0.55,"Sejuani":0.45,"Senna":0.3,"Seraphine":0.45,"Sett":0.5,"Shaco":0.5,"Shen":0.45,"Shyvana":0.55,"Singed":0.4,"Sion":0.5,"Sivir":0.48,"Skarner":0.5,"Smolder":0.5,"Sona":0.55,"Soraka":0.3,"Swain":0.45,"Sylas":0.48,"Syndra":0.45,"TahmKench":0.45,"Taliyah":0.45,"Talon":0.45,"Taric":0.45,"Teemo":0.4,"Thresh":0.35,"Tristana":0.35,"Trundle":0.4,"Tryndamere":0.35,"TwistedFate":0.45,"Twitch":0.6,"Udyr":0.45,"Urgot":0.6,"Varus":0.45,"Vayne":0.55,"Veigar":0.45,"Velkoz":0.5,"Vex":0.45,"Vi":0.35,"Viego":0.6,"Viktor":0.45,"Vladimir":0.55,"Volibear":0.4,"Warwick":0.5,"Xayah":0.5,"Xerath":0.35,"XinZhao":0.45,"Yasuo":0.55,"Yone":0.45,"Yorick":0.5,"Yunara":0.5,"Yuumi":0.45,"Zaahen":0.5,"Zac":0.5,"Zed":0.4,"Zeri":0.45,"Ziggs":0.4,"Zilean":0.55,"Zoe":0.5,"Zyra":0.55};
+var CHAMP_FACE_X = {"Aatrox":0.45,"Ahri":0.5,"Akali":0.45,"Alistar":0.6,"Ambessa":0.57,"Amumu":0.62,"Anivia":0.24,"Annie":0.43,"Aphelios":0.45,"Ashe":0.5,"AurelionSol":0.65,"Aurora":0.45,"Azir":0.4,"Bard":0.45,"Belveth":0.45,"Blitzcrank":0.75,"Brand":0.45,"Braum":0.27,"Briar":0.4,"Caitlyn":0.45,"Camille":0.75,"Cassiopeia":0.42,"Chogath":0.65,"Corki":0.4,"Darius":0.45,"Diana":0.47,"DrMundo":0.55,"Draven":0.4,"Ekko":0.55,"Elise":0.5,"Evelynn":0.35,"Ezreal":0.5,"Fiddlesticks":0.25,"Fiora":0.6,"Fizz":0.6,"Galio":0.6,"Gangplank":0.6,"Garen":0.6,"Gnar":0.62,"Gragas":0.45,"Graves":0.45,"Gwen":0.45,"Hecarim":0.65,"Heimerdinger":0.55,"Hwei":0.6,"Illaoi":0.3,"Irelia":0.45,"Ivern":0.6,"Janna":0.6,"JarvanIV":0.4,"Jax":0.4,"Jayce":0.65,"Jhin":0.3,"Jinx":0.55,"KSante":0.3,"Kaisa":0.5,"Kalista":0.55,"Karma":0.5,"Karthus":0.6,"Kassadin":0.55,"Katarina":0.4,"Kayle":0.55,"Kayn":0.45,"Kennen":0.6,"Khazix":0.55,"Kindred":0.72,"Kled":0.6,"KogMaw":0.5,"Leblanc":0.5,"LeeSin":0.6,"Leona":0.58,"Lillia":0.4,"Lissandra":0.35,"Locke":0.38,"Lucian":0.6,"Lulu":0.55,"Lux":0.62,"Malphite":0.5,"Malzahar":0.55,"Maokai":0.65,"MasterYi":0.55,"Mel":0.4,"Milio":0.35,"MissFortune":0.75,"MonkeyKing":0.35,"Mordekaiser":0.45,"Morgana":0.58,"Naafiri":0.65,"Nami":0.6,"Nasus":0.5,"Nautilus":0.45,"Neeko":0.55,"Nidalee":0.6,"Nilah":0.45,"Nocturne":0.4,"Nunu":0.7,"Olaf":0.47,"Orianna":0.5,"Ornn":0.5,"Pantheon":0.5,"Poppy":0.6,"Pyke":0.6,"Qiyana":0.4,"Quinn":0.75,"Rakan":0.5,"Rammus":0.25,"RekSai":0.45,"Rell":0.65,"Renata":0.3,"Renekton":0.4,"Rengar":0.55,"Riven":0.4,"Rumble":0.55,"Ryze":0.72,"Samira":0.4,"Sejuani":0.45,"Senna":0.45,"Seraphine":0.5,"Sett":0.5,"Shaco":0.58,"Shen":0.45,"Shyvana":0.6,"Singed":0.42,"Sion":0.45,"Sivir":0.5,"Skarner":0.5,"Smolder":0.35,"Sona":0.45,"Soraka":0.25,"Swain":0.5,"Sylas":0.5,"Syndra":0.45,"TahmKench":0.4,"Taliyah":0.4,"Talon":0.5,"Taric":0.4,"Teemo":0.4,"Thresh":0.42,"Tristana":0.33,"Trundle":0.4,"Tryndamere":0.3,"TwistedFate":0.55,"Twitch":0.5,"Udyr":0.45,"Urgot":0.45,"Varus":0.55,"Vayne":0.62,"Veigar":0.5,"Velkoz":0.5,"Vex":0.5,"Vi":0.25,"Viego":0.55,"Viktor":0.4,"Vladimir":0.65,"Volibear":0.5,"Warwick":0.75,"Xayah":0.4,"Xerath":0.5,"XinZhao":0.5,"Yasuo":0.5,"Yone":0.55,"Yorick":0.65,"Yunara":0.25,"Yuumi":0.4,"Zaahen":0.5,"Zac":0.5,"Zed":0.5,"Zeri":0.6,"Ziggs":0.35,"Zilean":0.55,"Zoe":0.6,"Zyra":0.62};
 function awFocus(){
   var els=document.querySelectorAll('.aw-im[data-fx]');
   for(var i=0;i<els.length;i++){ var e=els[i], W=e.clientWidth, H=e.clientHeight; if(!W||!H) continue;
@@ -3760,12 +3761,12 @@ function renderAward(){
       if(entry){
         var p = entry.p, L = p.games-p.wins, wr = p.games?Math.round(p.wins/p.games*100):0;
         // 주포지션 모스트 5 (세로 일러스트 + 챔피언별 전적)
-        var mcs = posChamps(p.name, ps).slice(0,5);
+        var mcs = posChamps(p.name, ps).slice(0,AW_MOST);
         var strips = mcs.map(function(mc){
           var c=mc[0], st=playerChampStatPos(p.name, c, ps), id=CMAP[c]||CMAPN[String(c).replace(/\s+/g,'')];
           var img = id ? 'background-image:url(https://ddragon.leagueoflegends.com/cdn/img/champion/loading/'+id+'_0.jpg)' : 'background:#2a3340';
-          return '<div class="aw-st"><div class="aw-im" data-fx="'+(CHAMP_FACE_X[id]||0.5)+'" style="'+img+'"></div><div class="aw-lb"><b>'+c+'</b>'+
-            '<span class="aw-rec">'+st.games+'G <em class="w">'+st.wins+'W</em> <em class="l">'+st.losses+'L</em></span><span class="aw-pct">'+st.wr+'%</span></div></div>';
+          return '<div class="aw-st" title="'+c+' '+st.games+'전 '+st.wins+'승 '+st.losses+'패"><div class="aw-im" data-fx="'+(CHAMP_FACE_X[id]||0.5)+'" style="'+img+'"></div><div class="aw-lb">'+
+            '<span class="aw-rec"><em class="w">'+st.wins+'W</em> <em class="l">'+st.losses+'L</em></span><span class="aw-pct">'+st.wr+'%</span></div></div>';
         }).join('');
         h += '<div class="aw-cd" style="border-color:'+accent+'55" onclick="goPlayer(\''+p.name+'\')">'+
           '<div class="aw-top"><div class="aw-lf">'+
