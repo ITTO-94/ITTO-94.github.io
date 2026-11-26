@@ -465,6 +465,7 @@ function _ggrade(v){ return v>=GRADE_CUT.OP?'OP':v>=GRADE_CUT.S?'S':v>=GRADE_CUT
 var _TG={};
 function totalGrade(p){
   if(_TG[p.name]) return _TG[p.name];
+  if(PLAYERS[p.name]) p=PLAYERS[p.name];   // 어워드용 최근 30경기 집계 객체가 들어와도 항상 통산 기준으로 계산
   var A=gradeAxes(p), W=A.r6?RADAR6_W[p.pos]:null, raw=_gscore(A.ax,1,W), g=p.games, r=recentGames(p), got=null, val=raw;
   var order=['OP','S','A','B'];
   for(var i=0;i<order.length;i++){
