@@ -437,7 +437,7 @@ function pgrd(score,cuts){
 }
 // ── 종합등급 판수 보정 (2026-11-27 개편) ─────────────────────
 // 1단계 · 통산 판수: 세부지표(전투·시야·생존·성장·챔프폭)를 각각 평균 쪽으로 보정 (베이지안 C=5)
-// 2단계 · 최근 30경기 출전 수: 최근에 거의 안 나왔으면 평균보다 높은 부분을 조금 덜 인정 (3판 이상이면 100%)
+// 2단계 · 최근 15경기 출전 수: 최근에 거의 안 나왔으면 평균보다 높은 부분을 조금 덜 인정 (3판 이상이면 100%)
 // 3단계 · 등급별 필요 판수: 높은 등급일수록 판수가 더 필요. 모자라면 평균보다 높은 세부지표를
 //         (판수 ÷ 필요 판수) 비율만큼만 인정한 점수로도 그 등급 기준선을 넘어야 그 등급을 받는다.
 //         → 지표가 비슷하면 20판 선수가 10판 선수보다 높은 등급을 받기 쉽다.
@@ -450,10 +450,10 @@ var _GCAT = null;
 var GCATS = ['전투','시야','생존','성장','챔프폭'];
 function _rawTotal(p){ return calcTotal(calcCats(p,p.pos),p.pos); }
 function gradeGames(p){ return p.games; }
+var GRADE_RECENT_WINDOW = 15;   // 2단계에서 보는 최근 경기 수
 function recentGames(p){
-  if(GAMES.length <= AWARD_WINDOW) return p.games;
-  var w = awardPlayersAll().filter(function(x){ return x.name === p.name; })[0];
-  return w ? w.games : 0;
+  var nos = GAME_DETAILS.map(function(g){ return g.no; }).sort(function(a,b){ return b-a; }).slice(0, GRADE_RECENT_WINDOW);
+  return GAME_DETAILS.filter(function(g){ return nos.indexOf(g.no) >= 0 && g.players.some(function(x){ return x.name === p.name; }); }).length;
 }
 function gradePool(){ return visiblePlayers().filter(function(p){ return p.games >= GRADE_POOL_MIN; }); }
 function _gcatMean(){
