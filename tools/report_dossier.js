@@ -19,7 +19,6 @@ function opt(k){ const i=args.indexOf(k); return i>=0?args[i+1]:null; }
     });
   }
   var head='# 최신 경기 #'+GAMES.length+' ('+GAMES[GAMES.length-1].date+') · 대상 '+want.length+'명: '+want.join(', ')+'\n';
-  try{ var miss={}; Object.keys(PLAYERS).forEach(function(n){ var c=phChamp(n); if(c && !(c.id in CHAMP_SKIN)) miss[c.id]=1; }); var ml=Object.keys(miss); head+='# 헤더 일러스트 스킨 미등록: '+(ml.length?ml.join(', '):'없음')+'\n'; }catch(e){}
   head+='\n';
   var PK={TOP:'탑',JUG:'정글',MID:'미드',ADC:'원딜',SUP:'서폿'};
   var MA={}; GAME_DETAILS.forEach(function(g){ ['win','lose'].forEach(function(t){ var x=g.players.filter(function(p){return p.team===t}).sort(function(a,b){return b.cp-a.cp})[0]; if(!x)return; MA[x.name]=MA[x.name]||{mvp:0,ace:0}; MA[x.name][t==='win'?'mvp':'ace']++; }); });

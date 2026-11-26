@@ -86,25 +86,23 @@ body{zoom:1.45;background:var(--bg);color:var(--text);font-family:'IBM Plex Sans
 
 /* 선수 헤더 */
 .ph{display:flex;align-items:flex-start;gap:14px;padding-bottom:18px;border-bottom:1px solid var(--border);margin-bottom:18px;position:relative;}
-.ph-art{position:absolute;top:0;bottom:0;left:27%;right:31%;background-repeat:no-repeat;pointer-events:none;}
-.ph-art::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,var(--bg) 0%,rgba(242,239,231,0) 18%,rgba(242,239,231,0) 82%,var(--bg) 100%),linear-gradient(0deg,var(--bg) 0%,rgba(242,239,231,0) 22%);}
-.ph-art-cap{position:absolute;left:50%;transform:translateX(-50%);bottom:12px;font-size:10px;font-weight:700;color:#fff;background:rgba(20,28,40,.5);padding:3px 10px;border-radius:20px;pointer-events:none;z-index:1;white-space:nowrap;}
-.ph.ph-has-art{padding:28px 16px 18px;min-height:250px;align-items:flex-start;}
-.ph-lcol,.ph-right{position:relative;z-index:1;}
-.ph-lcol{flex:0 0 auto;}
-.ph-top{display:flex;gap:14px;align-items:flex-start;}
-.ph.ph-has-art .ph-name{text-shadow:0 0 10px var(--bg),0 0 4px var(--bg);}
-.ph-left{margin-top:10px;}
-.ph-right{margin-left:auto;width:270px;flex-shrink:0;}
-.ph-rank{display:flex;flex-direction:column;gap:8px;align-items:stretch;}
+.ph-art{position:absolute;top:0;left:11%;right:11%;height:215px;background-repeat:no-repeat;pointer-events:none;opacity:.92;-webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 16%,#000 84%,transparent 100%),linear-gradient(180deg,transparent 0%,#000 14%,#000 55%,transparent 100%);-webkit-mask-composite:source-in;mask-image:linear-gradient(90deg,transparent 0%,#000 16%,#000 84%,transparent 100%),linear-gradient(180deg,transparent 0%,#000 14%,#000 55%,transparent 100%);mask-composite:intersect;}
+.ph-art-cap{position:absolute;right:13%;top:14px;font-size:10px;font-weight:700;color:#fff;background:rgba(20,28,40,.45);padding:3px 10px;border-radius:20px;pointer-events:none;z-index:1;white-space:nowrap;}
+.ph.ph-has-art{display:block;padding:22px 16px 16px;}
+.ph.ph-has-art .ph-name,.ph.ph-has-art .ph-sub{text-shadow:0 0 10px var(--bg),0 0 4px var(--bg),0 0 2px var(--bg);}
+.ph-top{display:flex;gap:14px;align-items:flex-start;position:relative;z-index:1;}
+.ph.ph-has-art .ph-top{min-height:140px;}
+.ph-row{display:flex;gap:12px;align-items:flex-start;position:relative;z-index:1;}
+.ph-left{flex-shrink:0;}
+.ph-right{flex:1;min-width:0;padding-top:2px;}
+.ph-rank{display:flex;flex-direction:row;gap:8px;align-items:stretch;}
 @media (max-width:768px){
-  .ph-art{left:0;right:0;bottom:auto;height:200px;border-radius:14px 14px 0 0;}
-  .ph-art::after{background:linear-gradient(0deg,var(--bg) 0%,rgba(242,239,231,.3) 35%,rgba(242,239,231,0) 65%);}
-  .ph-art-cap{left:auto;right:10px;transform:none;top:10px;bottom:auto;}
-  .ph.ph-has-art{padding-top:150px;padding-left:0;padding-right:0;}
-  .ph-lcol{flex:1 1 100%;}
-  .ph-rank{flex-direction:row;flex-wrap:wrap;}
-  .ph-right{margin-left:0;width:100%;}
+  .ph-art{left:0;right:0;height:200px;}
+  .ph-art-cap{right:10px;top:10px;}
+  .ph.ph-has-art{padding:16px 0 14px;}
+  .ph.ph-has-art .ph-top{min-height:120px;}
+  .ph-row{flex-direction:column;}
+  .ph-rank{flex-wrap:wrap;}
 }
 .ph-bg{position:absolute;inset:0;background:linear-gradient(90deg,rgba(200,155,60,.04),transparent 60%);pointer-events:none;}
 .ph-ava{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#eaf3f0,#d5e8e2);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--gold);flex-shrink:0;}
@@ -1030,10 +1028,10 @@ function rankBadgeHtml(name){
   }
   return '<div class="ph-rank">'+main+mvpAceBadgeHtml(name)+'</div>';
 }
-// ── 선수 탭 헤더 일러스트: 판수 모스트 5 중 승률 1위 챔피언, OP.GG 스킨 순위(가장 많이 보유) 1위 스킨 ──
+// ── 선수 탭 헤더 일러스트: 판수 모스트 5 중 승률 1위 챔피언 (스킨은 기본, 요청한 챔피언만 CHAMP_SKIN 으로 변경) ──
 // 키 = Data Dragon 챔피언 id, 값 = 스킨 번호. 없는 챔피언은 기본 스킨(0)으로 나온다.
-var CHAMP_SKIN = {"LeeSin":4,"Warwick":1,"Jhin":14,"Thresh":5,"MasterYi":106,"Renekton":9,"Skarner":3,"Lissandra":4,"Draven":68,"Pantheon":6,"Gnar":1,"Maokai":6,"Kled":9,"Aatrox":9,"TwistedFate":45,"Samira":1,"Blitzcrank":36,"XinZhao":13,"Anivia":46,"Ambessa":1,"Hecarim":4,"Amumu":34,"Pyke":16,"Yone":1,"Nautilus":9,"Tristana":33,"Rakan":5,"Leblanc":20,"Varus":17,"Braum":11,"Xayah":4,"Ornn":1,"Gwen":11,"Leona":11,"Syndra":5,"Graves":3,"Sylas":8,"Aurora":1,"Camille":2,"Tryndamere":27,"Viego":1,"Shen":51,"Sejuani":36,"Sett":1,"Taliyah":11,"Locke":1,"Lucian":8,"Rell":1,"Karma":26,"Shyvana":5,"Vladimir":5,"Zyra":7,"Galio":4,"Chogath":14,"Jax":13};
-var SKIN_FOCUS = {"LeeSin_4":[0.6,0.12],"Warwick_1":[0.55,0.3],"Jhin_14":[0.68,0.22],"Thresh_5":[0.6,0.4],"MasterYi_106":[0.62,0.25],"Renekton_9":[0.22,0.3],"Skarner_3":[0.45,0.4],"Lissandra_4":[0.57,0.25],"Draven_68":[0.45,0.15],"Pantheon_6":[0.55,0.3],"Gnar_1":[0.62,0.2],"Maokai_6":[0.5,0.35],"Kled_9":[0.6,0.25],"Aatrox_9":[0.55,0.3],"TwistedFate_45":[0.27,0.22],"Samira_1":[0.47,0.2],"Blitzcrank_36":[0.4,0.18],"XinZhao_13":[0.5,0.35],"Anivia_46":[0.4,0.3],"Ambessa_1":[0.55,0.15],"Hecarim_4":[0.5,0.35],"Amumu_34":[0.3,0.35],"Pyke_16":[0.45,0.35],"Yone_1":[0.52,0.25],"Nautilus_9":[0.5,0.3],"Tristana_33":[0.62,0.4],"Rakan_5":[0.55,0.35],"Leblanc_20":[0.58,0.2],"Varus_17":[0.5,0.25],"Braum_11":[0.75,0.4],"Xayah_4":[0.45,0.35],"Ornn_1":[0.5,0.35],"Gwen_11":[0.42,0.2],"Leona_11":[0.55,0.12],"Syndra_5":[0.5,0.3],"Graves_3":[0.35,0.25],"Sylas_8":[0.35,0.35],"Aurora_1":[0.5,0.2],"Camille_2":[0.45,0.3],"Tryndamere_27":[0.45,0.15],"Viego_1":[0.45,0.2],"Shen_51":[0.55,0.35],"Sejuani_36":[0.5,0.25],"Sett_1":[0.45,0.3],"Taliyah_11":[0.35,0.25],"Locke_1":[0.6,0.25],"Lucian_8":[0.55,0.25],"Rell_1":[0.5,0.35],"Karma_26":[0.55,0.25],"Shyvana_5":[0.65,0.2],"Vladimir_5":[0.68,0.2],"Zyra_7":[0.45,0.3],"Galio_4":[0.5,0.3],"Chogath_14":[0.45,0.3],"Jax_13":[0.5,0.3]};   // "스킨키": [얼굴 x, 얼굴 y] (0~1 비율) — 얼굴이 빗나가면 여기서 조정
+var CHAMP_SKIN = {};   // 기본 스킨(0) 사용. 바꿀 챔피언만 {"Jhin":14} 처럼 추가
+var SKIN_FOCUS = {};   // "스킨키": [얼굴 x, 얼굴 y] (0~1 비율) — 얼굴이 빗나가면 여기서 조정
 function phChamp(name){
   var p=PLAYERS[name]; if(!p||!p.mostChamps||!p.mostChamps.length) return null;
   var m=p.mostChamps.slice(0,5).slice().sort(function(a,b){ return (b[1].wins/b[1].games)-(a[1].wins/a[1].games) || b[1].games-a[1].games; })[0];
@@ -1099,12 +1097,12 @@ function renderPlayer() {
   ];
 
   var html = '<div class="ph fi'+(phArtHtml(name)?' ph-has-art':'')+'">'+phArtHtml(name)+'<div class="ph-bg"></div>'+
-    '<div class="ph-lcol"><div class="ph-top">'+
+    '<div class="ph-top">'+
     '<div class="ph-ava" style="border-color:'+tierOf(p.elo).c+';background:linear-gradient(135deg,'+tierOf(p.elo).c+'18,#eaf3f0);">'+tierIcon(p.elo,44)+'</div>'+
     '<div class="ph-info">'+
     '<div class="ph-name">'+name+'</div>'+
     '<div class="ph-sub">'+p.games+'게임 플레이 · '+p.pos+' 포지션</div>'+
-    '</div></div><div class="ph-left">'+rankBadgeHtml(name)+'</div></div><div class="ph-right">'+
+    '</div></div><div class="ph-row"><div class="ph-left">'+rankBadgeHtml(name)+'</div><div class="ph-right">'+
     ownedChampsHtml(name)+
     '<div style="display:flex;gap:6px;flex-wrap:wrap;margin:0 0 8px">'+
       ((typeof OPGG_LINKS!=='undefined'&&OPGG_LINKS[name])?'<a href="'+OPGG_LINKS[name]+'" target="_blank" rel="noopener" style="text-decoration:none;padding:4px 11px;border-radius:7px;font-size:11px;font-weight:800;color:#3368a0;background:rgba(51,104,160,.08);border:1px solid rgba(51,104,160,.35)">🔗 op.gg 전적</a>':'')+
@@ -1123,7 +1121,7 @@ function renderPlayer() {
         return '<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:5px;font-size:11px;font-weight:700;background:rgba(240,192,48,.08);border:1px solid rgba(240,192,48,.25);color:#b8860f">👑 '+m.label+'</span>';
       }).join('')+'</div>';
     })()+
-    '</div>'+
+    '</div></div>'+
     '</div>';
 
   html += '<div class="two-col"><div>';
