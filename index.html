@@ -86,11 +86,24 @@ body{zoom:1.45;background:var(--bg);color:var(--text);font-family:'IBM Plex Sans
 
 /* 선수 헤더 */
 .ph{display:flex;align-items:flex-start;gap:14px;padding-bottom:18px;border-bottom:1px solid var(--border);margin-bottom:18px;position:relative;}
-.ph-art{position:absolute;left:0;right:0;top:0;height:230px;border-radius:14px;background-size:cover;background-repeat:no-repeat;filter:blur(1.5px) saturate(1.05);opacity:.75;pointer-events:none;-webkit-mask-image:linear-gradient(to bottom,#000 0%,rgba(0,0,0,.85) 45%,transparent 100%);mask-image:linear-gradient(to bottom,#000 0%,rgba(0,0,0,.85) 45%,transparent 100%);}
-.ph-art-cap{position:absolute;right:12px;top:10px;font-size:10px;font-weight:700;color:#fff;background:rgba(20,28,40,.45);padding:3px 9px;border-radius:20px;pointer-events:none;}
-.ph.ph-has-art{padding-top:150px;}
+.ph-art{position:absolute;top:0;right:0;bottom:0;left:56%;border-radius:0 14px 14px 0;background-repeat:no-repeat;filter:saturate(1.05);pointer-events:none;}
+.ph-art::after{content:'';position:absolute;inset:0;border-radius:14px;border-radius:0 14px 14px 0;background:linear-gradient(90deg,var(--bg) 0%,rgba(242,239,231,.55) 14%,rgba(242,239,231,0) 34%),linear-gradient(0deg,var(--bg) 0%,rgba(242,239,231,0) 22%);}
+.ph-art-cap{position:absolute;right:12px;top:10px;font-size:10px;font-weight:700;color:#fff;background:rgba(20,28,40,.45);padding:3px 9px;border-radius:20px;pointer-events:none;z-index:1;}
+.ph.ph-has-art{padding:56px 16px 18px;min-height:240px;}
 .ph.ph-has-art>.ph-ava,.ph.ph-has-art>.ph-info{position:relative;z-index:1;}
 .ph.ph-has-art .ph-name{text-shadow:0 0 10px var(--bg),0 0 4px var(--bg);}
+.ph-row{display:flex;gap:14px;align-items:flex-start;margin:6px 0 0;}
+.ph-left{flex-shrink:0;}
+.ph-right{min-width:0;max-width:255px;}
+.ph-rank{display:flex;flex-direction:column;gap:8px;align-items:stretch;}
+@media (max-width:768px){
+  .ph-art{left:0;bottom:auto;height:200px;border-radius:14px 14px 0 0;}
+  .ph-art::after{background:linear-gradient(0deg,var(--bg) 0%,rgba(242,239,231,.35) 40%,rgba(242,239,231,0) 70%);}
+  .ph.ph-has-art{padding-top:150px;padding-left:0;padding-right:0;}
+  .ph-row{flex-direction:column;}
+  .ph-rank{flex-direction:row;flex-wrap:wrap;}
+  .ph-right{max-width:none;}
+}
 .ph-bg{position:absolute;inset:0;background:linear-gradient(90deg,rgba(200,155,60,.04),transparent 60%);pointer-events:none;}
 .ph-ava{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#eaf3f0,#d5e8e2);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--gold);flex-shrink:0;}
 .ph-info{flex:1;}
@@ -1013,7 +1026,7 @@ function rankBadgeHtml(name){
       '<span style="font-size:9px;font-weight:700;letter-spacing:.5px;color:var(--muted)">승률 지수 순위 · '+r.wiMin+'판+</span>'+
       '<span style="font-size:12px;font-weight:700;color:var(--muted)">'+r.wiNeed+'판 더 뛰면 집계</span></div>';
   }
-  return '<div class="ph-rank" style="display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 8px">'+main+sub+mvpAceBadgeHtml(name)+'</div>';
+  return '<div class="ph-rank">'+main+mvpAceBadgeHtml(name)+'</div>';
 }
 // ── 선수 탭 헤더 일러스트: 판수 모스트 5 중 승률 1위 챔피언, OP.GG 스킨 순위(가장 많이 보유) 1위 스킨 ──
 // 키 = Data Dragon 챔피언 id, 값 = 스킨 번호. 없는 챔피언은 기본 스킨(0)으로 나온다.
@@ -1034,7 +1047,8 @@ function phArtHtml(name){
 function phFocus(){ var e=document.querySelector('.ph-art[data-fx]'); if(!e) return;
   var W=e.clientWidth,H=e.clientHeight; if(!W||!H) return;
   var s=Math.max(W/1215,H/717), sw=1215*s, sh=717*s, fx=parseFloat(e.getAttribute('data-fx')), fy=parseFloat(e.getAttribute('data-fy'));
-  var x=Math.max(W-sw,Math.min(0,W/2-fx*sw)), y=Math.max(H-sh,Math.min(0,H*0.42-fy*sh));
+  var mob=window.matchMedia&&window.matchMedia('(max-width:768px)').matches;
+  var x=Math.max(W-sw,Math.min(0,W*(mob?0.5:0.55)-fx*sw)), y=Math.max(H-sh,Math.min(0,H*(mob?0.42:0.38)-fy*sh));
   e.style.backgroundSize=Math.round(sw)+'px '+Math.round(sh)+'px'; e.style.backgroundPosition=Math.round(x)+'px '+Math.round(y)+'px'; }
 window.addEventListener('resize', function(){ phFocus(); });
 function renderPlayer() {
@@ -1087,7 +1101,7 @@ function renderPlayer() {
     '<div class="ph-info">'+
     '<div class="ph-name">'+name+'</div>'+
     '<div class="ph-sub">'+p.games+'게임 플레이 · '+p.pos+' 포지션</div>'+
-    rankBadgeHtml(name)+
+    '<div class="ph-row"><div class="ph-left">'+rankBadgeHtml(name)+'</div><div class="ph-right">'+
     ownedChampsHtml(name)+
     '<div style="display:flex;gap:6px;flex-wrap:wrap;margin:0 0 8px">'+
       ((typeof OPGG_LINKS!=='undefined'&&OPGG_LINKS[name])?'<a href="'+OPGG_LINKS[name]+'" target="_blank" rel="noopener" style="text-decoration:none;padding:4px 11px;border-radius:7px;font-size:11px;font-weight:800;color:#3368a0;background:rgba(51,104,160,.08);border:1px solid rgba(51,104,160,.35)">🔗 op.gg 전적</a>':'')+
@@ -1106,16 +1120,8 @@ function renderPlayer() {
         return '<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:5px;font-size:11px;font-weight:700;background:rgba(240,192,48,.08);border:1px solid rgba(240,192,48,.25);color:#b8860f">👑 '+m.label+'</span>';
       }).join('')+'</div>';
     })()+
+    '</div></div>'+
     '</div>'+
-    (function(){
-      var ec = eloChartSvg(name, 260, 110, 10);
-      var chgS = ec.chg>0?'+'+ec.chg:''+ec.chg;
-      return '<div style="flex-shrink:0;align-self:flex-start;background:var(--bg2);border:1px solid var(--dim);border-radius:10px;padding:10px 12px">'+
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'+
-        '<span style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.5px">ELO 변동</span>'+
-        '<span style="font-size:12px;font-weight:700;font-family:Rajdhani,sans-serif;color:'+ec.col+'">'+chgS+'</span></div>'+
-        ec.svg+'</div>';
-    })()+
     '</div>';
 
   html += '<div class="two-col"><div>';
@@ -1289,6 +1295,16 @@ function renderPlayer() {
     rKeys.map(function(cat,i){var sc=rVals[cat];var gr=r6?r6grade(sc):pgrd(sc, pgradeCuts()[cat]);return '<div class="gr-row" title="'+(r6?RADAR6_DESC[cat]+' · '+POS_KR[pos]+' 선수 대비 백분위':'')+'"><div class="gr-dot" style="background:'+rCols[i]+'"></div><div class="gr-cat">'+cat+'</div><div class="gr-bw"><div class="gr-bf" style="width:'+sc+'%;background:'+rCols[i]+';opacity:.7"></div></div><div class="gr-sc">'+Math.round(sc)+'</div><div class="gr-gd" style="color:'+gr.c+'">'+gr.g+'</div></div>';}).join('')+
     '</div></div></div>';
 
+  // ELO 변동 (6각 레이더 아래)
+  (function(){
+      var ec = eloChartSvg(name, 320, 120, 10);
+      var chgS = ec.chg>0?'+'+ec.chg:''+ec.chg;
+      html += '<div class="card fi" style="padding:12px 14px">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'+
+        '<span style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.5px">ELO 변동</span>'+
+        '<span style="font-size:12px;font-weight:700;font-family:Rajdhani,sans-serif;color:'+ec.col+'">'+chgS+'</span></div>'+
+        '<div style="display:flex;justify-content:center">'+ec.svg+'</div></div>';
+  })();
   html += similarHtml(name);
   html += botDuoHtml(name);
   // 듀오 전적 (최근 30경기, 같은 팀 기준)
