@@ -805,8 +805,8 @@ function report2Html(name, R, report){
       (ch.length?'<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:7px">'+ch.map(rep2Chip).join('')+'</div>':'')+
       '<div style="font-size:13px;line-height:1.75;color:var(--text2)">'+txt+'</div></div>';
   });
-  var asof=R.asof||GAMES.length, more=GAMES.length-asof;
-  h+='<div style="font-size:10px;color:var(--muted);text-align:right;margin:-4px 0 12px">본문 '+asof+'경기까지 기준'+(more>0?' · 이후 '+more+'경기는 다음 업데이트에 반영':'')+' · 숫자 칩은 실시간 · 순위는 같은 라인 기준</div>';
+  var asof=R.asof||GAMES.length, more=GAME_DETAILS.filter(function(g){ return g.no>asof && g.players.some(function(x){return x.name===name;}); }).length;
+  h+='<div style="font-size:10px;color:var(--muted);text-align:right;margin:-4px 0 12px">본문 '+asof+'경기까지 기준'+(more>0?' · 이후 출전한 '+more+'경기는 다음 업데이트에 반영':'')+' · 숫자 칩은 실시간 · 순위는 같은 라인 기준</div>';
   return h;
 }
 
