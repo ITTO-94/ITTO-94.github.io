@@ -191,8 +191,12 @@ body{zoom:1.45;background:var(--bg);color:var(--text);font-family:'IBM Plex Sans
   div[style*="grid-template-columns:repeat(4,1fr)"]{grid-template-columns:repeat(2,1fr) !important;}
   div[style*="grid-template-columns:repeat(5,1fr)"]{grid-template-columns:repeat(3,1fr) !important;}
   /* 어워드 1·2·3팀: 휴대폰에서는 2열로, 레이더를 크게 */
-  div.aw-team.aw-team{grid-template-columns:repeat(2,1fr) !important;}
-  .aw-team canvas{max-width:170px !important;}
+  div.aw-team.aw-team{grid-template-columns:1fr !important;gap:12px !important;}
+  .aw-team .aw-cd{height:430px}
+  .aw-team .aw-top{padding:14px 10px 0 16px}
+  .aw-team .aw-nm{font-size:19px}.aw-team .aw-gd{font-size:15px}.aw-team .aw-rc{font-size:15px}.aw-team .aw-rc span{font-size:21px}
+  .aw-team .aw-rt canvas{max-width:210px}
+  .aw-team .aw-bg .aw-lb b{font-size:11.5px}.aw-team .aw-bg .aw-rec{font-size:11px;letter-spacing:0}.aw-team .aw-bg .aw-pct{font-size:17px}
   div[style*="grid-template-columns:repeat(2,1fr)"]{grid-template-columns:1fr !important;}
 
   /* 선수 헤더: ELO 차트가 아래로 자연 줄바꿈 */
@@ -284,6 +288,28 @@ body{zoom:1.45;background:var(--bg);color:var(--text);font-family:'IBM Plex Sans
   .grid2{grid-template-columns:1fr;}
   .power{flex-wrap:wrap;}
 }
+
+/* 어워드 1·2·3팀 카드 (위: 선수 정보 + 6각, 아래: 주포지션 모스트 5 일러스트) */
+.aw-cd{position:relative;height:390px;border-radius:12px;overflow:hidden;border:1px solid;background:linear-gradient(180deg,var(--bg2),var(--bg));display:flex;flex-direction:column;cursor:pointer}
+.aw-top{display:flex;align-items:flex-start;padding:10px 6px 0 10px;height:47%;box-sizing:border-box}
+.aw-lf{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:60px}
+.aw-nm{font-size:14px;font-weight:800;color:var(--text);line-height:1.2}
+.aw-gd{font-size:13px;font-weight:800;padding:0 10px;border-radius:6px;border:1px solid;font-family:Rajdhani,sans-serif}
+.aw-rc{font-family:Rajdhani,sans-serif;font-size:11.5px;font-weight:700;color:var(--text2);line-height:1.15;margin-top:2px}
+.aw-rc span{font-size:15px;color:var(--text)}
+.aw-cd em{font-style:normal}.aw-rc .w{color:#3368a0}.aw-rc .l{color:#cf4444}
+.aw-rt{flex:1;min-width:0;display:flex;justify-content:flex-end;margin-top:6px}
+.aw-rt canvas{width:100%;max-width:165px;aspect-ratio:190/168;display:block}
+.aw-bg{position:relative;flex:1;display:flex;border-top:1px solid rgba(184,134,15,.25)}
+.aw-st{position:relative;flex:1;overflow:hidden;border-right:1px solid rgba(255,255,255,.5)}.aw-st:last-child{border-right:0}
+.aw-im{position:absolute;inset:0;background-size:cover;background-position:center 42%}
+.aw-lb{position:absolute;left:0;right:0;bottom:0;padding:22px 1px 6px;background:linear-gradient(180deg,transparent,rgba(8,12,18,.82));color:#fff;text-align:center;display:flex;flex-direction:column}
+.aw-lb b{font-size:9.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:1px}
+.aw-rec{font-size:9px;font-family:Rajdhani,sans-serif;font-weight:700;white-space:nowrap;letter-spacing:-.1px}
+.aw-lb .w{color:#8fb8ff}.aw-lb .l{color:#ff8f8f}
+.aw-pct{font-size:13px;font-family:Rajdhani,sans-serif;font-weight:700;line-height:1.1}
+.aw-n5 .aw-rec,.aw-n4 .aw-rec{font-size:6.6px;letter-spacing:-.2px}.aw-n5 .aw-pct,.aw-n4 .aw-pct{font-size:10px}.aw-n5 .aw-lb b,.aw-n4 .aw-lb b{font-size:7px}
+.aw-n3 .aw-rec{font-size:8px}.aw-n3 .aw-pct{font-size:12px}.aw-n3 .aw-lb b{font-size:8.5px}
 </style>
 </head>
 <body>
@@ -3718,21 +3744,31 @@ function renderAward(){
   function teamCard(title, rankIdx, accent, medal){
     var h = '<div class="card fi" style="border-color:'+accent+'40">'+
       '<div class="ct" style="color:'+accent+'">'+medal+' '+title+'</div>'+
-      '<div class="aw-team" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px">';
+      '<div class="aw-team" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px">';
     POS.forEach(function(ps){
       var entry = byPos[ps][rankIdx];
       if(entry){
-        var p = entry.p;
-        h += '<div style="background:var(--bg2);border:1px solid '+accent+'33;border-radius:10px;padding:12px 8px;text-align:center;cursor:pointer" onclick="goPlayer(\''+p.name+'\')">'+
-          '<div class="pb pb-'+ps+'" style="margin:0 0 8px">'+ps+'</div>'+
-          '<div style="width:36px;height:36px;margin:0 auto 6px;position:relative">'+tierIcon(p.elo,36)+'</div>'+
-          '<div style="font-size:14px;font-weight:700;color:var(--text2);margin-bottom:3px">'+p.name+'</div>'+
-          '<div style="display:inline-block;font-size:12px;font-family:Rajdhani,sans-serif;font-weight:800;padding:1px 9px;border-radius:6px;color:'+entry.tg.c+';background:'+entry.tg.bg+';border:1px solid '+entry.tg.bd+'">'+entry.tg.g+'</div>'+
-          '<div style="font-size:10px;color:var(--muted);margin-top:3px">'+p.games+'전 '+p.wins+'승</div>'+
-          '<canvas id="awr_'+rankIdx+'_'+ps+'" width="380" height="336" style="width:100%;max-width:150px;aspect-ratio:190/168;display:block;margin:6px auto 0"></canvas>'+
+        var p = entry.p, L = p.games-p.wins, wr = p.games?Math.round(p.wins/p.games*100):0;
+        // 주포지션 모스트 5 (세로 일러스트 + 챔피언별 전적)
+        var mcs = posChamps(p.name, ps).slice(0,5);
+        var strips = mcs.map(function(mc){
+          var c=mc[0], st=playerChampStatPos(p.name, c, ps), id=CMAP[c]||CMAPN[String(c).replace(/\s+/g,'')];
+          var img = id ? 'background-image:url(https://ddragon.leagueoflegends.com/cdn/img/champion/loading/'+id+'_0.jpg)' : 'background:#2a3340';
+          return '<div class="aw-st"><div class="aw-im" style="'+img+'"></div><div class="aw-lb"><b>'+c+'</b>'+
+            '<span class="aw-rec">'+st.games+'G <em class="w">'+st.wins+'W</em> <em class="l">'+st.losses+'L</em></span><span class="aw-pct">'+st.wr+'%</span></div></div>';
+        }).join('');
+        h += '<div class="aw-cd" style="border-color:'+accent+'55" onclick="goPlayer(\''+p.name+'\')">'+
+          '<div class="aw-top"><div class="aw-lf">'+
+            '<div class="pb pb-'+ps+'" style="margin:0">'+ps+'</div>'+
+            '<div style="width:34px;height:34px;position:relative;margin:3px 0 2px">'+tierIcon(p.elo,34)+'</div>'+
+            '<div class="aw-nm">'+p.name+'</div>'+
+            '<div class="aw-gd" style="color:'+entry.tg.c+';background:'+entry.tg.bg+';border-color:'+entry.tg.bd+'">'+entry.tg.g+'</div>'+
+            '<div class="aw-rc">'+p.games+'G <em class="w">'+p.wins+'W</em> <em class="l">'+L+'L</em><br><span>'+wr+'%</span></div>'+
+          '</div><div class="aw-rt"><canvas id="awr_'+rankIdx+'_'+ps+'" width="380" height="336"></canvas></div></div>'+
+          '<div class="aw-bg aw-n'+mcs.length+'">'+strips+'</div>'+
         '</div>';
       } else {
-        h += '<div style="background:var(--bg2);border:1px dashed var(--dim);border-radius:10px;padding:12px 8px;text-align:center;opacity:.4">'+
+        h += '<div style="background:var(--bg2);border:1px dashed var(--dim);border-radius:12px;padding:12px 8px;text-align:center;opacity:.4">'+
           '<div class="pb pb-'+ps+'" style="margin:0 0 8px">'+ps+'</div>'+
           '<div style="font-size:18px;color:var(--muted);padding:14px 0">—</div>'+
         '</div>';
