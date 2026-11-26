@@ -440,12 +440,14 @@ function pgrd(score,cuts){
 //       6각 데이터가 없는 선수(라이엇 데이터 3판 미만)는 예전 5개 지표로 대신 계산.
 // 판수 조건 (높은 등급일수록 더 필요):
 //   1차 · 통산 판수     OP 20 · S 15 · A 10 · B 5
-//   2차 · 리그 전체 최근 30경기 중 출전 수   OP 8 · S 6 · A 4 · B 2
-//   모자라면 평균(50)보다 높은 축을 (판수 ÷ 필요 판수) × (최근 출전 ÷ 필요 출전)만큼만 인정하고,
+//   2차 · 리그 전체 최근 30경기 중 출전 수 → 구간별 패널티 (등급과 무관하게 적용)
+//         8판+ 0% · 6~7판 10% · 4~5판 20% · 2~3판 35% · 0~1판 50%
+//   평균(50)보다 높은 축을 (통산 판수 ÷ 필요 판수) × (1 − 최근 패널티)만큼만 인정하고,
 //   그 점수로도 해당 등급 기준선을 넘어야 그 등급을 받는다. 못 넘으면 한 단계 아래로 다시 계산.
 // 기준선(고정): OP 72 · S 65 · A 58 · B 50 · C 42 · D 34
 var GRADE_REQ = {OP:20, S:15, A:10, B:5};
-var GRADE_RECENT_REQ = {OP:8, S:6, A:4, B:2};
+var GRADE_RECENT_PEN = [[8,0],[6,0.10],[4,0.20],[2,0.35],[0,0.50]];   // [최근 30경기 출전 수 이상, 패널티]
+function recentPenalty(r){ for(var i=0;i<GRADE_RECENT_PEN.length;i++) if(r>=GRADE_RECENT_PEN[i][0]) return GRADE_RECENT_PEN[i][1]; return 0.5; }
 var GRADE_CUT = {OP:72, S:65, A:58, B:50, C:42, D:34};
 var GRADE_RECENT_WINDOW = 30;   // 리그 전체 최근 30경기
 function recentGames(p){
@@ -466,7 +468,7 @@ function totalGrade(p){
   var A=gradeAxes(p), raw=_gscore(A.ax,1), g=p.games, r=recentGames(p), got=null, val=raw;
   var order=['OP','S','A','B'];
   for(var i=0;i<order.length;i++){
-    var G=order[i], f=Math.min(1,g/GRADE_REQ[G])*Math.min(1,r/GRADE_RECENT_REQ[G]), v=_gscore(A.ax,f);
+    var G=order[i], f=Math.min(1,g/GRADE_REQ[G])*(1-recentPenalty(r)), v=_gscore(A.ax,f);
     if(v>=GRADE_CUT[G]){ got=G; val=v; break; }
   }
   if(!got){ got=_ggrade(raw); if('OP S A B'.indexOf(got)>=0) got='C'; val=raw; }   // 판수 조건을 하나도 못 채우면 C부터
@@ -475,7 +477,7 @@ function totalGrade(p){
   var up={OP:Infinity,S:GRADE_CUT.OP,A:GRADE_CUT.S,B:GRADE_CUT.A,C:GRADE_CUT.B,D:GRADE_CUT.C,F:GRADE_CUT.D}[got];
   if(val>=up) val=up-0.01;
   var st=GSTYLE[got];
-  var why = pen ? natural+' 등급은 통산 '+GRADE_REQ[natural]+'판 · 최근 30경기 '+GRADE_RECENT_REQ[natural]+'판부터' : '';
+  var rp=recentPenalty(r), why = pen ? (g<GRADE_REQ[natural]?natural+' 등급은 통산 '+GRADE_REQ[natural]+'판부터':'')+(g<GRADE_REQ[natural]&&rp?' · ':'')+(rp?'최근 30경기 '+r+'판 출전(−'+Math.round(rp*100)+'%)':'') : '';
   return (_TG[p.name]={g:got, c:st.c, bg:st.bg, bd:st.bd, adj:val, raw:raw, capped:pen, natural:natural, why:why, r6:A.r6, recent:r});
 }
 function adjTotal(p){ return totalGrade(p).adj; }
@@ -4108,7 +4110,7 @@ function renderNews(){
 
   // ── 👑 현재 OP 선수 (능력치 레이더) ──
   html += '<div class="card fi" style="border-color:rgba(240,192,48,.35);background:linear-gradient(180deg,rgba(240,192,48,.05),transparent)">'+
-    '<div class="ct" style="color:#b8860f;display:flex;align-items:center;gap:8px">👑 현재 OP 선수 <span style="font-weight:400;color:var(--muted);font-size:11px">종합등급 OP · 6각 평균 '+GRADE_CUT.OP+'점+ · 통산 '+GRADE_REQ.OP+'판 · 최근 30경기 '+GRADE_RECENT_REQ.OP+'판</span></div>';
+    '<div class="ct" style="color:#b8860f;display:flex;align-items:center;gap:8px">👑 현재 OP 선수 <span style="font-weight:400;color:var(--muted);font-size:11px">종합등급 OP · 6각 평균 '+GRADE_CUT.OP+'점+ · 통산 '+GRADE_REQ.OP+'판 · 최근 30경기 출전 보정</span></div>';
   if(!opList.length){
     html += '<div style="padding:20px;text-align:center;font-size:11px;color:var(--muted)">현재 OP 등급 선수가 없어요</div>';
   } else {
