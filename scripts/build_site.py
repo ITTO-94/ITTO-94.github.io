@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """HUSH.GG — data/ 로 통계를 다시 계산해 index.html 데이터 부분만 교체 (GitHub Actions용)
  - 디자인 · 기능 코드는 건드리지 않음 (선수 리포트 · Just Joke 는 data/reports.json · data/just_joke.json 이 있을 때만 교체)
- - 새 경기가 생겼을 때만 '지난 업데이트' 기준값(ELO 변동 · 티어리스트 순위 변동 · NEW 표시)을 갱신
+ - 새 내전 날의 첫 경기가 들어올 때만 '지난 업데이트' 기준값(ELO 변동 · 티어리스트 순위 변동 · NEW 표시)을 갱신
+   (같은 날 한 판씩 여러 번 돌려도 기준은 이전 내전 날로 유지)
 """
 import json, os, re, subprocess, sys
 
@@ -71,8 +72,12 @@ def main():
     details = json.load(open(os.path.join(DATA, 'api_details.json'), encoding='utf-8'))
     games_src = json.load(open(os.path.join(DATA, 'games.json'), encoding='utf-8'))
 
-    if len(b['GAMES']) > len(old_games):
-        print(f'새 경기 {len(b["GAMES"]) - len(old_games)}판 → 지난 업데이트 기준값 갱신')
+    new_day = len(b['GAMES']) > len(old_games) and (not old_games or
+               games_src[len(old_games)]['date'] != games_src[len(old_games) - 1]['date'])
+    if len(b['GAMES']) > len(old_games) and not new_day:
+        print(f'새 경기 {len(b["GAMES"]) - len(old_games)}판 (같은 날 추가) → 지난 업데이트 기준값 유지')
+    if new_day:
+        print(f'새 경기 {len(b["GAMES"]) - len(old_games)}판 (새 내전 날) → 지난 업데이트 기준값 갱신')
         s = put(s, 'ELO_PREV', {n: p['elo'] for n, p in old_players.items()})
         s = put(s, 'CHAMP_PREV', lane_ranks(old_games, old_details))
         s = re.sub(r'var PREV_GAMES = \d+;', f'var PREV_GAMES = {len(old_games)};', s)
