@@ -425,7 +425,7 @@ var _PCUTS=null;
 function pgradeCuts(){
   if(_PCUTS) return _PCUTS;
   var arr=visiblePlayers();
-  var c={ total:_pcuts(arr.map(function(p){return adjTotal(p);})) };
+  var c={ total:_pcuts(gradePool().map(function(p){return adjTotal(p);})) };
   ['전투','시야','생존','성장','챔프폭'].forEach(function(cat){
     c[cat]=_pcuts(arr.map(function(p){return calcCats(p,p.pos)[cat];}));
   });
@@ -435,34 +435,59 @@ function pgrd(score,cuts){
   var g=score>=cuts.OP?'OP':score>=cuts.S?'S':score>=cuts.A?'A':score>=cuts.B?'B':score>=cuts.C?'C':score>=cuts.D?'D':'F';
   var st=GSTYLE[g];return {g:g,c:st.c,bg:st.bg,bd:st.bd};
 }
-// ── 종합등급 판수 보정 ─────────────────────────────
-// 승률 지수와 동일한 베이지안 보정(C=5): 판수가 적으면 전체 평균으로 수렴.
-// '최근 30게임 내 판수가 많고 + 능력치가 높아야' 높은 등급을 받도록 설계.
-// 추가로 OP·S 등급은 기준 판수(statMinGames) 이상 출전자만 자격 — 미달 시 A로 캡.
+// ── 종합등급 판수 보정 (2026-11-27 개편) ─────────────────────
+// 1단계 · 통산 판수: 세부지표(전투·시야·생존·성장·챔프폭)를 각각 평균 쪽으로 보정 (베이지안 C=5)
+// 2단계 · 최근 30경기 출전 수: 최근에 거의 안 나왔으면 평균보다 높은 부분을 조금 덜 인정 (3판 이상이면 100%)
+// 3단계 · 등급별 필요 판수: 높은 등급일수록 판수가 더 필요. 모자라면 평균보다 높은 세부지표를
+//         (판수 ÷ 필요 판수) 비율만큼만 인정한 점수로도 그 등급 기준선을 넘어야 그 등급을 받는다.
+//         → 지표가 비슷하면 20판 선수가 10판 선수보다 높은 등급을 받기 쉽다.
+// 기준선(백분위)은 통산 5판 이상 선수의 1·2단계 보정 점수로 계산.
 var GRADE_C = 5;
-var _GMEAN = null;
+var GRADE_POOL_MIN = 5;
+var GRADE_REQ = {OP:15, S:12, A:8, B:4};   // 등급별 필요 판수 (모자라면 그만큼 세부지표 인정 비율이 줄어듦)
+var GRADE_RECENT_FULL = 3;
+var _GCAT = null;
+var GCATS = ['전투','시야','생존','성장','챔프폭'];
 function _rawTotal(p){ return calcTotal(calcCats(p,p.pos),p.pos); }
-function gradeGames(p){
+function gradeGames(p){ return p.games; }
+function recentGames(p){
   if(GAMES.length <= AWARD_WINDOW) return p.games;
   var w = awardPlayersAll().filter(function(x){ return x.name === p.name; })[0];
   return w ? w.games : 0;
 }
-function adjTotal(p){
-  if(_GMEAN === null){
-    var arr = visiblePlayers().map(function(p){ return _rawTotal(p); });
-    _GMEAN = arr.reduce(function(a,b){ return a+b; }, 0) / arr.length;
-  }
-  var g = gradeGames(p);
-  return (_rawTotal(p)*g + _GMEAN*GRADE_C) / (g + GRADE_C);
+function gradePool(){ return visiblePlayers().filter(function(p){ return p.games >= GRADE_POOL_MIN; }); }
+function _gcatMean(){
+  if(_GCAT) return _GCAT;
+  var pool=gradePool(), m={};
+  GCATS.forEach(function(k){ m[k]=pool.reduce(function(s,p){ return s+calcCats(p,p.pos)[k]; },0)/pool.length; });
+  _GCAT=m; return m;
 }
+// f: 평균보다 높은 부분을 인정하는 비율 (3단계)
+function _gradeCats(p,f){
+  var c=calcCats(p,p.pos), m=_gcatMean(), g=p.games, r=recentGames(p), out={};
+  var w1=g/(g+GRADE_C), w2=Math.min(1, 0.85+0.15*r/GRADE_RECENT_FULL);
+  GCATS.forEach(function(k){
+    var d=(c[k]-m[k])*w1;              // 1단계 (위아래 모두)
+    if(d>0) d=d*w2*(f===undefined?1:f); // 2·3단계 (평균보다 높은 부분만)
+    out[k]=m[k]+d;
+  });
+  return out;
+}
+function adjTotal(p){ return calcTotal(_gradeCats(p),p.pos); }
 function totalGrade(p){
-  var adj = adjTotal(p);
-  var gr = pgrd(adj, pgradeCuts().total);
-  if((gr.g==='OP' || gr.g==='S') && gradeGames(p) < statMinGames()){
-    var st = GSTYLE['A'];
-    return {g:'A', c:st.c, bg:st.bg, bd:st.bd, adj:adj, capped:true};
+  var cuts=pgradeCuts().total, base=adjTotal(p), order=['OP','S','A','B'], g=p.games;
+  var natural=pgrd(base,cuts).g, got=null, score=base;
+  for(var i=0;i<order.length;i++){
+    var G=order[i], f=Math.min(1, g/GRADE_REQ[G]), sc=calcTotal(_gradeCats(p,f),p.pos);
+    if(sc>=cuts[G]){ got=G; score=sc; break; }
   }
-  return {g:gr.g, c:gr.c, bg:gr.bg, bd:gr.bd, adj:adj, capped:false};
+  if(!got){ got=natural; score=base; }
+  // 정렬용 점수: 받은 등급 범위 안으로 맞춤
+  var up={OP:Infinity,S:cuts.OP,A:cuts.S,B:cuts.A,C:cuts.B,D:cuts.C,F:cuts.D}[got];
+  if(score>=up) score=up-0.01;
+  var st=GSTYLE[got], rank='OP S A B C D F';
+  var pen = rank.indexOf(got) > rank.indexOf(natural);
+  return {g:got, c:st.c, bg:st.bg, bd:st.bd, adj:score, capped:pen, need:pen?GRADE_REQ[natural]:0, natural:natural};
 }
 
 // KDA 색상: 5점 이상 노란색, 3점 이상 청록, 미만 회색
@@ -978,7 +1003,7 @@ function renderPlayer() {
   // 상세 지표 카드 데이터 (사진 스타일)
   var statCards = [
     // 행1: 핵심 지표 (종합등급·ELO는 항상 전체 기준)
-    {val: og.g,      label: '종합등급',  rank: '보정 총점 '+Math.round(total)+'점'+(og.capped?' · 판수 부족(A 캡)':''), color: og.c, highlight: true},
+    {val: og.g,      label: '종합등급',  rank: '보정 총점 '+Math.round(total)+'점'+(og.capped?' · '+og.natural+' 등급은 '+og.need+'판부터':''), color: og.c, highlight: true},
     {val: dsx.kda,   label: 'KDA',        rank: rk('kda'),     color: 'var(--text2)'},
     {val: dsx.wr+'%',label: '승률',       rank: rk('wr'),      color: wrC2},
     {val: p.elo,     label: 'ELO',        rank: getRank(name,'elo'),     color: 'var(--gold)'},
@@ -3550,7 +3575,7 @@ function duoStats(name){
 
 // ── 어워드 시스템 (최근 30경기 기반) ─────────────────
 var AWARD_METRICS = [
-  {key:'total',      label:'종합등급', getter:function(p){return adjTotal(p);}, fmt:function(v){return pgrd(v, pgradeCuts().total).g;}},
+  {key:'total',      label:'종합등급', getter:function(p){return totalGrade(p).adj;}, fmt:function(v){return pgrd(v, pgradeCuts().total).g;}},
   {key:'kda',        label:'KDA'},
   {key:'wr',         label:'승률', fmt:function(v){return v+'%';},
     // 1위 판정은 베이지안 승률지수(C=5, 전체 평균 수렴) — 소표본 100% 왜곡 방지. 표시는 실승률.
@@ -4093,7 +4118,7 @@ function renderNews(){
 
   // ── 👑 현재 OP 선수 (능력치 레이더) ──
   html += '<div class="card fi" style="border-color:rgba(240,192,48,.35);background:linear-gradient(180deg,rgba(240,192,48,.05),transparent)">'+
-    '<div class="ct" style="color:#b8860f;display:flex;align-items:center;gap:8px">👑 현재 OP 선수 <span style="font-weight:400;color:var(--muted);font-size:11px">종합등급 OP · 판수 보정 · '+statMinGames()+'판 이상 출전</span></div>';
+    '<div class="ct" style="color:#b8860f;display:flex;align-items:center;gap:8px">👑 현재 OP 선수 <span style="font-weight:400;color:var(--muted);font-size:11px">종합등급 OP · OP는 '+GRADE_REQ.OP+'판부터 온전히 인정</span></div>';
   if(!opList.length){
     html += '<div style="padding:20px;text-align:center;font-size:11px;color:var(--muted)">현재 OP 등급 선수가 없어요</div>';
   } else {
