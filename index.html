@@ -436,7 +436,7 @@ function pgrd(score,cuts){
   var st=GSTYLE[g];return {g:g,c:st.c,bg:st.bg,bd:st.bd};
 }
 // ── 종합등급 (2026-11-27 개편 · 6각 레이더 기준) ─────────────────────
-// 점수: 6각 레이더(라인전·전투·오브젝트·시야·생존·다양성, 같은 포지션 안 백분위) 평균.
+// 점수: 6각 레이더(라인전·전투·오브젝트·시야·생존·다양성, 같은 포지션 안 백분위)의 포지션별 가중 평균 (RADAR6_W).
 //       6각 데이터가 없는 선수(라이엇 데이터 3판 미만)는 예전 5개 지표로 대신 계산.
 // 판수 조건 (높은 등급일수록 더 필요):
 //   1차 · 통산 판수     OP 20 · S 15 · A 10 · B 5
@@ -460,15 +460,15 @@ function gradeAxes(p){
   var c=calcCats(p,p.pos);
   return {ax:{'라인전':c['성장'],'전투':c['전투'],'오브젝트':50,'시야':c['시야'],'생존':c['생존'],'다양성':c['챔프폭']}, r6:false};
 }
-function _gscore(ax,f){ var s=0; RADAR6_KEYS.forEach(function(k){ var d=ax[k]-50; if(d>0) d*=f; s+=50+d; }); return s/RADAR6_KEYS.length; }
+function _gscore(ax,f,w){ var s=0,t=0; RADAR6_KEYS.forEach(function(k){ var d=ax[k]-50, wk=w?w[k]:1; if(d>0) d*=f; s+=(50+d)*wk; t+=wk; }); return s/t; }
 function _ggrade(v){ return v>=GRADE_CUT.OP?'OP':v>=GRADE_CUT.S?'S':v>=GRADE_CUT.A?'A':v>=GRADE_CUT.B?'B':v>=GRADE_CUT.C?'C':v>=GRADE_CUT.D?'D':'F'; }
 var _TG={};
 function totalGrade(p){
   if(_TG[p.name]) return _TG[p.name];
-  var A=gradeAxes(p), raw=_gscore(A.ax,1), g=p.games, r=recentGames(p), got=null, val=raw;
+  var A=gradeAxes(p), W=A.r6?RADAR6_W[p.pos]:null, raw=_gscore(A.ax,1,W), g=p.games, r=recentGames(p), got=null, val=raw;
   var order=['OP','S','A','B'];
   for(var i=0;i<order.length;i++){
-    var G=order[i], f=Math.min(1,g/GRADE_REQ[G])*(1-recentPenalty(r)), v=_gscore(A.ax,f);
+    var G=order[i], f=Math.min(1,g/GRADE_REQ[G])*(1-recentPenalty(r)), v=_gscore(A.ax,f,W);
     if(v>=GRADE_CUT[G]){ got=G; val=v; break; }
   }
   if(!got){ got=_ggrade(raw); if('OP S A B'.indexOf(got)>=0) got='C'; val=raw; }   // 판수 조건을 하나도 못 채우면 C부터
@@ -2844,19 +2844,31 @@ function recordBreaksHtml(){
 var RADAR6_KEYS=['라인전','전투','오브젝트','시야','생존','다양성'];
 var RADAR6_COLORS=['#c07a10','#c33b6b','#7a5bd6','#3368a0','#199473','#2a9db5'];
 var RADAR6_AX={라인전:['gd15','csd15','xpd15'],전투:['kp','sh','dpm','sk'],오브젝트:['obj','tur','fbp'],시야:['vs','wpm','wkm','cw'],생존:['d','tdd']};
-var RADAR6_DESC={라인전:'15분 골드·CS·경험치 차이',전투:'킬관여·팀 딜 비중·분당 딜·솔로킬',오브젝트:'용·바론·전령 관여·포탑 딜·퍼블',시야:'분당 시야·와드 설치/제거·제어 와드',생존:'데스·사망 대기 시간 75% + 탱킹 효율 25%',다양성:'챔프폭 (판수 반영)'};
+// 포지션별 축 구성 예외 (서폿: 전투 = 킬관여·분당 CC·적 묶기·분당 딜, 시야 = 기본 + 아군 회복·보호막)
+var RADAR6_AX_POS={SUP:{전투:['kp','cc','imm','dpm'],시야:['vs','wpm','wkm','cw','hs']}};
+// 종합등급용 포지션별 축 가중치 (합 100)
+var RADAR6_W={
+  TOP:{라인전:25,전투:20,오브젝트:15,시야:10,생존:20,다양성:10},
+  JUG:{라인전:10,전투:20,오브젝트:25,시야:20,생존:15,다양성:10},
+  MID:{라인전:25,전투:25,오브젝트:15,시야:10,생존:15,다양성:10},
+  ADC:{라인전:20,전투:25,오브젝트:15,시야:10,생존:20,다양성:10},
+  SUP:{라인전:15,전투:20,오브젝트:15,시야:25,생존:15,다양성:10}
+};
+var RADAR6_DESC={라인전:'15분 골드·CS·경험치 차이',전투:'킬관여·팀 딜 비중·분당 딜·솔로킬 (서폿: 킬관여·CC·적 묶기·분당 딜)',오브젝트:'용·바론·전령 관여·포탑 딜·퍼블',시야:'분당 시야·와드 설치/제거·제어 와드',생존:'데스·사망 대기 시간 (탑·정글·서폿은 탱킹 효율 25% 포함)',다양성:'챔프폭 (판수 반영)'};
 var _R6={};
 function radar6(name){
   if(_R6[name]!==undefined) return _R6[name];
   var p=PLAYERS[name], pos=p.pos, me=sc2Agg()[name+'|'+pos];
   if(isHidden(name) || !me || me.g<scoutMinG(pos) || (me.n.gd15||0)<3){ _R6[name]=null; return null; }
   var o={};
+  // 같은 포지션 안 백분위 (판수 보정 순위 — 판수가 적으면 평균 쪽으로)
   Object.keys(RADAR6_AX).forEach(function(ax){
-    var ps=RADAR6_AX[ax].map(function(k){ var r=sc2Rank(name,pos,k); return r?r.pct:null; }).filter(function(v){return v!==null;});
+    var keys=(RADAR6_AX_POS[pos]&&RADAR6_AX_POS[pos][ax])||RADAR6_AX[ax];
+    var ps=keys.map(function(k){ var r=sc2Rank(name,pos,k,true); return r?r.pct:null; }).filter(function(v){return v!==null;});
     o[ax]=ps.length?Math.round(ps.reduce(function(s,v){return s+v;},0)/ps.length*100):50;
   });
-  // 생존: 덜 죽기(데스·사망 대기) 75% + 탱킹 효율(받은 피해 중 막아낸 비율) 25%
-  var te=sc2Rank(name,pos,'teff'); if(te) o['생존']=Math.round(o['생존']*0.75+te.pct*100*0.25);
+  // 생존: 덜 죽기(데스·사망 대기) 75% + 탱킹 효율 25% — 탱킹 효율은 탑·정글·서폿만
+  if(pos==='TOP'||pos==='JUG'||pos==='SUP'){ var te=sc2Rank(name,pos,'teff',true); if(te) o['생존']=Math.round(o['생존']*0.75+te.pct*100*0.25); }
   o['다양성']=Math.round(calcCats(p,pos)['챔프폭']);
   _R6[name]=o; return o;
 }
