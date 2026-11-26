@@ -80,12 +80,25 @@ def champ_kr_map(games):
     return out
 
 
+def norm(rid):
+    return (rid or '').replace(' ', '').lower()
+
+
 def to_game(no, m, t, accounts, ckr):
     """API 경기 → games.json 한 경기 + api_details 한 경기"""
     info = m['info']
     parts = info['participants']
     def nm(p):
         a = accounts.get(p['puuid'])
+        if not a:
+            # 미리 등록한 새 멤버 (accounts.json 의 "riot:게임명#태그" 항목) → 실제 계정(puuid)으로 옮겨 등록
+            rid = f"{p.get('riotIdGameName')}#{p.get('riotIdTagline')}"
+            key = next((k for k in accounts if k.startswith('riot:') and norm(k[5:]) == norm(rid)), None)
+            if key:
+                a = {'name': accounts.pop(key)['name'], 'riotId': rid}
+                accounts[p['puuid']] = a
+                log(f"  ✓ 새 멤버 계정 연결: {rid} → '{a['name']}'")
+                return a['name']
         if not a:
             a = {'name': p.get('riotIdGameName') or p['puuid'][:8], 'riotId': f"{p.get('riotIdGameName')}#{p.get('riotIdTagline')}", 'auto': True}
             accounts[p['puuid']] = a
@@ -197,9 +210,9 @@ def main():
     new = []
     if KEY:
         since = int(state.get('lastStart', 0) // 1000) + 1
-        log(f"■ 새 경기 찾기 (기준 시각 {time.strftime('%Y-%m-%d %H:%M', time.gmtime(since + 9*3600))} KST 이후 · 계정 {len(accounts)}개)")
+        log(f"■ 새 경기 찾기 (기준 시각 {time.strftime('%Y-%m-%d %H:%M', time.gmtime(since + 9*3600))} KST 이후 · 계정 {sum(1 for k in accounts if not k.startswith('riot:'))}개)")
         cand = set()
-        for pu in list(accounts):
+        for pu in [k for k in accounts if not k.startswith('riot:')]:
             ids = get(f'/lol/match/v5/matches/by-puuid/{pu}/ids', {'type': 'tourney', 'startTime': since, 'count': 100}) or []
             cand.update(ids)
         cand = sorted(c for c in cand if c not in have and c not in exclude)
@@ -208,7 +221,8 @@ def main():
             m = get(f'/lol/match/v5/matches/{mid}')
             if not m: continue
             info = m['info']
-            known = sum(1 for p in info['participants'] if p['puuid'] in accounts)
+            pend = {norm(k[5:]) for k in accounts if k.startswith('riot:')}
+            known = sum(1 for p in info['participants'] if p['puuid'] in accounts or norm(f"{p.get('riotIdGameName')}#{p.get('riotIdTagline')}") in pend)
             if info['gameDuration'] < 300:
                 log(f"  - {mid} 제외: {info['gameDuration']}초 (다시하기/로비 테스트)"); continue
             if known < 5:
