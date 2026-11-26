@@ -1167,7 +1167,7 @@ function renderPlayer() {
       var wC = st.wr>=60?'var(--green)':st.wr>=50?'var(--gold)':'var(--red)';
       var icon = champ ? cImg(champ,38,7)
         : '<div style="width:38px;height:38px;border-radius:7px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:var(--gold)">ALL</div>';
-      var mus = playerChampMatchups(name, champ);
+      var mus = playerChampMatchups(name, champ, posMode ? PPOS : null);
       var expand = mus.length
         ? mus.map(function(m){
             var mc2 = m.wr>=60?'var(--green)':m.wr>=50?'var(--gold)':'var(--red)';
@@ -3726,6 +3726,7 @@ function renderAward(){
           '<div style="font-size:14px;font-weight:700;color:var(--text2);margin-bottom:3px">'+p.name+'</div>'+
           '<div style="display:inline-block;font-size:12px;font-family:Rajdhani,sans-serif;font-weight:800;padding:1px 9px;border-radius:6px;color:'+entry.tg.c+';background:'+entry.tg.bg+';border:1px solid '+entry.tg.bd+'">'+entry.tg.g+'</div>'+
           '<div style="font-size:10px;color:var(--muted);margin-top:3px">'+p.games+'전 '+p.wins+'승</div>'+
+          '<canvas id="awr_'+rankIdx+'_'+ps+'" width="380" height="336" style="width:100%;max-width:150px;aspect-ratio:190/168;display:block;margin:6px auto 0"></canvas>'+
         '</div>';
       } else {
         h += '<div style="background:var(--bg2);border:1px dashed var(--dim);border-radius:10px;padding:12px 8px;text-align:center;opacity:.4">'+
@@ -3888,6 +3889,9 @@ function renderAward(){
   html += funAwardsHtml();
   html += badgeDexHtml();
   document.getElementById('page-award').innerHTML = html;
+  // 1·2·3팀 6각 레이더
+  setTimeout(function(){ [0,1,2].forEach(function(ri){ POS.forEach(function(ps){ var e=byPos[ps][ri]; if(!e) return;
+    var r6=radar6(e.p.name); if(r6) drawMiniRadar('awr_'+ri+'_'+ps, r6, RADAR6_KEYS, RADAR6_COLORS); else drawMiniRadar('awr_'+ri+'_'+ps, calcCats(e.p,e.p.pos), SC_KEYS, CAT_COLORS); }); }); }, 0);
 }
 
 
@@ -3909,18 +3913,20 @@ function playerChampStat(name, champ){
     cp:cps.length?Math.round(cps.reduce(function(s,x){return s+x;},0)/cps.length*100)/100:0};
 }
 // 선수가 특정 챔피언으로 상대한 맞라인 챔프별 전적 (champ=null이면 전체)
-function playerChampMatchups(name, champ){
+function playerChampMatchups(name, champ, pos){
+  // 통산 전체 경기 기준 (모스트 챔피언 판수와 같은 범위) · pos 가 있으면 그 라인에서 뛴 경기만
   var rec = {};
   // 게임번호+선수 → 그 경기 CP
   var cpLook = {};
   GAME_DETAILS.forEach(function(gd){
     gd.players.forEach(function(p){ if(p.name===name && typeof p.cp==='number') cpLook[gd.no+'|'+p.champ] = p.cp; });
   });
-  GAMES.slice(-30).forEach(function(gm){
+  GAMES.forEach(function(gm){
     if(!gm.winChamps) return;
     for(var i=0;i<gm.win.length;i++){
       var wp=_strip(gm.win[i]), lp=_strip(gm.lose[i]);
       var wc=gm.winChamps[i], lc=gm.loseChamps[i];
+      if(pos && (gm.win[i].indexOf('('+pos+')')<0)) continue;   // 같은 인덱스 = 같은 라인
       if(wp===name && (!champ || wc===champ)){ // 이김
         rec[lc]=rec[lc]||{games:0,wins:0,cps:[]}; rec[lc].games++; rec[lc].wins++;
         var cv1=cpLook[gm.no+'|'+wc]; if(typeof cv1==='number') rec[lc].cps.push(cv1);
@@ -3940,7 +3946,7 @@ function playerChampMatchups(name, champ){
 // 특정 챔피언으로 맞라인 이긴/진 플레이어별 전적
 function champCounterPlayers(champ){
   var rec = {};
-  GAMES.slice(-30).forEach(function(gm){
+  GAMES.forEach(function(gm){   // 통산 (챔피언 상세의 다른 통계와 같은 범위)
     if(!gm.winChamps) return;
     for(var i=0;i<gm.win.length;i++){
       if(gm.winChamps[i]===champ){ var p=_strip(gm.win[i]); rec[p]=rec[p]||{games:0,wins:0}; rec[p].games++; rec[p].wins++; }
