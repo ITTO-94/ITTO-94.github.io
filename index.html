@@ -86,23 +86,25 @@ body{zoom:1.45;background:var(--bg);color:var(--text);font-family:'IBM Plex Sans
 
 /* 선수 헤더 */
 .ph{display:flex;align-items:flex-start;gap:14px;padding-bottom:18px;border-bottom:1px solid var(--border);margin-bottom:18px;position:relative;}
-.ph-art{position:absolute;top:0;right:0;bottom:0;left:56%;border-radius:0 14px 14px 0;background-repeat:no-repeat;filter:saturate(1.05);pointer-events:none;}
-.ph-art::after{content:'';position:absolute;inset:0;border-radius:14px;border-radius:0 14px 14px 0;background:linear-gradient(90deg,var(--bg) 0%,rgba(242,239,231,.55) 14%,rgba(242,239,231,0) 34%),linear-gradient(0deg,var(--bg) 0%,rgba(242,239,231,0) 22%);}
-.ph-art-cap{position:absolute;right:12px;top:10px;font-size:10px;font-weight:700;color:#fff;background:rgba(20,28,40,.45);padding:3px 9px;border-radius:20px;pointer-events:none;z-index:1;}
-.ph.ph-has-art{padding:56px 16px 18px;min-height:240px;}
-.ph.ph-has-art>.ph-ava,.ph.ph-has-art>.ph-info{position:relative;z-index:1;}
+.ph-art{position:absolute;top:0;bottom:0;left:27%;right:31%;background-repeat:no-repeat;pointer-events:none;}
+.ph-art::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,var(--bg) 0%,rgba(242,239,231,0) 18%,rgba(242,239,231,0) 82%,var(--bg) 100%),linear-gradient(0deg,var(--bg) 0%,rgba(242,239,231,0) 22%);}
+.ph-art-cap{position:absolute;left:50%;transform:translateX(-50%);bottom:12px;font-size:10px;font-weight:700;color:#fff;background:rgba(20,28,40,.5);padding:3px 10px;border-radius:20px;pointer-events:none;z-index:1;white-space:nowrap;}
+.ph.ph-has-art{padding:28px 16px 18px;min-height:250px;align-items:flex-start;}
+.ph-lcol,.ph-right{position:relative;z-index:1;}
+.ph-lcol{flex:0 0 auto;}
+.ph-top{display:flex;gap:14px;align-items:flex-start;}
 .ph.ph-has-art .ph-name{text-shadow:0 0 10px var(--bg),0 0 4px var(--bg);}
-.ph-row{display:flex;gap:14px;align-items:flex-start;margin:6px 0 0;}
-.ph-left{flex-shrink:0;}
-.ph-right{min-width:0;max-width:255px;}
+.ph-left{margin-top:10px;}
+.ph-right{margin-left:auto;width:270px;flex-shrink:0;}
 .ph-rank{display:flex;flex-direction:column;gap:8px;align-items:stretch;}
 @media (max-width:768px){
-  .ph-art{left:0;bottom:auto;height:200px;border-radius:14px 14px 0 0;}
-  .ph-art::after{background:linear-gradient(0deg,var(--bg) 0%,rgba(242,239,231,.35) 40%,rgba(242,239,231,0) 70%);}
+  .ph-art{left:0;right:0;bottom:auto;height:200px;border-radius:14px 14px 0 0;}
+  .ph-art::after{background:linear-gradient(0deg,var(--bg) 0%,rgba(242,239,231,.3) 35%,rgba(242,239,231,0) 65%);}
+  .ph-art-cap{left:auto;right:10px;transform:none;top:10px;bottom:auto;}
   .ph.ph-has-art{padding-top:150px;padding-left:0;padding-right:0;}
-  .ph-row{flex-direction:column;}
+  .ph-lcol{flex:1 1 100%;}
   .ph-rank{flex-direction:row;flex-wrap:wrap;}
-  .ph-right{max-width:none;}
+  .ph-right{margin-left:0;width:100%;}
 }
 .ph-bg{position:absolute;inset:0;background:linear-gradient(90deg,rgba(200,155,60,.04),transparent 60%);pointer-events:none;}
 .ph-ava{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#eaf3f0,#d5e8e2);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--gold);flex-shrink:0;}
@@ -1048,7 +1050,7 @@ function phFocus(){ var e=document.querySelector('.ph-art[data-fx]'); if(!e) ret
   var W=e.clientWidth,H=e.clientHeight; if(!W||!H) return;
   var s=Math.max(W/1215,H/717), sw=1215*s, sh=717*s, fx=parseFloat(e.getAttribute('data-fx')), fy=parseFloat(e.getAttribute('data-fy'));
   var mob=window.matchMedia&&window.matchMedia('(max-width:768px)').matches;
-  var x=Math.max(W-sw,Math.min(0,W*(mob?0.5:0.55)-fx*sw)), y=Math.max(H-sh,Math.min(0,H*(mob?0.42:0.38)-fy*sh));
+  var x=Math.max(W-sw,Math.min(0,W*0.5-fx*sw)), y=Math.max(H-sh,Math.min(0,H*(mob?0.42:0.4)-fy*sh));
   e.style.backgroundSize=Math.round(sw)+'px '+Math.round(sh)+'px'; e.style.backgroundPosition=Math.round(x)+'px '+Math.round(y)+'px'; }
 window.addEventListener('resize', function(){ phFocus(); });
 function renderPlayer() {
@@ -1097,11 +1099,12 @@ function renderPlayer() {
   ];
 
   var html = '<div class="ph fi'+(phArtHtml(name)?' ph-has-art':'')+'">'+phArtHtml(name)+'<div class="ph-bg"></div>'+
+    '<div class="ph-lcol"><div class="ph-top">'+
     '<div class="ph-ava" style="border-color:'+tierOf(p.elo).c+';background:linear-gradient(135deg,'+tierOf(p.elo).c+'18,#eaf3f0);">'+tierIcon(p.elo,44)+'</div>'+
     '<div class="ph-info">'+
     '<div class="ph-name">'+name+'</div>'+
     '<div class="ph-sub">'+p.games+'게임 플레이 · '+p.pos+' 포지션</div>'+
-    '<div class="ph-row"><div class="ph-left">'+rankBadgeHtml(name)+'</div><div class="ph-right">'+
+    '</div></div><div class="ph-left">'+rankBadgeHtml(name)+'</div></div><div class="ph-right">'+
     ownedChampsHtml(name)+
     '<div style="display:flex;gap:6px;flex-wrap:wrap;margin:0 0 8px">'+
       ((typeof OPGG_LINKS!=='undefined'&&OPGG_LINKS[name])?'<a href="'+OPGG_LINKS[name]+'" target="_blank" rel="noopener" style="text-decoration:none;padding:4px 11px;border-radius:7px;font-size:11px;font-weight:800;color:#3368a0;background:rgba(51,104,160,.08);border:1px solid rgba(51,104,160,.35)">🔗 op.gg 전적</a>':'')+
@@ -1120,7 +1123,6 @@ function renderPlayer() {
         return '<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:5px;font-size:11px;font-weight:700;background:rgba(240,192,48,.08);border:1px solid rgba(240,192,48,.25);color:#b8860f">👑 '+m.label+'</span>';
       }).join('')+'</div>';
     })()+
-    '</div></div>'+
     '</div>'+
     '</div>';
 
