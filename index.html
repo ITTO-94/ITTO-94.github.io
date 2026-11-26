@@ -190,6 +190,9 @@ body{zoom:1.45;background:var(--bg);color:var(--text);font-family:'IBM Plex Sans
   /* 인라인 그리드 축소 (기본스탯/전적통산 4→2, 포지션/어워드팀 5→3, 밸런스패널 2→1) */
   div[style*="grid-template-columns:repeat(4,1fr)"]{grid-template-columns:repeat(2,1fr) !important;}
   div[style*="grid-template-columns:repeat(5,1fr)"]{grid-template-columns:repeat(3,1fr) !important;}
+  /* 어워드 1·2·3팀: 휴대폰에서는 2열로, 레이더를 크게 */
+  div.aw-team.aw-team{grid-template-columns:repeat(2,1fr) !important;}
+  .aw-team canvas{max-width:170px !important;}
   div[style*="grid-template-columns:repeat(2,1fr)"]{grid-template-columns:1fr !important;}
 
   /* 선수 헤더: ELO 차트가 아래로 자연 줄바꿈 */
@@ -3715,7 +3718,7 @@ function renderAward(){
   function teamCard(title, rankIdx, accent, medal){
     var h = '<div class="card fi" style="border-color:'+accent+'40">'+
       '<div class="ct" style="color:'+accent+'">'+medal+' '+title+'</div>'+
-      '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px">';
+      '<div class="aw-team" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px">';
     POS.forEach(function(ps){
       var entry = byPos[ps][rankIdx];
       if(entry){
