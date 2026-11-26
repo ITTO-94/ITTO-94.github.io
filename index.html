@@ -1978,9 +1978,14 @@ var SCOUT_ITEMS=[['wr','승률','%',0],['cp','CP 평균','',2],['kda','KDA','',2
   ['d','평균 데스','',1,true],['vs','분당 시야','',2],['cs','분당 CS','',1],['gold','분당 골드','',0],['cc','분당 CC','',2],['dt','분당 받은 딜','',0]];
 
 // ── ⑦ 챔피언의 주인 (최근 30경기, 가장 많이·잘 쓴 사람) ──
-var OWNER_WIN=30;
+// 챔피언의 주인 (2026-11-27): 통산 기준 '장인'
+//  점수 = 판수 × (0.5 + 보정 승률), 보정 승률 = (승 + 1.5) / (판 + 3)
+//  자격: 통산 OWNER_MIN판 이상 + 보정 승률 45% 이상  (전체 100경기 이후 최소 판수 상향 검토)
+var OWNER_MIN=3;
+var OWNER_TXT='통산 판수 × 승률 1위 · '+OWNER_MIN+'판+';
+function ownerScore(g,w){ return g*(0.5+(w+1.5)/(g+3)); }
 function champOwners(uptoN){
-  var games=GAME_DETAILS.filter(function(g){return g.no<=uptoN;}).slice(-OWNER_WIN);
+  var games=GAME_DETAILS.filter(function(g){return g.no<=uptoN;});
   var by={};
   games.forEach(function(g){ g.players.forEach(function(p){
     if(isHidden(p.name)) return;
@@ -1990,8 +1995,8 @@ function champOwners(uptoN){
   var out={};
   Object.keys(by).forEach(function(ch){
     var best=null;
-    Object.keys(by[ch]).forEach(function(n){ var o=by[ch][n]; if(o.g<2 || o.w<1) return;
-      var s={name:n,g:o.g,w:o.w,cp:o.cp/o.g,sc:o.g+o.w};   // 판수 + 승수 (승리는 두 배 가치)
+    Object.keys(by[ch]).forEach(function(n){ var o=by[ch][n]; if(o.g<OWNER_MIN || (o.w+1.5)/(o.g+3)<0.45) return;
+      var s={name:n,g:o.g,w:o.w,cp:o.cp/o.g,sc:ownerScore(o.g,o.w)};
       if(!best || s.sc>best.sc || (s.sc===best.sc && (s.g>best.g || (s.g===best.g && s.cp>best.cp)))) best=s; });
     if(best) out[ch]=best;
   });
@@ -2001,7 +2006,7 @@ var _OWN=null;
 function ownersNow(){ if(!_OWN) _OWN=champOwners(GAMES.length); return _OWN; }
 function ownerTag(champ){
   var o=ownersNow()[champ]; if(!o) return '';
-  return '<span title="최근 '+OWNER_WIN+'경기에서 '+champ+'를 가장 많이·잘 쓴 선수 (판수+승수, 2판 1승 이상) ('+o.g+'전 '+o.w+'승)" style="font-size:10px;font-weight:700;color:#b8860f;white-space:nowrap">👑 '+o.name+'</span>';
+  return '<span title="'+champ+' 장인: 통산 가장 많이·잘 쓴 선수 (판수 × 보정 승률, '+OWNER_MIN+'판 이상) ('+o.g+'전 '+o.w+'승)" style="font-size:10px;font-weight:700;color:#b8860f;white-space:nowrap">👑 '+o.name+'</span>';
 }
 function ownerChangesHtml(){
   var now=ownersNow(), prev=champOwners(PREV_GAMES), ch=[];
@@ -2011,7 +2016,7 @@ function ownerChangesHtml(){
     else if(a.name!==b.name) ch.push({c:c, to:b.name, from:a.name, o:b});
   });
   var lost=Object.keys(prev).filter(function(c){return !now[c];});
-  var h='<div class="card fi"><div class="ct">👑 챔피언의 주인 <span style="font-weight:400;color:var(--muted);margin-left:6px;font-size:10px">최근 '+OWNER_WIN+'경기 판수+승수 1위 · 지난 업데이트 대비</span></div>';
+  var h='<div class="card fi"><div class="ct">👑 챔피언의 주인 <span style="font-weight:400;color:var(--muted);margin-left:6px;font-size:10px">'+OWNER_TXT+' · 지난 업데이트 대비</span></div>';
   if(!ch.length && !lost.length) h+='<div style="padding:12px;text-align:center;font-size:11px;color:var(--muted)">이번 업데이트에서 바뀐 주인이 없어요</div>';
   ch.sort(function(a,b){return (a.from?0:1)-(b.from?0:1) || b.o.g-a.o.g;}).slice(0,6).forEach(function(x){
     h+='<div style="display:flex;align-items:center;gap:8px;padding:7px 9px;background:var(--bg2);border:1px solid var(--dim);border-radius:8px;margin-bottom:5px;font-size:11px">'+
@@ -2020,14 +2025,14 @@ function ownerChangesHtml(){
       '<b class="pn" style="color:#b8860f" onclick="goPlayer(\''+x.to+'\')">'+x.to+'</b></span>'+
       '<span style="color:var(--muted);font-size:10px">'+x.o.g+'전 '+x.o.w+'승</span></div>';
   });
-  if(lost.length) h+='<div style="font-size:10px;color:var(--muted);margin-top:4px">주인 공석: '+lost.slice(0,6).join(', ')+(lost.length>6?' 외 '+(lost.length-6)+'개':'')+' (최근 '+OWNER_WIN+'경기 2판 1승 이상 사용자 없음)</div>';
+  if(lost.length) h+='<div style="font-size:10px;color:var(--muted);margin-top:4px">주인 공석: '+lost.slice(0,6).join(', ')+(lost.length>6?' 외 '+(lost.length-6)+'개':'')+' ('+OWNER_MIN+'판 이상·승률 기준 충족 사용자 없음)</div>';
   return h+'</div>';
 }
 function ownedChampsHtml(name){
   var own=ownersNow(), mine=Object.keys(own).filter(function(c){return own[c].name===name;});
   if(!mine.length) return '';
   return '<div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin:0 0 8px;font-size:11px;color:var(--muted)">👑 챔피언의 주인 '+
-    mine.map(function(c){ return '<span title="'+own[c].g+'전 '+own[c].w+'승 (최근 '+OWNER_WIN+'경기)" style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px 2px 2px;border-radius:12px;background:rgba(240,192,48,.1);border:1px solid rgba(240,192,48,.4);color:var(--text2);font-weight:700"><span style="width:18px;height:18px;border-radius:50%;overflow:hidden;display:inline-block">'+cImg(c,18,9)+'</span>'+c+'</span>'; }).join('')+'</div>';
+    mine.map(function(c){ return '<span title="'+own[c].g+'전 '+own[c].w+'승 (통산)" style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px 2px 2px;border-radius:12px;background:rgba(240,192,48,.1);border:1px solid rgba(240,192,48,.4);color:var(--text2);font-weight:700"><span style="width:18px;height:18px;border-radius:50%;overflow:hidden;display:inline-block">'+cImg(c,18,9)+'</span>'+c+'</span>'; }).join('')+'</div>';
 }
 
 // ── ⑧ 오늘의 경기: 출전 전 폼 ──
@@ -3102,7 +3107,7 @@ function renderChampDetail(){
     '<div style="width:64px;height:64px;border-radius:12px;overflow:hidden;border:2px solid '+g.c+';flex-shrink:0">'+cImg(champ,60,10)+'</div>'+
     '<div class="ph-info">'+
     '<div class="ph-name">'+champ+' <span style="font-size:12px;font-weight:500;color:var(--muted)">'+cs.pos+'</span></div>'+
-    (ownersNow()[champ]?'<div style="margin-top:4px;font-size:12px">'+ownerTag(champ)+' <span style="font-size:10px;color:var(--muted)">'+ownersNow()[champ].g+'전 '+ownersNow()[champ].w+'승 · 최근 '+OWNER_WIN+'경기</span></div>':'')+
+    (ownersNow()[champ]?'<div style="margin-top:4px;font-size:12px">'+ownerTag(champ)+' <span style="font-size:10px;color:var(--muted)">'+ownersNow()[champ].g+'전 '+ownersNow()[champ].w+'승 · 통산</span></div>':'')+
     '<div class="badges" style="margin-top:6px">'+
     '<span class="badge" style="background:'+g.bg+';border-color:'+g.bd+';color:'+g.c+'">등급 '+g.g+'</span>'+
     '<span class="badge b-elo">픽률 '+pickRate+'%</span>'+
