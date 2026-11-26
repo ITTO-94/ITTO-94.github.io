@@ -86,6 +86,11 @@ body{zoom:1.45;background:var(--bg);color:var(--text);font-family:'IBM Plex Sans
 
 /* 선수 헤더 */
 .ph{display:flex;align-items:flex-start;gap:14px;padding-bottom:18px;border-bottom:1px solid var(--border);margin-bottom:18px;position:relative;}
+.ph-art{position:absolute;left:0;right:0;top:0;height:230px;border-radius:14px;background-size:cover;background-repeat:no-repeat;filter:blur(1.5px) saturate(1.05);opacity:.75;pointer-events:none;-webkit-mask-image:linear-gradient(to bottom,#000 0%,rgba(0,0,0,.85) 45%,transparent 100%);mask-image:linear-gradient(to bottom,#000 0%,rgba(0,0,0,.85) 45%,transparent 100%);}
+.ph-art-cap{position:absolute;right:12px;top:10px;font-size:10px;font-weight:700;color:#fff;background:rgba(20,28,40,.45);padding:3px 9px;border-radius:20px;pointer-events:none;}
+.ph.ph-has-art{padding-top:150px;}
+.ph.ph-has-art>.ph-ava,.ph.ph-has-art>.ph-info{position:relative;z-index:1;}
+.ph.ph-has-art .ph-name{text-shadow:0 0 10px var(--bg),0 0 4px var(--bg);}
 .ph-bg{position:absolute;inset:0;background:linear-gradient(90deg,rgba(200,155,60,.04),transparent 60%);pointer-events:none;}
 .ph-ava{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#eaf3f0,#d5e8e2);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--gold);flex-shrink:0;}
 .ph-info{flex:1;}
@@ -1010,6 +1015,28 @@ function rankBadgeHtml(name){
   }
   return '<div class="ph-rank" style="display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 8px">'+main+sub+mvpAceBadgeHtml(name)+'</div>';
 }
+// ── 선수 탭 헤더 일러스트: 판수 모스트 5 중 승률 1위 챔피언, OP.GG 스킨 순위(가장 많이 보유) 1위 스킨 ──
+// 키 = Data Dragon 챔피언 id, 값 = 스킨 번호. 없는 챔피언은 기본 스킨(0)으로 나온다.
+var CHAMP_SKIN = {"LeeSin":4,"Warwick":1,"Jhin":14,"Thresh":5,"MasterYi":106,"Renekton":9,"Skarner":3,"Lissandra":4,"Draven":68,"Pantheon":6,"Gnar":1,"Maokai":6,"Kled":9,"Aatrox":9,"TwistedFate":45,"Samira":1,"Blitzcrank":36,"XinZhao":13,"Anivia":46,"Ambessa":1,"Hecarim":4,"Amumu":34,"Pyke":16,"Yone":1,"Nautilus":9,"Tristana":33,"Rakan":5,"Leblanc":20,"Varus":17,"Braum":11,"Xayah":4,"Ornn":1,"Gwen":11,"Leona":11,"Syndra":5,"Graves":3,"Sylas":8,"Aurora":1,"Camille":2,"Tryndamere":27,"Viego":1,"Shen":51,"Sejuani":36,"Sett":1,"Taliyah":11,"Locke":1,"Lucian":8,"Rell":1,"Karma":26,"Shyvana":5,"Vladimir":5,"Zyra":7,"Galio":4,"Chogath":14,"Jax":13};
+var SKIN_FOCUS = {"LeeSin_4":[0.6,0.12],"Warwick_1":[0.55,0.3],"Jhin_14":[0.68,0.22],"Thresh_5":[0.6,0.4],"MasterYi_106":[0.62,0.25],"Renekton_9":[0.22,0.3],"Skarner_3":[0.45,0.4],"Lissandra_4":[0.57,0.25],"Draven_68":[0.45,0.15],"Pantheon_6":[0.55,0.3],"Gnar_1":[0.62,0.2],"Maokai_6":[0.5,0.35],"Kled_9":[0.6,0.25],"Aatrox_9":[0.55,0.3],"TwistedFate_45":[0.27,0.22],"Samira_1":[0.47,0.2],"Blitzcrank_36":[0.4,0.18],"XinZhao_13":[0.5,0.35],"Anivia_46":[0.4,0.3],"Ambessa_1":[0.55,0.15],"Hecarim_4":[0.5,0.35],"Amumu_34":[0.3,0.35],"Pyke_16":[0.45,0.35],"Yone_1":[0.52,0.25],"Nautilus_9":[0.5,0.3],"Tristana_33":[0.62,0.4],"Rakan_5":[0.55,0.35],"Leblanc_20":[0.58,0.2],"Varus_17":[0.5,0.25],"Braum_11":[0.75,0.4],"Xayah_4":[0.45,0.35],"Ornn_1":[0.5,0.35],"Gwen_11":[0.42,0.2],"Leona_11":[0.55,0.12],"Syndra_5":[0.5,0.3],"Graves_3":[0.35,0.25],"Sylas_8":[0.35,0.35],"Aurora_1":[0.5,0.2],"Camille_2":[0.45,0.3],"Tryndamere_27":[0.45,0.15],"Viego_1":[0.45,0.2],"Shen_51":[0.55,0.35],"Sejuani_36":[0.5,0.25],"Sett_1":[0.45,0.3],"Taliyah_11":[0.35,0.25],"Locke_1":[0.6,0.25],"Lucian_8":[0.55,0.25],"Rell_1":[0.5,0.35],"Karma_26":[0.55,0.25],"Shyvana_5":[0.65,0.2],"Vladimir_5":[0.68,0.2],"Zyra_7":[0.45,0.3],"Galio_4":[0.5,0.3],"Chogath_14":[0.45,0.3],"Jax_13":[0.5,0.3]};   // "스킨키": [얼굴 x, 얼굴 y] (0~1 비율) — 얼굴이 빗나가면 여기서 조정
+function phChamp(name){
+  var p=PLAYERS[name]; if(!p||!p.mostChamps||!p.mostChamps.length) return null;
+  var m=p.mostChamps.slice(0,5).slice().sort(function(a,b){ return (b[1].wins/b[1].games)-(a[1].wins/a[1].games) || b[1].games-a[1].games; })[0];
+  var c=m[0], id=CMAP[c]||CMAPN[String(c).replace(/\s+/g,'')]; if(!id) return null;
+  return {champ:c, id:id, skin:CHAMP_SKIN[id]||0, g:m[1].games, w:m[1].wins};
+}
+function phArtHtml(name){
+  var c=phChamp(name); if(!c) return '';
+  var key=c.id+'_'+c.skin, f=SKIN_FOCUS[key]||[0.5,0.3];
+  return '<div class="ph-art" data-fx="'+f[0]+'" data-fy="'+f[1]+'" style="background-image:url(https://ddragon.leagueoflegends.com/cdn/img/champion/splash/'+key+'.jpg)"></div>'+
+    '<div class="ph-art-cap">'+c.champ+' · '+c.g+'전 '+c.w+'승 '+Math.round(c.w/c.g*100)+'%</div>';
+}
+function phFocus(){ var e=document.querySelector('.ph-art[data-fx]'); if(!e) return;
+  var W=e.clientWidth,H=e.clientHeight; if(!W||!H) return;
+  var s=Math.max(W/1215,H/717), sw=1215*s, sh=717*s, fx=parseFloat(e.getAttribute('data-fx')), fy=parseFloat(e.getAttribute('data-fy'));
+  var x=Math.max(W-sw,Math.min(0,W/2-fx*sw)), y=Math.max(H-sh,Math.min(0,H*0.42-fy*sh));
+  e.style.backgroundSize=Math.round(sw)+'px '+Math.round(sh)+'px'; e.style.backgroundPosition=Math.round(x)+'px '+Math.round(y)+'px'; }
+window.addEventListener('resize', function(){ phFocus(); });
 function renderPlayer() {
   var name = document.getElementById('pSel').value;
   var selPos = document.getElementById('posSel').value;
@@ -1055,17 +1082,14 @@ function renderPlayer() {
     {val: dsx.cs_per_min, label: 'CS/분', rank: rk('cs_per_min'), color: '#199473'},
   ];
 
-  var html = '<div class="ph fi"><div class="ph-bg"></div>'+
+  var html = '<div class="ph fi'+(phArtHtml(name)?' ph-has-art':'')+'">'+phArtHtml(name)+'<div class="ph-bg"></div>'+
     '<div class="ph-ava" style="border-color:'+tierOf(p.elo).c+';background:linear-gradient(135deg,'+tierOf(p.elo).c+'18,#eaf3f0);">'+tierIcon(p.elo,44)+'</div>'+
     '<div class="ph-info">'+
     '<div class="ph-name">'+name+'</div>'+
     '<div class="ph-sub">'+p.games+'게임 플레이 · '+p.pos+' 포지션</div>'+
     rankBadgeHtml(name)+
-    badgesHtml(name)+
     ownedChampsHtml(name)+
     '<div style="display:flex;gap:6px;flex-wrap:wrap;margin:0 0 8px">'+
-      (isHidden(name)?'':'<span onclick="goCompare(\''+name+'\')" style="cursor:pointer;padding:4px 11px;border-radius:7px;font-size:11px;font-weight:800;color:var(--blue);background:rgba(51,104,160,.08);border:1px solid rgba(51,104,160,.35)">🆚 이 선수와 비교</span>')+
-      '<span onclick="savePlayerCard(\''+name+'\')" style="cursor:pointer;padding:4px 11px;border-radius:7px;font-size:11px;font-weight:800;color:var(--green);background:rgba(25,148,115,.08);border:1px solid rgba(25,148,115,.35)">📸 내 카드 이미지로 저장</span>'+
       ((typeof OPGG_LINKS!=='undefined'&&OPGG_LINKS[name])?'<a href="'+OPGG_LINKS[name]+'" target="_blank" rel="noopener" style="text-decoration:none;padding:4px 11px;border-radius:7px;font-size:11px;font-weight:800;color:#3368a0;background:rgba(51,104,160,.08);border:1px solid rgba(51,104,160,.35)">🔗 op.gg 전적</a>':'')+
     '</div>'+
     '<div class="badges">'+
@@ -1073,6 +1097,7 @@ function renderPlayer() {
     '<span class="badge b-wr" style="color:'+wrC+'">WR '+p.wr+'%</span>'+
     '<span class="badge b-elo" style="border-color:'+tierOf(p.elo).c+'55;color:'+tierOf(p.elo).c+'">'+tierOf(p.elo).label+' · ELO '+p.elo+'</span>'+
     '<span class="badge" style="background:'+og.bg+';border-color:'+og.bd+';color:'+og.c+'">'+og.g+' ('+Math.round(total)+'점)</span>'+
+    '<span class="badge" onclick="savePlayerCard(\''+name+'\')" style="cursor:pointer;color:var(--green);background:rgba(25,148,115,.08);border-color:rgba(25,148,115,.35)">📸 내 카드 이미지로 저장</span>'+
     '</div>'+
     (function(){
       var firsts = AWARD_METRICS.filter(function(m){ return m.key!=='dtpm' && metricFirst(m).name === name; });  // DTPM은 1위 선정 제외 규칙과 일치
@@ -1332,7 +1357,7 @@ function renderPlayer() {
   html += funRecordsHtml(name);
   html += myBadgesHtml(name);
   html += calendarHtml(name);
-  document.getElementById('page-player').innerHTML = html;
+  document.getElementById('page-player').innerHTML = html; phFocus();
   setTimeout(function(){ drawRadar(rVals,rKeys,rCols); }, 30);
 }
 
@@ -1726,8 +1751,7 @@ function renderCompare(){
       '<div style="width:44px;height:44px;margin:0 auto 6px">'+tierIcon(P.elo,44)+'</div>'+
       '<div class="pn" style="font-size:18px;font-weight:900" onclick="goPlayer(\''+P.name+'\')">'+P.name+'</div>'+
       '<div style="font-size:11px;color:var(--muted)">'+POS_KR[P.pos]+' · '+P.games+'전 '+P.wins+'승 '+P.losses+'패</div>'+
-      '<div style="font-size:12px;font-weight:700;color:'+t.c+';margin-top:3px">'+t.label+' · ELO '+P.elo+' · '+r.eloRank+'위</div>'+
-      badgesHtml(P.name).replace('margin:2px 0 8px','margin:8px 0 0;justify-content:center')+'</div>';
+      '<div style="font-size:12px;font-weight:700;color:'+t.c+';margin-top:3px">'+t.label+' · ELO '+P.elo+' · '+r.eloRank+'위</div>'+'</div>';
   }
   var h='<div class="card fi"><div class="ct">🆚 1:1 선수 비교</div>'+
     '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px">'+sel('a',CMP_A)+
@@ -1829,12 +1853,6 @@ function savePlayerCard(name){
     // 이름
     x.textAlign='left'; x.fillStyle='#1c2b42'; x.font='900 64px '+F; x.fillText(name,260,200);
     x.fillStyle='#84929e'; x.font='600 24px '+F; x.fillText(POS_KR[p.pos]+' · '+p.games+'전 '+p.wins+'승 '+p.losses+'패 · '+t.label,262,245);
-    // 칭호
-    var bx=262, bs=playerBadges(name);
-    x.font='800 22px '+F;
-    bs.forEach(function(b){ var s=b.icon+' '+b.name, w=x.measureText(s).width+32;
-      x.fillStyle='rgba(51,104,160,.12)'; roundRect(x,bx,268,w,40,20); x.fill(); x.strokeStyle='rgba(51,104,160,.35)'; x.lineWidth=2; x.stroke();
-      x.fillStyle='#1c2b42'; x.fillText(s,bx+16,296); bx+=w+10; });
     // 지표 박스
     var r=playerRankInfo(name), ma=mvpAceAll()[name]||{mvp:0,ace:0};
     var boxes=[

@@ -18,7 +18,9 @@ function opt(k){ const i=args.indexOf(k); return i>=0?args[i+1]:null; }
       if(played || !(R&&typeof R==='object')) want.push(n);
     });
   }
-  var head='# 최신 경기 #'+GAMES.length+' ('+GAMES[GAMES.length-1].date+') · 대상 '+want.length+'명: '+want.join(', ')+'\n\n';
+  var head='# 최신 경기 #'+GAMES.length+' ('+GAMES[GAMES.length-1].date+') · 대상 '+want.length+'명: '+want.join(', ')+'\n';
+  try{ var miss={}; Object.keys(PLAYERS).forEach(function(n){ var c=phChamp(n); if(c && !(c.id in CHAMP_SKIN)) miss[c.id]=1; }); var ml=Object.keys(miss); head+='# 헤더 일러스트 스킨 미등록: '+(ml.length?ml.join(', '):'없음')+'\n'; }catch(e){}
+  head+='\n';
   var PK={TOP:'탑',JUG:'정글',MID:'미드',ADC:'원딜',SUP:'서폿'};
   var MA={}; GAME_DETAILS.forEach(function(g){ ['win','lose'].forEach(function(t){ var x=g.players.filter(function(p){return p.team===t}).sort(function(a,b){return b.cp-a.cp})[0]; if(!x)return; MA[x.name]=MA[x.name]||{mvp:0,ace:0}; MA[x.name][t==='win'?'mvp':'ace']++; }); });
   function rel(n,same){ var rec={}; GAME_DETAILS.forEach(function(g){ var me=g.players.filter(function(p){return p.name===n})[0]; if(!me)return; g.players.forEach(function(p){ if(p.name===n)return; if((p.team===me.team)!==same)return; var o=rec[p.name]=rec[p.name]||{name:p.name,games:0,wins:0}; o.games++; if(me.team==='win')o.wins++; }); }); return Object.keys(rec).map(function(k){var o=rec[k];o.wr=o.wins/o.games*100;return o;}); }
@@ -61,7 +63,6 @@ function opt(k){ const i=args.indexOf(k); return i>=0?args[i+1]:null; }
    var riv=rel(n,false).filter(function(d){return d.games>=3}).sort(function(a,b){return b.wr-a.wr||b.games-a.games});
    if(riv.length) L.push('상대전(3판+): 먹잇감 '+riv.slice(0,3).map(function(d){return d.name+' '+d.games+'전'+d.wins+'승'}).join(', ')+' / 천적 '+riv.slice(-3).map(function(d){return d.name+' '+d.games+'전'+d.wins+'승'}).join(', '));
    try{ var bd=botDuoHtml(n).replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim(); if(bd) L.push('바텀듀오: '+bd.slice(0,260)); }catch(e){}
-   try{ L.push('칭호: '+playerBadges(n).map(function(x){return x.name+'('+x.why+')'}).join('; ')); }catch(e){}
    // game badges
    var gbc={}; rows.forEach(function(r){ try{ (gameBadges(r.no)[n]||[]).forEach(function(x){gbc[x.t]=(gbc[x.t]||0)+1}); }catch(e){} });
    if(Object.keys(gbc).length) L.push('판별배지: '+Object.keys(gbc).sort(function(a,b){return gbc[b]-gbc[a]}).map(function(k){return k+'×'+gbc[k]}).join(', '));
