@@ -425,7 +425,7 @@ var _PCUTS=null;
 function pgradeCuts(){
   if(_PCUTS) return _PCUTS;
   var arr=visiblePlayers();
-  var c={ total:_pcuts(gradePool().map(function(p){return adjTotal(p);})) };
+  var c={ total:GRADE_CUT };
   ['전투','시야','생존','성장','챔프폭'].forEach(function(cat){
     c[cat]=_pcuts(arr.map(function(p){return calcCats(p,p.pos)[cat];}));
   });
@@ -435,60 +435,50 @@ function pgrd(score,cuts){
   var g=score>=cuts.OP?'OP':score>=cuts.S?'S':score>=cuts.A?'A':score>=cuts.B?'B':score>=cuts.C?'C':score>=cuts.D?'D':'F';
   var st=GSTYLE[g];return {g:g,c:st.c,bg:st.bg,bd:st.bd};
 }
-// ── 종합등급 판수 보정 (2026-11-27 개편) ─────────────────────
-// 1단계 · 통산 판수: 세부지표(전투·시야·생존·성장·챔프폭)를 각각 평균 쪽으로 보정 (베이지안 C=5)
-// 2단계 · 최근 15경기 출전 수: 최근에 거의 안 나왔으면 평균보다 높은 부분을 조금 덜 인정 (3판 이상이면 100%)
-// 3단계 · 등급별 필요 판수: 높은 등급일수록 판수가 더 필요. 모자라면 평균보다 높은 세부지표를
-//         (판수 ÷ 필요 판수) 비율만큼만 인정한 점수로도 그 등급 기준선을 넘어야 그 등급을 받는다.
-//         → 지표가 비슷하면 20판 선수가 10판 선수보다 높은 등급을 받기 쉽다.
-// 기준선(백분위)은 통산 5판 이상 선수의 1·2단계 보정 점수로 계산.
-var GRADE_C = 5;
-var GRADE_POOL_MIN = 5;
-var GRADE_REQ = {OP:15, S:12, A:8, B:4};   // 등급별 필요 판수 (모자라면 그만큼 세부지표 인정 비율이 줄어듦)
-var GRADE_RECENT_FULL = 3;
-var _GCAT = null;
-var GCATS = ['전투','시야','생존','성장','챔프폭'];
-function _rawTotal(p){ return calcTotal(calcCats(p,p.pos),p.pos); }
-function gradeGames(p){ return p.games; }
-var GRADE_RECENT_WINDOW = 15;   // 2단계에서 보는 최근 경기 수
+// ── 종합등급 (2026-11-27 개편 · 6각 레이더 기준) ─────────────────────
+// 점수: 6각 레이더(라인전·전투·오브젝트·시야·생존·다양성, 같은 포지션 안 백분위) 평균.
+//       6각 데이터가 없는 선수(라이엇 데이터 3판 미만)는 예전 5개 지표로 대신 계산.
+// 판수 조건 (높은 등급일수록 더 필요):
+//   1차 · 통산 판수     OP 20 · S 15 · A 10 · B 5
+//   2차 · 리그 전체 최근 30경기 중 출전 수   OP 8 · S 6 · A 4 · B 2
+//   모자라면 평균(50)보다 높은 축을 (판수 ÷ 필요 판수) × (최근 출전 ÷ 필요 출전)만큼만 인정하고,
+//   그 점수로도 해당 등급 기준선을 넘어야 그 등급을 받는다. 못 넘으면 한 단계 아래로 다시 계산.
+// 기준선(고정): OP 72 · S 65 · A 58 · B 50 · C 42 · D 34
+var GRADE_REQ = {OP:20, S:15, A:10, B:5};
+var GRADE_RECENT_REQ = {OP:8, S:6, A:4, B:2};
+var GRADE_CUT = {OP:72, S:65, A:58, B:50, C:42, D:34};
+var GRADE_RECENT_WINDOW = 30;   // 리그 전체 최근 30경기
 function recentGames(p){
   var nos = GAME_DETAILS.map(function(g){ return g.no; }).sort(function(a,b){ return b-a; }).slice(0, GRADE_RECENT_WINDOW);
   return GAME_DETAILS.filter(function(g){ return nos.indexOf(g.no) >= 0 && g.players.some(function(x){ return x.name === p.name; }); }).length;
 }
-function gradePool(){ return visiblePlayers().filter(function(p){ return p.games >= GRADE_POOL_MIN; }); }
-function _gcatMean(){
-  if(_GCAT) return _GCAT;
-  var pool=gradePool(), m={};
-  GCATS.forEach(function(k){ m[k]=pool.reduce(function(s,p){ return s+calcCats(p,p.pos)[k]; },0)/pool.length; });
-  _GCAT=m; return m;
+function gradeGames(p){ return p.games; }
+function gradeAxes(p){
+  var r=radar6(p.name); if(r) return {ax:r, r6:true};
+  var c=calcCats(p,p.pos);
+  return {ax:{'라인전':c['성장'],'전투':c['전투'],'오브젝트':50,'시야':c['시야'],'생존':c['생존'],'다양성':c['챔프폭']}, r6:false};
 }
-// f: 평균보다 높은 부분을 인정하는 비율 (3단계)
-function _gradeCats(p,f){
-  var c=calcCats(p,p.pos), m=_gcatMean(), g=p.games, r=recentGames(p), out={};
-  var w1=g/(g+GRADE_C), w2=Math.min(1, 0.85+0.15*r/GRADE_RECENT_FULL);
-  GCATS.forEach(function(k){
-    var d=(c[k]-m[k])*w1;              // 1단계 (위아래 모두)
-    if(d>0) d=d*w2*(f===undefined?1:f); // 2·3단계 (평균보다 높은 부분만)
-    out[k]=m[k]+d;
-  });
-  return out;
-}
-function adjTotal(p){ return calcTotal(_gradeCats(p),p.pos); }
+function _gscore(ax,f){ var s=0; RADAR6_KEYS.forEach(function(k){ var d=ax[k]-50; if(d>0) d*=f; s+=50+d; }); return s/RADAR6_KEYS.length; }
+function _ggrade(v){ return v>=GRADE_CUT.OP?'OP':v>=GRADE_CUT.S?'S':v>=GRADE_CUT.A?'A':v>=GRADE_CUT.B?'B':v>=GRADE_CUT.C?'C':v>=GRADE_CUT.D?'D':'F'; }
+var _TG={};
 function totalGrade(p){
-  var cuts=pgradeCuts().total, base=adjTotal(p), order=['OP','S','A','B'], g=p.games;
-  var natural=pgrd(base,cuts).g, got=null, score=base;
+  if(_TG[p.name]) return _TG[p.name];
+  var A=gradeAxes(p), raw=_gscore(A.ax,1), g=p.games, r=recentGames(p), got=null, val=raw;
+  var order=['OP','S','A','B'];
   for(var i=0;i<order.length;i++){
-    var G=order[i], f=Math.min(1, g/GRADE_REQ[G]), sc=calcTotal(_gradeCats(p,f),p.pos);
-    if(sc>=cuts[G]){ got=G; score=sc; break; }
+    var G=order[i], f=Math.min(1,g/GRADE_REQ[G])*Math.min(1,r/GRADE_RECENT_REQ[G]), v=_gscore(A.ax,f);
+    if(v>=GRADE_CUT[G]){ got=G; val=v; break; }
   }
-  if(!got){ got=natural; score=base; }
+  if(!got){ got=_ggrade(raw); if('OP S A B'.indexOf(got)>=0) got='C'; val=raw; }   // 판수 조건을 하나도 못 채우면 C부터
+  var natural=_ggrade(raw), rank='OP S A B C D F', pen=rank.indexOf(got)>rank.indexOf(natural);
   // 정렬용 점수: 받은 등급 범위 안으로 맞춤
-  var up={OP:Infinity,S:cuts.OP,A:cuts.S,B:cuts.A,C:cuts.B,D:cuts.C,F:cuts.D}[got];
-  if(score>=up) score=up-0.01;
-  var st=GSTYLE[got], rank='OP S A B C D F';
-  var pen = rank.indexOf(got) > rank.indexOf(natural);
-  return {g:got, c:st.c, bg:st.bg, bd:st.bd, adj:score, capped:pen, need:pen?GRADE_REQ[natural]:0, natural:natural};
+  var up={OP:Infinity,S:GRADE_CUT.OP,A:GRADE_CUT.S,B:GRADE_CUT.A,C:GRADE_CUT.B,D:GRADE_CUT.C,F:GRADE_CUT.D}[got];
+  if(val>=up) val=up-0.01;
+  var st=GSTYLE[got];
+  var why = pen ? natural+' 등급은 통산 '+GRADE_REQ[natural]+'판 · 최근 30경기 '+GRADE_RECENT_REQ[natural]+'판부터' : '';
+  return (_TG[p.name]={g:got, c:st.c, bg:st.bg, bd:st.bd, adj:val, raw:raw, capped:pen, natural:natural, why:why, r6:A.r6, recent:r});
 }
+function adjTotal(p){ return totalGrade(p).adj; }
 
 // KDA 색상: 5점 이상 노란색, 3점 이상 청록, 미만 회색
 function kdaColor(k){return k>=5?'#e8b93b':k>=3?'#00bba3':'#8a99ad';}
@@ -1003,7 +993,7 @@ function renderPlayer() {
   // 상세 지표 카드 데이터 (사진 스타일)
   var statCards = [
     // 행1: 핵심 지표 (종합등급·ELO는 항상 전체 기준)
-    {val: og.g,      label: '종합등급',  rank: '보정 총점 '+Math.round(total)+'점'+(og.capped?' · '+og.natural+' 등급은 '+og.need+'판부터':''), color: og.c, highlight: true},
+    {val: og.g,      label: '종합등급',  rank: '6각 평균 '+Math.round(og.raw)+'점'+(og.r6?'':' (예전 지표)')+(og.capped?' · '+og.why:''), color: og.c, highlight: true},
     {val: dsx.kda,   label: 'KDA',        rank: rk('kda'),     color: 'var(--text2)'},
     {val: dsx.wr+'%',label: '승률',       rank: rk('wr'),      color: wrC2},
     {val: p.elo,     label: 'ELO',        rank: getRank(name,'elo'),     color: 'var(--gold)'},
@@ -4118,7 +4108,7 @@ function renderNews(){
 
   // ── 👑 현재 OP 선수 (능력치 레이더) ──
   html += '<div class="card fi" style="border-color:rgba(240,192,48,.35);background:linear-gradient(180deg,rgba(240,192,48,.05),transparent)">'+
-    '<div class="ct" style="color:#b8860f;display:flex;align-items:center;gap:8px">👑 현재 OP 선수 <span style="font-weight:400;color:var(--muted);font-size:11px">종합등급 OP · OP는 '+GRADE_REQ.OP+'판부터 온전히 인정</span></div>';
+    '<div class="ct" style="color:#b8860f;display:flex;align-items:center;gap:8px">👑 현재 OP 선수 <span style="font-weight:400;color:var(--muted);font-size:11px">종합등급 OP · 6각 평균 '+GRADE_CUT.OP+'점+ · 통산 '+GRADE_REQ.OP+'판 · 최근 30경기 '+GRADE_RECENT_REQ.OP+'판</span></div>';
   if(!opList.length){
     html += '<div style="padding:20px;text-align:center;font-size:11px;color:var(--muted)">현재 OP 등급 선수가 없어요</div>';
   } else {
