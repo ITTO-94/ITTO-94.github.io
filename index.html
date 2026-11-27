@@ -1028,21 +1028,17 @@ function rankBadgeHtml(name){
   }
   return '<div class="ph-rank">'+main+mvpAceBadgeHtml(name)+'</div>';
 }
-// ── 선수 탭 헤더 일러스트: 판수 모스트 5 중 승률 1위 챔피언 (스킨은 기본, 요청한 챔피언만 CHAMP_SKIN 으로 변경) ──
+// ── 선수 탭 헤더 일러스트: 챔피언의 주인인 챔피언 중 승률 1위 (없으면 일러스트 없음, 스킨은 기본) ──
 // 키 = Data Dragon 챔피언 id, 값 = 스킨 번호. 없는 챔피언은 기본 스킨(0)으로 나온다.
 var CHAMP_SKIN = {};   // 기본 스킨(0) 사용. 바꿀 챔피언만 {"Jhin":14} 처럼 추가
 var SKIN_FOCUS = {"Aatrox_0":[0.5,0.33],"Ahri_0":[0.5,0.22],"Akali_0":[0.5,0.2],"Alistar_0":[0.5,0.4],"Ambessa_0":[0.5,0.22],"Amumu_0":[0.5,0.32],"Anivia_0":[0.5,0.3],"Annie_0":[0.5,0.37],"Aphelios_0":[0.5,0.2],"Ashe_0":[0.5,0.28],"AurelionSol_0":[0.5,0.3],"Aurora_0":[0.5,0.25],"Azir_0":[0.5,0.25],"Bard_0":[0.5,0.35],"Belveth_0":[0.5,0.25],"Blitzcrank_0":[0.5,0.35],"Brand_0":[0.5,0.25],"Braum_0":[0.79,0.2],"Briar_0":[0.5,0.3],"Caitlyn_0":[0.5,0.2],"Camille_0":[0.5,0.18],"Cassiopeia_0":[0.5,0.3],"Chogath_0":[0.5,0.4],"Corki_0":[0.5,0.35],"Darius_0":[0.5,0.18],"Diana_0":[0.5,0.25],"DrMundo_0":[0.5,0.23],"Draven_0":[0.5,0.32],"Ekko_0":[0.5,0.32],"Elise_0":[0.5,0.28],"Evelynn_0":[0.5,0.2],"Ezreal_0":[0.5,0.2],"Fiddlesticks_0":[0.5,0.45],"Fiora_0":[0.5,0.15],"Fizz_0":[0.5,0.3],"Galio_0":[0.5,0.2],"Gangplank_0":[0.5,0.22],"Garen_0":[0.5,0.25],"Gnar_0":[0.78,0.45],"Gragas_0":[0.5,0.3],"Graves_0":[0.5,0.2],"Gwen_0":[0.5,0.25],"Hecarim_0":[0.5,0.15],"Heimerdinger_0":[0.5,0.35],"Hwei_0":[0.5,0.2],"Illaoi_0":[0.5,0.18],"Irelia_0":[0.5,0.15],"Ivern_0":[0.5,0.25],"Janna_0":[0.5,0.2],"JarvanIV_0":[0.5,0.15],"Jax_0":[0.5,0.3],"Jayce_0":[0.5,0.25],"Jhin_0":[0.5,0.25],"Jinx_0":[0.5,0.2],"KSante_0":[0.5,0.2],"Kaisa_0":[0.5,0.2],"Kalista_0":[0.5,0.2],"Karma_0":[0.5,0.15],"Karthus_0":[0.5,0.3],"Kassadin_0":[0.5,0.2],"Katarina_0":[0.5,0.25],"Kayle_0":[0.5,0.2],"Kayn_0":[0.5,0.3],"Kennen_0":[0.5,0.3],"Khazix_0":[0.5,0.25],"Kindred_0":[0.78,0.45],"Kled_0":[0.5,0.3],"KogMaw_0":[0.5,0.5],"Leblanc_0":[0.5,0.2],"LeeSin_0":[0.76,0.12],"Leona_0":[0.5,0.2],"Lillia_0":[0.5,0.25],"Lissandra_0":[0.5,0.25],"Locke_0":[0.5,0.15],"Lucian_0":[0.5,0.32],"Lulu_0":[0.5,0.35],"Lux_0":[0.5,0.1],"Malphite_0":[0.5,0.45],"Malzahar_0":[0.5,0.2],"Maokai_0":[0.5,0.35],"MasterYi_0":[0.5,0.1],"Mel_0":[0.5,0.2],"Milio_0":[0.5,0.25],"MissFortune_0":[0.78,0.25],"MonkeyKing_0":[0.5,0.15],"Mordekaiser_0":[0.5,0.15],"Morgana_0":[0.5,0.25],"Naafiri_0":[0.5,0.4],"Nami_0":[0.5,0.3],"Nasus_0":[0.5,0.2],"Nautilus_0":[0.5,0.32],"Neeko_0":[0.5,0.3],"Nidalee_0":[0.5,0.2],"Nilah_0":[0.5,0.3],"Nocturne_0":[0.5,0.3],"Nunu_0":[0.8,0.4],"Olaf_0":[0.5,0.2],"Orianna_0":[0.5,0.15],"Ornn_0":[0.5,0.3],"Pantheon_0":[0.5,0.25],"Poppy_0":[0.5,0.3],"Pyke_0":[0.5,0.25],"Qiyana_0":[0.5,0.2],"Quinn_0":[0.5,0.25],"Rakan_0":[0.5,0.2],"Rammus_0":[0.5,0.4],"RekSai_0":[0.5,0.4],"Rell_0":[0.5,0.15],"Renata_0":[0.5,0.2],"Renekton_0":[0.5,0.2],"Rengar_0":[0.5,0.15],"Riven_0":[0.75,0.2],"Rumble_0":[0.5,0.3],"Ryze_0":[0.82,0.35],"Samira_0":[0.5,0.25],"Sejuani_0":[0.5,0.15],"Senna_0":[0.5,0.3],"Seraphine_0":[0.5,0.2],"Sett_0":[0.5,0.2],"Shaco_0":[0.5,0.2],"Shen_0":[0.5,0.2],"Shyvana_0":[0.5,0.2],"Singed_0":[0.5,0.2],"Sion_0":[0.5,0.42],"Sivir_0":[0.5,0.15],"Skarner_0":[0.5,0.45],"Smolder_0":[0.5,0.3],"Sona_0":[0.5,0.2],"Soraka_0":[0.5,0.25],"Swain_0":[0.5,0.2],"Sylas_0":[0.5,0.3],"Syndra_0":[0.5,0.15],"TahmKench_0":[0.5,0.3],"Taliyah_0":[0.5,0.15],"Talon_0":[0.5,0.2],"Taric_0":[0.5,0.15],"Teemo_0":[0.5,0.25],"Thresh_0":[0.5,0.1],"Tristana_0":[0.5,0.3],"Trundle_0":[0.5,0.25],"Tryndamere_0":[0.5,0.2],"TwistedFate_0":[0.5,0.2],"Twitch_0":[0.5,0.25],"Udyr_0":[0.5,0.2],"Urgot_0":[0.5,0.15],"Varus_0":[0.5,0.1],"Vayne_0":[0.5,0.2],"Veigar_0":[0.5,0.25],"Velkoz_0":[0.5,0.35],"Vex_0":[0.5,0.25],"Vi_0":[0.5,0.2],"Viego_0":[0.5,0.15],"Viktor_0":[0.5,0.2],"Vladimir_0":[0.5,0.15],"Volibear_0":[0.5,0.2],"Warwick_0":[0.85,0.56],"Xayah_0":[0.5,0.2],"Xerath_0":[0.5,0.2],"XinZhao_0":[0.5,0.15],"Yasuo_0":[0.5,0.25],"Yone_0":[0.5,0.15],"Yorick_0":[0.5,0.25],"Yunara_0":[0.5,0.2],"Yuumi_0":[0.5,0.25],"Zaahen_0":[0.5,0.15],"Zac_0":[0.5,0.45],"Zed_0":[0.5,0.25],"Zeri_0":[0.5,0.2],"Ziggs_0":[0.5,0.3],"Zilean_0":[0.5,0.2],"Zoe_0":[0.5,0.15],"Zyra_0":[0.5,0.3]};   // "스킨키": [얼굴 x, 얼굴 y] (0~1 비율) — 얼굴이 빗나가면 여기서 조정
 function phChamp(name){
   // 1순위: 이 선수가 '챔피언의 주인'인 챔피언 중 승률 1위 (같으면 판수 많은 쪽)
-  // 2순위(주인 챔프 없음): 주포지션 모스트 5 중 승률 1위
+  // 주인인 챔피언이 없으면 일러스트 없이 둔다
   var p=PLAYERS[name]; if(!p) return null;
   function idOf(c){ return CMAP[c]||CMAPN[String(c).replace(/\s+/g,'')]; }
   var cand=[];
   try{ var own=ownersNow(); Object.keys(own).forEach(function(c){ if(own[c].name===name) cand.push([c,own[c].g,own[c].w]); }); }catch(e){}
-  if(!cand.length){
-    try{ cand=posChamps(name,p.pos).slice(0,5).map(function(m){ var st=playerChampStatPos(name,m[0],p.pos); return [m[0],st.games,st.wins]; }); }catch(e){}
-  }
-  if(!cand.length && p.mostChamps) cand=p.mostChamps.slice(0,5).map(function(m){ return [m[0],m[1].games,m[1].wins]; });
   cand=cand.filter(function(x){ return x[1]>0 && idOf(x[0]); });
   if(!cand.length) return null;
   cand.sort(function(a,b){ return (b[2]/b[1])-(a[2]/a[1]) || b[1]-a[1]; });
@@ -1111,7 +1107,7 @@ function renderPlayer() {
     {val: dsx.cs_per_min, label: 'CS/분', rank: rk('cs_per_min'), color: '#199473'},
   ];
 
-  var html = '<div class="ph fi'+(phArtHtml(name)?' ph-has-art':'')+'">'+phArtHtml(name)+'<div class="ph-bg"></div>'+
+  var html = '<div class="ph fi ph-has-art">'+phArtHtml(name)+'<div class="ph-bg"></div>'+
     '<div class="ph-top">'+
     '<div class="ph-ava" style="border-color:'+tierOf(p.elo).c+';background:linear-gradient(135deg,'+tierOf(p.elo).c+'18,#eaf3f0);">'+tierIcon(p.elo,44)+'</div>'+
     '<div class="ph-info">'+
